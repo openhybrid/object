@@ -1,0 +1,33 @@
+{
+  "name": "HybridObjects",
+  "version": "0.3.1",
+  "description": "",
+  "main": "server.js",
+  "dependencies": {
+    "cors": "^2.5.0",
+    "body-parser": "^1.9.2",
+    "change-case": "^2.2.0",
+    "archiver": "^0.14.2",
+    "decompress-zip": "^0.1.0",
+    "formidable": "^1.0.16",
+    "fstream": "^1.0.4",
+    "express": "^4.11.0",
+    "fs-extra": "^0.12.0",
+    "node-watch": "^0.3.4",
+    "getmac": "^1.0.6",
+    "socket.io": "^1.2.0",
+    "ip": "^0.3.2",
+    "socket.io-client": "^1.2.0",
+    "watch": "^0.13.0",
+    "serialport": "^1.4.6",
+    "unzip": "^0.1.11",
+    "xml2js": "^0.4.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Valentin Heun <heun@mit.edu> (http://openhybrid.com/)",
+  "license": "Mozilla Public"
+}

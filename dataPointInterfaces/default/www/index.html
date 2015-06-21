@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>IO</title>
+<style>
+body, html{
+height: 100%; margin:0; padding:0;
+}
+img{
+	display: block;
+}
+</style>
+	<script>		
+		// function for resizing the windows.
+var objectExp = {};
+
+window.addEventListener("message", function(e){
+    parent.postMessage(JSON.stringify(
+            {"pos":JSON.parse(e.data).pos,"obj":JSON.parse(e.data).obj,"height":document.body.scrollHeight,"width":document.body.scrollWidth}
+        )
+        // this needs to contain the final interface source
+        ,"*");
+    objectExp.pos = JSON.parse(e.data).pos;
+    objectExp.obj = JSON.parse(e.data).obj;
+
+}, false);	
+	</script>
+</head>
+<body>
+<img src="button.png" width="47" height="47">
+</body></html>

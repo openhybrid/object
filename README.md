@@ -21,20 +21,21 @@ Once completed the Expander:
 
 4. Upload any other sketch to remove the update sketch.
 
-5. on your osx computer: 
-install osxfuse 
+5. on your osx computer: install osxfuse 
 
 5. connect via: ssh root@objectname.local
 
 example for getting to the right folder. 
+
 		root@so1:~# cd ..
 		root@so1:/# cd mnt/sda1/
 
 
 6. on the yun install:
-opkg update
-opkg install openssh-sftp-server node node-socket.io node-socket.io-client node-serialport
 
+		opkg update
+		opkg install openssh-sftp-server node node-socket.io node-socket.io-client node-serialport
+		
 7. Generate a folder with the name "mountpoint". 
 8. use this for mounting the arduino in to the mountpoint folder like so:
 		sshfs root@objectname.local:/mnt/sda1/arduino ~/mountpoint
@@ -47,6 +48,7 @@ For unmoint
 
 10. to make the serial port work with the Hybrid Object 
 uncomment in /etc/inittab:
+
 		#ttyATH0::askfirst:/bin/ash --login
 
 11. Follow chapter SWAP
@@ -61,11 +63,11 @@ uncomment in /etc/inittab:
 reboot 
 
 
-Renmae Host
+Rename Host
 ------------------
 
-uci set system.@system[0].hostname=obj
-uci commit system
+		uci set system.@system[0].hostname=obj
+		uci commit system
 
 
 Clone Yun to sd
@@ -86,8 +88,8 @@ prepar bootftp
 
 Copy the firmware package from Arduino.cc
 
-sudo launchctl load -F /System/Library/LaunchDaemons/tftp.plist
-sudo launchctl start com.apple.tftpd
+		sudo launchctl load -F /System/Library/LaunchDaemons/tftp.plist
+		sudo launchctl start com.apple.tftpd
 
 Move the unpacked base images files into the folder /private/tftpboot/
 
@@ -95,22 +97,22 @@ Move the unpacked base images files into the folder /private/tftpboot/
 UBOOT reflesh
 ------------
 
-setenv serverip 192.168.1.1;
-setenv ipaddr 192.168.1.146;
+		setenv serverip 192.168.1.1;
+		setenv ipaddr 192.168.1.146;
 
-tftp 0x80060000 openwrt-ar71xx-generic-linino-u-boot.bin;
-erase 0x9f000000 +0x40000;
-cp.b $fileaddr 0x9f000000 $filesize;
+		tftp 0x80060000 openwrt-ar71xx-generic-linino-u-boot.bin;
+		erase 0x9f000000 +0x40000;
+		cp.b $fileaddr 0x9f000000 $filesize;
 
-tftp 0x80060000 openwrt-ar71xx-generic-yun-16M-kernel.bin;
-erase 0x9fEa0000 +0x140000;
-cp.b $fileaddr 0x9fea0000 $filesize;
+		tftp 0x80060000 openwrt-ar71xx-generic-yun-16M-kernel.bin;
+		erase 0x9fEa0000 +0x140000;
+		cp.b $fileaddr 0x9fea0000 $filesize;
 
-tftp 0x80060000 openwrt-ar71xx-generic-yun-16M-rootfs-squashfs.bin;
-erase 0x9f050000 +0xE50000;
-cp.b $fileaddr 0x9f050000 $filesize;
+		tftp 0x80060000 openwrt-ar71xx-generic-yun-16M-rootfs-squashfs.bin;
+		erase 0x9f050000 +0xE50000;
+		cp.b $fileaddr 0x9f050000 $filesize;
 
-bootm 0x9fea0000
+		bootm 0x9fea0000
 
  
  

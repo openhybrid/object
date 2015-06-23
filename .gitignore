@@ -19,6 +19,12 @@ coverage
 # node-waf configuration
 .lock-wscript
 
+# idea editing tools
+.idea
+
+# osx directory files
+.DS_Store
+
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
 

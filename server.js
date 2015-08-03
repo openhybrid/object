@@ -120,6 +120,7 @@ var formidable = require('formidable');
 // additional required code
 var HybridObjectsUtilities = require(__dirname+'/libraries/HybridObjectsUtilities');
 var HybridObjectsWebFrontend = require(__dirname+'/libraries/HybridObjectsWebFrontend');
+var templateModule = require(__dirname+'/libraries/templateModule');
 
 // sync debugging with the additional code
 HybridObjectsWebFrontend.debug = globalVariables.debug;
@@ -250,9 +251,25 @@ for (var i = 0; i < tempFiles.length; i++) {
     pluginModules[tempFiles[i]] = require(__dirname + "/dataPointInterfaces/" + tempFiles[i] + "/index.js").render;
 }
 
-// start system
-initSystem();
-startSystem();
+
+
+var modulesList = [ 'base',
+                    'documentation',
+                    'header',
+                    'home-object',
+                    'home-object-add',
+                    'interface',
+                    'interface-rowitem',
+                    'monitor',
+                    'sidebar',
+                    'target' ];
+
+templateModule.loadAllModules(modulesList, function() {
+    // start system
+    initSystem();
+    startSystem();
+
+});
 
 
 
@@ -569,6 +586,9 @@ function objectWebServer() {
     webServer.use(bodyParser.json());
     // devine a couple of static directory routs
     webServer.use("/obj", express.static(__dirname + '/objects/'));
+    webServer.use("/public", express.static(__dirname + '/public'));
+    webServer.use(express.static(__dirname + '/public'));
+
     if (globalVariables.developer === true) {
         webServer.use("/target/js", express.static(__dirname + '/libraries/js/'));
         webServer.use("/target", express.static(__dirname + '/libraries/js/'));
@@ -802,13 +822,15 @@ function objectWebServer() {
     // frontend interface
     // ****************************************************************************************************************
 
+
+
     if (globalVariables.developer === true) {
 
         // sends the info page for the object :id
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder + 'info/:id', function (req, res) {
            // if(globalVariables.debug) console.log("get 12");
-            res.send(HybridObjectsWebFrontend.uploadInfoText(req.params.id, objectLookup, objectExp, knownObjects, sockets));
+            res.send(HybridObjectsWebFrontend.uploadInfoText(req.params.id, objectLookup, objectExp, knownObjects, io, sockets));
         });
 
         // sends the content page for the object :id
@@ -835,7 +857,7 @@ function objectWebServer() {
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder, function (req, res) {
            // if(globalVariables.debug) console.log("get 16");
-            res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup) );
+          res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup));
         });
 
         // ****************************************************************************************************************

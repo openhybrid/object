@@ -29,5 +29,5 @@
     "start": "node server.js"
   },
   "author": "Valentin Heun <heun@mit.edu> (http://openhybrid.com/)",
-  "license": "Mozilla Public"
+  "license": "MPL-2.0"
 }

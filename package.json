@@ -9,6 +9,7 @@
     "change-case": "^2.2.0",
     "archiver": "^0.14.2",
     "decompress-zip": "^0.1.0",
+    "cheerio": "2.5.0",
     "formidable": "^1.0.16",
     "fstream": "^1.0.4",
     "express": "^4.11.0",
@@ -19,9 +20,12 @@
     "ip": "^0.3.2",
     "socket.io-client": "^1.2.0",
     "watch": "^0.13.0",
+    "readdir": "0.0.13",
+    "ip": "^0.3.2",
     "serialport": "^1.4.6",
     "unzip": "^0.1.11",
-    "xml2js": "^0.4.4"
+    "xml2js": "^0.4.4",
+    "watch": "0.13.0"
   },
   "devDependencies": {},
   "scripts": {
@@ -29,5 +33,6 @@
     "start": "node server.js"
   },
   "author": "Valentin Heun <heun@mit.edu> (http://openhybrid.com/)",
+  "contributors": "Marc Teyssier <marc.teys@gmail.com> (http://marcteyssier.com)",
   "license": "Mozilla Public"
 }

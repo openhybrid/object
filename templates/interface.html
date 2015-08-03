@@ -1,0 +1,109 @@
+        <div class="title">
+          <h3>
+          <span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span> Interface : {{name}}
+          </h3>
+          <a href="/" class="back-nav"><span aria-hidden="true">&larr;</span> Back</a>
+        </div>
+        <div id="actions" class="row">
+          <div class="col-xs-7">
+            <table class="table table-hover table-interface">
+              <thead>
+                <tr>
+                  <th class="info">Object Folder</th>
+                  <th class="info"></th>
+                </tr>
+              </thead>
+        <tbody> 
+        {{ rowItems }}
+        </tbody>
+      </table>
+      <span class="badge" style="background-color:#D3D3D3;border-radius:0">&nbsp;&nbsp;</span> <span style="font-size:11px">is required.</span>
+      </div>
+    <div class="col-xs-5">
+        Drag and Drop your interface files anywhere on this window. Make sure that <b>index.html</b> is your startpoint. You can drop all your files at the same time.
+        <br>
+        <br>
+        <b>object.json</b> holds all relevant information about your object. You need to include <b>object.css</b> and <b>object.js</b> at the beginning of your interface index.html page.<br>
+        <br>
+        <br>
+        <span class="fileupload-process">
+              <div id="total-progress" class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="opacity:0">
+                <div class="progress-bar progress-bar-success" style="width:100%;" data-dz-uploadprogress=""></div>
+              </div>
+        </span>
+        <span class="btn btn-success fileinput-button dz-clickable" id="targetButton">
+            <span>Add Interface Files</span>
+        </span>
+        <div class="table table-striped" id="previews" style="visibility: hidden">
+        </div>
+        <div class="table table-striped" class="files" id="previews" style="visibility: hidden">        <div id="template" class="file-row">        </div>    </div> 
+    
+
+
+      <script>
+        var previewNode = document.querySelector("#template");
+        previewNode.id = "";
+        var previewTemplate = previewNode.parentNode.innerHTML;
+        previewNode.parentNode.removeChild(previewNode);
+        var myDropzone = new Dropzone(document.body, {
+            url: "/content/{{name}}",
+            autoProcessQueue: true,
+            thumbnailWidth: 80,
+            thumbnailHeight: 80,
+            parallelUploads: 20,
+            headers: {
+                "type": "contentUpload"
+            },
+            createImageThumbnails: false,
+            previewTemplate: previewTemplate,
+            autoQueue: true,
+            previewsContainer: "#previews",
+            clickable: ".fileinput-button"
+        });
+              var lastTarget = null;
+        myDropzone.on("dragenter", function(e) {
+            lastTarget = e.target;
+            dropzoneBox.style.visibility = "visible";
+            dropzoneBox.style.opacity = 1;
+        });
+ 
+        myDropzone.on("dragleave", function(e) {
+           if(e.target === lastTarget)
+            {
+                dropzoneBox.style.visibility = "hidden";
+                dropzoneBox.style.opacity = 0;
+            }
+        });
+        myDropzone.on("addedfile", function(file) {});
+        myDropzone.on("drop", function(file) {
+            dropzoneBox.style.visibility = "hidden";
+
+            myDropzone.enqueueFiles(myDropzone.getFilesWithStatus(Dropzone.ADDED));
+        });
+     
+
+        myDropzone.on("totaluploadprogress", function(progress) {
+            document.querySelector("#total-progress").style.width = progress + "%";
+        });
+        myDropzone.on("sending", function(file) {
+            document.querySelector("#total-progress").style.opacity = "1";
+        });
+        myDropzone.on("queuecomplete", function(progress) {
+            document.querySelector("#total-progress").style.opacity = "0";
+        });
+        myDropzone.on("success", function(file, responseText) {
+            if (responseText === "done") {
+                document.querySelector("#total-progress").style.opacity = "0";
+                location.reload();
+            }
+        });
+    </script>
+    </div>
+
+    <div id="dropzoneBox">
+        <h2><span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span></h2>
+        <h3>Drop files here.</h3>
+        <span class="note">Allowed extensions : <em>.jpg, .zip</em></span>
+    </div>
+    
+</div>

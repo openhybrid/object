@@ -10,7 +10,7 @@ How to install on an Arduino Yún
 
 1. Plug the SD card into the Arduino Yún and power it on
 
-2. On your computer, connect to the Arduino's WiFi network, named similar to "Arduino Yún-XXXXXXXX."
+2. On your computer, connect to the Arduino's WiFi network, named similar to "Arduino Yun-XXXXXXXX."
 Using a web browser, navigate to *http://arduino.local* and enter password *arduino* when prompted.
 
 3. Give the board a name and enter the WiFi settings for your network.
@@ -28,31 +28,42 @@ capability which we'll use later to conveniently mount a folder on the Yún to y
 
 7. Connect to the Yún via: `ssh root@objectname.local`
 
-example for getting to the right folder:
+   Example for getting to the right folder:
 
+````
     root@so1:~# cd ..
     root@so1:/# cd mnt/sda1/
+````
 
 
 8. Update the software on the Yún and install the sftp server and node packages:
 
+````
     opkg update
     opkg install openssh-sftp-server node node-socket.io node-socket.io-client node-serialport
+````
 
-9. Generate a folder with the name "mountpoint"
+9. Create a folder with the name "mountpoint"
+
+````
     mkdir ~/mountpoint
+````
 
 10. Mount the arduino's filesystem to your local mountpoint:
-    sshfs root@objectname.local:/mnt/sda1/arduino ~/mountpoint
 
-To unmount:
-    umount ~/mountpoint
+````
+    sshfs root@objectname.local:/mnt/sda1/arduino ~/mountpoint
+````
+
+   (To unmount: `umount ~/mountpoint`)
 
 11. Work in the mounted folder and run your programms via the terminal.
 
 12. To allow logins over the serial port on the Hybrid Object, uncomment in `/etc/inittab`:
 
+````
     #ttyATH0::askfirst:/bin/ash --login
+````
 
 13. Setup a swap file as described below in section **SWAP**.
 
@@ -60,7 +71,9 @@ To unmount:
 
 15. Install the dependences:
 
+````
     npm install
+````
 
  
 reboot 
@@ -69,41 +82,48 @@ reboot
 Rename Host
 ===========
 
+````
     uci set system.@system[0].hostname=obj
     uci commit system
+````
 
 
 Clone Yún to SD card
 ====================
 
 ````
-umount /overlay
-dd if=/dev/mtd7ro of=/mnt/sda1/hybrid-squashfs-sysupgrade.bin
+    umount /overlay
+    dd if=/dev/mtd7ro of=/mnt/sda1/hybrid-squashfs-sysupgrade.bin
 ````
 
 If you plan to disconnect power and remove the SD card, run these additional commands:
 
 ````
-sync
-halt
+    sync
+    halt
 ````
 
 
 Setup a TFTP server on your Mac
 ===============================
 
-Download the Arduino Yún base images zip file from Arduino.cc and extract the tree files (uboot, kernel, rootfs).
+Start the TFTP service on your Mac:
 
-
+````
     sudo launchctl load -F /System/Library/LaunchDaemons/tftp.plist
     sudo launchctl start com.apple.tftpd
+````
 
-Move the unpacked base images files into the folder /private/tftpboot/
+Download the [Arduino Yún base images zip file from Arduino.cc](http://arduino.cc/download_handler.php?f=/openwrtyun/1/YunImage_v1.5.3.zip)
+and extract the three files (uboot, kernel, rootfs) from the archive.
+
+Move the unpacked base images files into the `/private/tftpboot/` folder.
 
 
 Reflashing U-Boot
 -----------------
 
+````
     setenv serverip 192.168.1.1;
     setenv ipaddr 192.168.1.146;
 
@@ -120,8 +140,9 @@ Reflashing U-Boot
     cp.b $fileaddr 0x9f050000 $filesize;
 
     bootm 0x9fea0000
+````
 
-For more information refer to [Reflashing the OpenWrt-Yun image on the Yún](https://www.arduino.cc/en/Tutorial/YunUBootReflash).
+For more information refer to [Reflashing the OpenWrt-Yún image on the Yún](https://www.arduino.cc/en/Tutorial/YúnUBootReflash).
  
  
 Make node app run on startup
@@ -134,12 +155,14 @@ Evaluate https://github.com/chovy/node-startup
 SWAP
 ====
 <!-- Cribbed from http://www.element14.com/community/groups/arduino/blog/2014/12/19/part-x3-arduino-yun-extending-the-ram -->
+A swap file is a special kind of file that can be used as *virtual memory* by a computer's operating system.
+This allows the computer's operating system to push infrequently used items from RAM to the hard disk
+so that new items can use the newly freed space in the actual RAM.
 
 #### Verifying Free Memory
  
-Connect to Yun using ssh  (i.e. by running "ssh root@youryun.local” from terminal). Then run:
-free -m
-This should show your current free memory.  For examle:
+Connect to Yún using ssh  (i.e. by running "ssh root@youryun.local” from terminal). Then run `free -m`.
+This shows your current memory memory usage in **m**egabytes, including free memory.  For example:
 
 ````
              total         used         free       shared      buffers
@@ -148,12 +171,12 @@ Mem:         61116        43556        17560            0         9612
 Swap:            0            0            0
 ````
 
-Note that the swap space is **0**.
-So now that i have confirmed that there is no swap file, I tried and set that swap file up on my Yun. The process involves 4 steps.
+Note that the swap space shows **0**, indicating that there is no swap configured and available.
+After confirming the lack of swap, you can setup a file to use for swap space.
  
 #### Step 1: Create an empty file to act as a swap file
  
-While connected to the Yun through the ssh terminal, run the following command to create a 
+While connected to the Yún through the ssh terminal, run the following command to create a 
 512 MB swap file named yunswapfile in folder "/swap" filled with zeroes:
 
     dd if=/dev/zero of=/swap/yunswapfile bs=1M count=512
@@ -202,18 +225,18 @@ the system to use this file for swap on boot, as show in step 4.
  
 #### Step 4: Load the swap file as part of boot sequence
  
-If you stop with Step 3, next time when you restart your Yun (linux part... either through power off/on or 
+If you stop with Step 3, next time when you restart your Yún (linux part... either through power off/on or 
 the Linux reset button near the LEDs) the swap file will not have been loaded. So to make sure that it gets 
 loaded every time, you need to set the swap file as part of boot sequence.
  
 **Warning:** The steps are fairly simple, but if the steps are not executed fully you might leave an inconsistent
-boot config and the Linux part of the Yun may not load properly.  Don't worry, since this is Arduino you can reset
+boot config and the Linux part of the Yún may not load properly.  Don't worry, since this is Arduino you can reset
 the whole thing easily and try again.  So please execute the following cleanly after understanding them.
 
 These commands are meant to be run as **root** on your Yún.  Lines beginning with `#` are interpreted as comments
 by the shell and are not interpreted, so they won't hurt anything if included via copy/paste:
 
-```
+````
 #1. Add swap config entry to fstab
 uci add fstab swap
 
@@ -236,6 +259,6 @@ uci set fstab.@swap[0].enabled_fsck=0
 uci commit
 ````
 
-That's it. Restart the Linux part of Yun (reset button near LEDs). After reboot, if you run 
+That's it. Restart the Linux part of Yún (reset button near LEDs). After reboot, if you run 
 `free -m` you should see the swap file loaded. You have successfully expanded the RAM on your 
-Arduino Yun's Linux side.
+Arduino Yún's Linux side.

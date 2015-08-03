@@ -142,7 +142,7 @@ Reflashing U-Boot
     bootm 0x9fea0000
 ````
 
-For more information refer to [Reflashing the OpenWrt-Yún image on the Yún](https://www.arduino.cc/en/Tutorial/YúnUBootReflash).
+For more information refer to [Reflashing the OpenWrt-Yún image on the Yún](https://www.arduino.cc/en/Tutorial/YunUBootReflash).
  
  
 Make node app run on startup

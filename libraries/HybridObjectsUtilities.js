@@ -55,7 +55,7 @@
  * @note the callback has the same structure then the initial prototype, however inputData has changed to outputData
  **/
 
-    var debug = false;
+var debug = false;
 var xml2js = require('xml2js');
 var fs = require('fs');
 

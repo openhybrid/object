@@ -59,7 +59,7 @@ var loadBaseTemplate = function() {
     var base = templateModule.loadTemplate("base");
 
     //get the objects
-    var objectPath = __dirname + '\\..\\objects';
+    var objectPath = __dirname + '/../objects';
     var tempFiles = fs.readdirSync(objectPath).filter(function (file) {
         return fs.statSync(objectPath + '/' + file).isDirectory();
     });

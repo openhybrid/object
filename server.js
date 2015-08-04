@@ -589,8 +589,8 @@ function objectWebServer() {
 
 
     if (globalVariables.developer === true) {
-        webServer.use("/public", express.static(__dirname + '/webInterface/public'));
-        webServer.use(express.static(__dirname + '/webInterface/public'));
+        webServer.use("/public", express.static(__dirname + '/libraries/webInterface/'));
+        webServer.use(express.static(__dirname + '/libraries//webInterface/'));
     }
 
     // use the cors cross origin REST model
@@ -617,7 +617,7 @@ function objectWebServer() {
             socketUpdater();
 
             // write the object state to the permanent storage.
-            HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
+           HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
             res.send(updateStatus);
         }
     });
@@ -658,7 +658,7 @@ function objectWebServer() {
     // delete a link. *1 is the object *2 is the link id
     // ****************************************************************************************************************
     webServer.delete('/object/*/link/*/', function (req, res) {
-        if (globalVariables.debug) console.log("delete 1");
+        if(globalVariables.debug) console.log("delete 1");
 
         if (globalVariables.debug) console.log("i got a delete message");
         var thisLinkId = req.params[1];
@@ -848,8 +848,8 @@ function objectWebServer() {
         // sends the object folder?? //todo what is this for?
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder, function (req, res) {
-            // if(globalVariables.debug) console.log("get 16");
-            res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup));
+           // if(globalVariables.debug) console.log("get 16");
+          res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup));
         });
 
         // ****************************************************************************************************************

@@ -1,0 +1,113 @@
+<div class="title">
+    <h3>
+            <span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span> Monitoring : <span data-name>{{name}}</span>
+          </h3>
+    <a href="" class="back-nav"><span aria-hidden="true">&larr;</span> Back</a>
+</div>
+
+<div id="full-table" class="row" data-id="{{name}}">
+    <div>
+        <div class="col-xs-6">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th class="info">Index</th>
+                        <th class="info">I/O Name</th>
+                        <th class="info">Value</th>
+                    </tr>
+                </thead>
+                <tbody data-variables>
+                     <tr>
+                        <td scope="row">loading the data...</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="col-xs-6">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th class="info">General Info</th>
+                        <th class="info"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row">ip</th>
+                        <td>{{ip}}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">version</th>
+                        <td>{{version}}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">sockets</th>
+                        <td>{{ sockets }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">connected</th>
+                        <td>{{ socketsConnected }}</td>
+                    </tr>
+                    <tr>
+                        <th scope="row">notConnected</th>
+                        <td>{{ socketsNotConnected }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th class="info">Known Objects</th>
+                        <th class="info"> </th>
+                    </tr>
+                </thead>
+                <tbody data-objects>
+                   <tr>
+                        <td scope="row">loading the data...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div><!-- / col  6 -->
+    </div>
+
+    <div id="actions" class="row">
+        <div class="col-xs-6">
+        </div>
+    </div> <!-- / acions -->
+
+    <div id="actions" class="row">
+        <div class="col-xs-12">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th class="info">Active Link ID</th>
+                        <th class="info">Origin</th>
+                        <th class="info">Location in O.</th>
+                        <th class="info">Destination
+                        </th>
+                        <th class="info">Location in D.</th>
+                    </tr>
+                </thead>
+                <tbody data-links="">
+                       <tr>
+                        <td scope="row">loading the data...</td><td></td><td></td><td></td><td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div><!-- / acions -->
+
+</div>
+</div>
+<!-- end table -->
+
+<script>
+    var table = document.getElementById("full-table");
+
+    var socket = io.connect("/");
+    socket.on("getSomeData", function(message) {
+        table.innerHTML = message;
+    });
+</script>

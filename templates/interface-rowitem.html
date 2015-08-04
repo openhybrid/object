@@ -1,0 +1,15 @@
+<tr class="{{rowClass}}">
+        <td>
+            <span class="glyphicon {{iconType}}"></span>&nbsp;&nbsp;<a href="/obj/{{filePath}}">{{fileName}}</a>
+        </td>
+
+        <td>
+            <form action="{{formAction}}" id="{{formId}}" method="post" name="{{formId}}" style="margin: 0px; padding: 0px">
+                <input name="folder" type="hidden" value="{{filePath}}">
+                <input name="action" type="hidden" value="delete">
+                <a href="#" onclick="parentNode.submit();" class="{{linkClass}}">
+                    <span class="badge" style="background-color: #d43f3a;">delete</span>
+                </a>
+            </form>
+        </td>
+</tr>

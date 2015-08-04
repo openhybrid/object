@@ -68,7 +68,7 @@
         </ul>
         <h2>Resources</h2>
         <ul>
-            <li><a href="documentation.html"><span class="glyphicon glyphicon-search" aria-hidden="true"></span>Documentation</a></li>
+            <li><a href="http://openhybrid.org/first-steps.html"><span class="glyphicon glyphicon-search" aria-hidden="true"></span>Documentation</a></li>
         </ul>
     </nav>
     <div class="table table-striped" class="files" id="previews" style="visibility: hidden">
@@ -76,42 +76,3 @@
     </div>
 </div>
 
-<script>
-    var previewNode = document.querySelector("#template");
-    previewNode.id = "";
-    var previewTemplate = previewNode.parentNode.innerHTML;
-    previewNode.parentNode.removeChild(previewNode);
-    var myDropzone = new Dropzone(document.body, {
-        url: "/backup",
-        autoProcessQueue: true,
-        thumbnailWidth: 80,
-        headers: {
-            "type": "objectUpload"
-        },
-        thumbnailHeight: 80,
-        parallelUploads: 20,
-        createImageThumbnails: false,
-        previewTemplate: previewTemplate,
-        autoQueue: true,
-        previewsContainer: "#previews",
-        clickable: ".fileinput-button"
-    });
-    myDropzone.on("addedfile", function(file) {});
-    myDropzone.on("drop", function(file) {
-        myDropzone.enqueueFiles(myDropzone.getFilesWithStatus(Dropzone.ADDED));
-    });
-    myDropzone.on("totaluploadprogress", function(progress) {
-        document.querySelector("#total-progress").style.width = progress + "%";
-    });
-    myDropzone.on("sending", function(file) {
-        document.querySelector("#total-progress").style.opacity = "1";
-    });
-    myDropzone.on("queuecomplete", function(progress) {});
-    myDropzone.on("success", function(file, responseText) {
-        console.log(responseText);
-        if (responseText === "done") {
-            document.querySelector("#total-progress").style.opacity = "0";
-            location.reload();
-        }
-    });
-</script>

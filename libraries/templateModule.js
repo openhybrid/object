@@ -49,7 +49,7 @@ var cheerio = require('cheerio');
 var templates = [];
 
 exports.loadAllModules = function(allModules, callback) {
-  var templatePath = '/../templates/';
+  var templatePath = '/../libraries/templates/';
   var index = 0;
   var that = this;
 

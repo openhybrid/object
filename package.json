@@ -1,6 +1,6 @@
 {
   "name": "HybridObjects",
-  "version": "0.3.2",
+  "version": "0.3.1",
   "description": "",
   "main": "server.js",
   "dependencies": {
@@ -20,19 +20,16 @@
     "ip": "^0.3.2",
     "socket.io-client": "^1.2.0",
     "watch": "^0.13.0",
-    "readdir": "0.0.13",
-    "ip": "^0.3.2",
     "serialport": "^1.4.6",
     "unzip": "^0.1.11",
-    "xml2js": "^0.4.4",
-    "watch": "0.13.0"
+    "xml2js": "^0.4.4"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "author": "Valentin Heun <heun@mit.edu> (http://openhybrid.com/)",
+  "author": "Valentin Heun <heun@mit.edu> (http://valentinheun.com/)",
   "contributors": "Marc Teyssier <marc.teys@gmail.com> (http://marcteyssier.com)",
   "license": "Mozilla Public"
 }

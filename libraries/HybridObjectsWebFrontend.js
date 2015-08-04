@@ -258,7 +258,7 @@ exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, 
             }
             if (infoCount === 0) {
                 jsonObjects.push({
-                  "no":"no Object found",
+                  "no":"no Object found"
                 });
             }
 
@@ -423,7 +423,7 @@ exports.uploadTargetContent = function (parm, dirname0, objectInterfaceFolder) {
                 }
 
                 fileName = content[1];
-                filePath = '/obj/' + parm + '/' + content[0] + '/' + content[1];
+                filePath =  parm + '/' + content[0] + '/' + content[1];
             }
 
             folderOld = content[0];

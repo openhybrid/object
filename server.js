@@ -586,17 +586,11 @@ function objectWebServer() {
     webServer.use(bodyParser.json());
     // devine a couple of static directory routs
     webServer.use("/obj", express.static(__dirname + '/objects/'));
-    webServer.use("/public", express.static(__dirname + '/public'));
-    webServer.use(express.static(__dirname + '/public'));
+
 
     if (globalVariables.developer === true) {
-        webServer.use("/target/js", express.static(__dirname + '/libraries/js/'));
-        webServer.use("/target", express.static(__dirname + '/libraries/js/'));
-        webServer.use("/content/js", express.static(__dirname + '/libraries/js/'));
-        webServer.use("/content/fonts", express.static(__dirname + '/libraries/fonts/'));
-        webServer.use("/js", express.static(__dirname + '/libraries/js/'));
-        webServer.use("/info/js", express.static(__dirname + '/libraries/js/'));
-        webServer.use("/test", express.static(__dirname + '/WebInterface/'));
+        webServer.use("/public", express.static(__dirname + '/webInterface/public'));
+        webServer.use(express.static(__dirname + '/webInterface/public'));
     }
 
     // use the cors cross origin REST model
@@ -608,7 +602,7 @@ function objectWebServer() {
     // ****************************************************************************************************************
     webServer.post('/object/*/link/*/', function (req, res) {
 
-      //  if(globalVariables.debug) console.log("post 1");
+        //  if(globalVariables.debug) console.log("post 1");
 
         var updateStatus = "nothing happened";
 
@@ -623,7 +617,7 @@ function objectWebServer() {
             socketUpdater();
 
             // write the object state to the permanent storage.
-           HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
+            HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
             res.send(updateStatus);
         }
     });
@@ -631,7 +625,7 @@ function objectWebServer() {
     // changing the size and possition of an item. *1 is the object *2 is the link id
     // ****************************************************************************************************************
     webServer.post('/object/*/size/*/', function (req, res) {
-       // if(globalVariables.debug) console.log("post 2");
+        // if(globalVariables.debug) console.log("post 2");
         var updateStatus = "nothing happened";
         var thisObject = req.params[0];
         var thisValue = req.params[1];
@@ -664,7 +658,7 @@ function objectWebServer() {
     // delete a link. *1 is the object *2 is the link id
     // ****************************************************************************************************************
     webServer.delete('/object/*/link/*/', function (req, res) {
-        if(globalVariables.debug) console.log("delete 1");
+        if (globalVariables.debug) console.log("delete 1");
 
         if (globalVariables.debug) console.log("i got a delete message");
         var thisLinkId = req.params[1];
@@ -697,21 +691,21 @@ function objectWebServer() {
     // request a link. *1 is the object *2 is the link id
     // ****************************************************************************************************************
     webServer.get('/object/*/link/:id', function (req, res) {
-       // if(globalVariables.debug) console.log("get 1");
+        // if(globalVariables.debug) console.log("get 1");
         res.send(objectExp[req.params[0]].objectLinks[req.params.id]);
     });
 
     // request all link. *1 is the object
     // ****************************************************************************************************************
     webServer.get('/object/*/link', function (req, res) {
-      //  if(globalVariables.debug) console.log("get 2");
+        //  if(globalVariables.debug) console.log("get 2");
         res.send(objectExp[req.params[0]].objectLinks);
     });
 
     // request a zip-file with the object stored inside. *1 is the object
     // ****************************************************************************************************************
     webServer.get('/object/*/zipBackup/', function (req, res) {
-      //  if(globalVariables.debug) console.log("get 3");
+        //  if(globalVariables.debug) console.log("get 3");
         res.writeHead(200, {
             'Content-Type': 'application/zip',
             'Content-disposition': 'attachment; filename=HybridObjectBackup.zip'
@@ -728,7 +722,6 @@ function objectWebServer() {
     // Send the programming interface static web content
     // ****************************************************************************************************************
     webServer.get('/obj/dataPointInterfaces/*/*/', function (req, res) {   // watch out that you need to make a "/" behind request.
-      //  if(globalVariables.debug) console.log("get 4");
         res.sendFile(__dirname + "/dataPointInterfaces/" + req.params[0] + '/www/' + req.params[1]);
     });
 
@@ -736,7 +729,7 @@ function objectWebServer() {
     // general overview of all the hybrid objects - html respond
     // ****************************************************************************************************************
     webServer.get('/object/*/html', function (req, res) {
-      //  if(globalVariables.debug) console.log("get 5");
+        //  if(globalVariables.debug) console.log("get 5");
         var msg = "<html><head><meta http-equiv='refresh' content='3.3' /><title>" + req.params[0] + "</title></head><body>";
         msg += "<table border='0'  cellpadding='10'><tr> <td  align='left' valign='top'>";
         msg += "Values for " + req.params[0] + ":<br><table border='1'><tr> <td>ID</td><td>Value</td></tr>";
@@ -787,26 +780,26 @@ function objectWebServer() {
     // sends json object for a specific hybrid object. * is the object name
     // ****************************************************************************************************************
     webServer.get('/object/*/', function (req, res) {
-      //  if(globalVariables.debug) console.log("get 7");
+        //  if(globalVariables.debug) console.log("get 7");
         res.json(objectExp[req.params[0]]);
     });
 
     webServer.get('/object/*/thisObject', function (req, res) {
-      //  if(globalVariables.debug) console.log("get 8");
+        //  if(globalVariables.debug) console.log("get 8");
         res.json(objectExp[req.params[0]]);
     });
 
     // sends all json object values for a specific hybrid object. * is the object name
     // ****************************************************************************************************************
     webServer.get('/object/*/value', function (req, res) {
-     //   if(globalVariables.debug) console.log("get 9");
+        //   if(globalVariables.debug) console.log("get 9");
         res.json(objectExp[req.params[0]].objectValues);
     });
 
     // sends a specific value for a specific hybrid object. * is the object name :id is the value name
     // ****************************************************************************************************************
     webServer.get('/object/*/value/:id', function (req, res) {
-      //  if(globalVariables.debug) console.log("get 10");
+        //  if(globalVariables.debug) console.log("get 10");
         res.send({value: objectExp[req.params[0]].objectValues[req.params.id].value});
     });
 
@@ -814,7 +807,7 @@ function objectWebServer() {
     // ****************************************************************************************************************
 
     webServer.get('/object/*/value/full/:id', function (req, res) {
-      //  if(globalVariables.debug) console.log("get 11");
+        //  if(globalVariables.debug) console.log("get 11");
         res.json(objectExp[req.params[0]].objectValues[req.params.id]);
     });
 
@@ -823,41 +816,40 @@ function objectWebServer() {
     // ****************************************************************************************************************
 
 
-
     if (globalVariables.developer === true) {
 
         // sends the info page for the object :id
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder + 'info/:id', function (req, res) {
-           // if(globalVariables.debug) console.log("get 12");
+            // if(globalVariables.debug) console.log("get 12");
             res.send(HybridObjectsWebFrontend.uploadInfoText(req.params.id, objectLookup, objectExp, knownObjects, io, sockets));
         });
 
         // sends the content page for the object :id
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder + 'content/:id', function (req, res) {
-           // if(globalVariables.debug) console.log("get 13");
+            // if(globalVariables.debug) console.log("get 13");
             res.send(HybridObjectsWebFrontend.uploadTargetContent(req.params.id, __dirname, objectInterfaceFolder));
         });
 
         // sends the target page for the object :id
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder + 'target/:id', function (req, res) {
-         //   if(globalVariables.debug) console.log("get 14");
+            //   if(globalVariables.debug) console.log("get 14");
             res.send(HybridObjectsWebFrontend.uploadTargetText(req.params.id, objectLookup, objectExp, globalVariables.debug));
             // res.sendFile(__dirname + '/'+ "index2.html");
         });
 
         webServer.get(objectInterfaceFolder + 'target/*/*/', function (req, res) {
-          //  if(globalVariables.debug) console.log("get 15");
+            //  if(globalVariables.debug) console.log("get 15");
             res.sendFile(__dirname + '/' + req.params[0] + '/' + req.params[1]);
         });
 
         // sends the object folder?? //todo what is this for?
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder, function (req, res) {
-           // if(globalVariables.debug) console.log("get 16");
-          res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup));
+            // if(globalVariables.debug) console.log("get 16");
+            res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup));
         });
 
         // ****************************************************************************************************************
@@ -865,7 +857,7 @@ function objectWebServer() {
         // ****************************************************************************************************************
 
         webServer.post(objectInterfaceFolder + "contentDelete/:id", function (req, res) {
-           // if(globalVariables.debug) console.log("post 21");
+            // if(globalVariables.debug) console.log("post 21");
             if (req.body.action === "delete") {
                 var folderDel = __dirname + '/objects/' + req.body.folder;
 
@@ -895,6 +887,8 @@ function objectWebServer() {
 
         });
 
+    }
+}
 
 /**
  * @desc Check for incoming MSG from other objects or the User. Make changes to the objectValues if changes occur.

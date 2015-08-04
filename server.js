@@ -887,8 +887,427 @@ function objectWebServer() {
 
         });
 
+//*****************************************************************************************
+        webServer.post(objectInterfaceFolder, function (req, res) {
+           // if(globalVariables.debug) console.log("post 22");
+            if (req.body.action === "new") {
+                // console.log(req.body);
+                if (req.body.folder != "") {
+
+                    HybridObjectsUtilities.createFolder(req.body.folder, __dirname, globalVariables.debug);
+
+                }
+                res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup) );
+            }
+            if (req.body.action === "delete") {
+                var folderDel = __dirname + '/objects/' + req.body.folder;
+
+                var deleteFolderRecursive = function (folderDel) {
+                    if (fs.existsSync(folderDel)) {
+                        fs.readdirSync(folderDel).forEach(function (file, index) {
+                            var curPath = folderDel + "/" + file;
+                            if (fs.lstatSync(curPath).isDirectory()) { // recurse
+                                deleteFolderRecursive(curPath);
+                            } else { // delete file
+                                fs.unlinkSync(curPath);
+                            }
+                        });
+                        fs.rmdirSync(folderDel);
+                    }
+                };
+
+                deleteFolderRecursive(folderDel);
+
+                var tempFolderName2 = HybridObjectsUtilities.readObject(objectLookup, req.body.folder);// req.body.folder + thisMacAddress;
+
+                if (tempFolderName2 !== null) {
+                    if (tempFolderName2 in objectExp) {
+                        if (globalVariables.debug)  console.log("ist noch da")
+                    } else {
+                        if (globalVariables.debug)  console.log("ist weg")
+                    }
+                    if (tempFolderName2 in knownObjects) {
+                        if (globalVariables.debug) console.log("ist noch da")
+                    } else {
+                        if (globalVariables.debug) console.log("ist weg")
+                    }
+
+                    // remove object from tree
+                    delete objectExp[tempFolderName2];
+                    delete knownObjects[tempFolderName2];
+                    delete objectLookup[req.body.folder];
+
+                    if (tempFolderName2 in objectExp) {
+                        if (globalVariables.debug)  console.log("ist noch da")
+                    } else {
+                        if (globalVariables.debug)  console.log("ist weg")
+                    }
+                    if (tempFolderName2 in knownObjects) {
+                        if (globalVariables.debug)  console.log("ist noch da")
+                    } else {
+                        if (globalVariables.debug) console.log("ist weg")
+                    }
+                }
+
+                if (globalVariables.debug) console.log("i deleted: " + tempFolderName2);
+
+                res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup) );
+            }
+
+        });
+
+        var tmpFolderFile = "";
+
+
+        // this is all used just for the backup folder
+        //*************************************************************************************
+        webServer.post(objectInterfaceFolder + 'backup/',
+            function (req, res) {
+               // if(globalVariables.debug) console.log("post 23");
+
+                if (globalVariables.debug)console.log("komm ich hier hin?");
+
+                var form = new formidable.IncomingForm({
+                    uploadDir: __dirname + '/objects',  // don't forget the __dirname here
+                    keepExtensions: true
+                });
+
+                var filename = "";
+
+                form.on('error', function (err) {
+                    throw err;
+                });
+
+                form.on('fileBegin', function (name, file) {
+                    filename = file.name;
+                    //rename the incoming file to the file's name
+                    file.path = form.uploadDir + "/" + file.name;
+                });
+
+                form.parse(req, function (err, fields, files) {
+                    var old_path = files.file.path,
+                        file_size = files.file.size;
+
+                });
+
+                form.on('end', function () {
+                    var folderD = form.uploadDir;
+                    if (globalVariables.debug) console.log("------------" + form.uploadDir + " " + filename);
+
+                    if (filename.substr(filename.lastIndexOf('.') + 1) === "zip") {
+
+                        if (globalVariables.debug) console.log("I found a zip file");
+
+                        try {
+
+                            var DecompressZip = require('decompress-zip');
+                            var unzipper = new DecompressZip(folderD + "/" + filename);
+
+                            unzipper.on('error', function (err) {
+                                if (globalVariables.debug)   console.log('Caught an error');
+                            });
+
+                            unzipper.on('extract', function (log) {
+                                if (globalVariables.debug)  console.log('Finished extracting');
+                                console.log("have created a new object");
+                                //createObjectFromTarget(filename.substr(0, filename.lastIndexOf('.')));
+                                createObjectFromTarget(ObjectExp, objectExp, filename.substr(0, filename.lastIndexOf('.')), __dirname, objectLookup, internalModules, objectBeatSender, beatPort, globalVariables.debug);
+
+
+
+//todo add object to the beatsender.
+
+                                console.log("have created a new object");
+                                fs.unlinkSync(folderD + "/" + filename);
+
+                                res.status(200);
+                                res.send("done");
+
+                            });
+
+                            unzipper.on('progress', function (fileIndex, fileCount) {
+                                if (globalVariables.debug)  console.log('Extracted file ' + (fileIndex + 1) + ' of ' + fileCount);
+                            });
+
+                            unzipper.extract({
+                                path: folderD + "/",
+                                filter: function (file) {
+                                    return file.type !== "SymbolicLink";
+                                }
+                            });
+
+                            if (globalVariables.debug) console.log("extracting: " + filename + "  " + folderD);
+
+                        } catch (err) {
+                            if (globalVariables.debug)  console.log("could not unzip file");
+                        }
+                    }
+                });
+            });
+
+
+        // this for all the upload to content
+        //***********************************************************************
+
+        webServer.post(objectInterfaceFolder + 'content/:id',
+            function (req, res) {
+
+
+
+               // if(globalVariables.debug) console.log("post 24");
+                if(globalVariables.debug) console.log("body is is: "+req.body);
+                tmpFolderFile = req.params.id;
+                if(globalVariables.debug) console.log("parameter is: "+req.params.id);
+                if (req.body.action === "delete") {
+                    var folderDel = __dirname + '/objects/' + req.body.folder;
+
+
+
+                    if (fs.existsSync(folderDel)) {
+                        if (fs.lstatSync(folderDel).isDirectory()) {
+                            var deleteFolderRecursive = function (folderDel) {
+                                if (fs.existsSync(folderDel)) {
+                                    fs.readdirSync(folderDel).forEach(function (file, index) {
+                                        var curPath = folderDel + "/" + file;
+                                        if (fs.lstatSync(curPath).isDirectory()) { // recurse
+                                            deleteFolderRecursive(curPath);
+                                        } else { // delete file
+                                            fs.unlinkSync(curPath);
+                                        }
+                                    });
+                                    fs.rmdirSync(folderDel);
+                                }
+                            };
+
+                            deleteFolderRecursive(folderDel);
+                        }
+                        else {
+                            fs.unlinkSync(folderDel);
+                        }
+                    }
+
+                    var tempFolderName2 = HybridObjectsUtilities.readObject(objectLookup, req.body.folder);//req.body.folder + thisMacAddress;
+                    // remove object from tree
+                    if (tempFolderName2 !== null) {
+                        delete objectExp[tempFolderName2];
+                        delete knownObjects[tempFolderName2];
+                    }
+
+                    if (globalVariables.debug) console.log("i deleted: " + tempFolderName2);
+
+                    res.send(HybridObjectsWebFrontend.uploadTargetContent(req.params.id, __dirname, objectInterfaceFolder));
+                }
+
+
+                var form = new formidable.IncomingForm({
+                    uploadDir: __dirname + '/objects/' + req.params.id,  // don't forget the __dirname here
+                    keepExtensions: true
+                });
+
+                var filename = "";
+
+                form.on('error', function (err) {
+                    throw err;
+                });
+
+                form.on('fileBegin', function (name, file) {
+                    filename = file.name;
+                    //rename the incoming file to the file's name
+                    if(req.headers.type === "targetUpload"){
+                        file.path = form.uploadDir + "/" +  file.name;
+                    }else {
+                        file.path = form.uploadDir + "/" + file.name;
+                    }
+                });
+
+                form.parse(req, function (err, fields, files) {
+                    var old_path = files.file.path,
+                        file_size = files.file.size;
+                    // new_path = path.join(__dirname, '/uploads/', files.file.name);
+
+                });
+
+                form.on('end', function () {
+                    var folderD = form.uploadDir;
+                    if (globalVariables.debug)  console.log("------------" + form.uploadDir + " " + filename);
+
+
+                    if (filename.substr(filename.lastIndexOf('.') + 1).toLowerCase() === "jpg"){
+                        if(!fs.existsSync(folderD+"/target/")){
+                            fs.mkdirSync(folderD+"/target/", 0766, function(err){
+                                if(err){
+                                    console.log(err);
+                                    response.send("ERROR! Can't make the directory! \n");    // echo the result back
+                                }
+                            });
+                        }
+
+                        fs.renameSync(folderD + "/" + filename, folderD + "/target/target.jpg");
+
+
+                       var objectName = req.params.id + HybridObjectsUtilities.uuidTime();
+
+                        var documentcreate = '<?xml version="1.0" encoding="UTF-8"?>\n'+
+                            '<ARConfig xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">\n'+
+                            '   <Tracking>\n'+
+                            '   <ImageTarget name="'+objectName+'" size="300.000000 300.000000" />\n'+
+                            '   </Tracking>\n'+
+                            '   </ARConfig>';
+
+
+                        if(!fs.existsSync(folderD+"/target/target.xml")){
+                            fs.writeFile(folderD+"/target/target.xml", documentcreate, function (err) {
+                                if (err) {
+                                    console.log(err);
+                                } else {
+                                    if (globalVariables.debug)  console.log("XML saved to " + outputFilename);
+                                }
+                            });
+                        }
+
+
+
+
+
+
+                            res.status(200);
+                        res.send("done");
+                     //   fs.unlinkSync(folderD + "/" + filename);
+                    }
+
+                    else if (filename.substr(filename.lastIndexOf('.') + 1).toLowerCase() === "zip") {
+
+                        if (globalVariables.debug)  console.log("I found a zip file");
+
+                        try {
+                            var DecompressZip = require('decompress-zip');
+                            var unzipper = new DecompressZip(folderD + "/" + filename);
+
+                            unzipper.on('error', function (err) {
+                                if (globalVariables.debug)   console.log('Caught an error');
+                            });
+
+                            unzipper.on('extract', function (log) {
+                                var folderFile = fs.readdirSync(folderD + "/target");
+
+                                for (var i = 0; i < folderFile.length; i++) {
+                                    if (globalVariables.debug) console.log(folderFile[i]);
+                                    if (folderFile[i].substr(folderFile[i].lastIndexOf('.') + 1) === "xml") {
+                                        fs.renameSync(folderD + "/target/" + folderFile[i], folderD + "/target/target.xml");
+                                    }
+                                    if (folderFile[i].substr(folderFile[i].lastIndexOf('.') + 1) === "dat") {
+                                        fs.renameSync(folderD + "/target/" + folderFile[i], folderD + "/target/target.dat");
+                                    }
+                                }
+                                fs.unlinkSync(folderD + "/" + filename);
+
+                                // evnetually create the object.
+
+                                if (globalVariables.debug) console.log("creating object from target file " + tmpFolderFile);
+                               // createObjectFromTarget(tmpFolderFile);
+                                createObjectFromTarget(ObjectExp, objectExp, tmpFolderFile, __dirname, objectLookup, internalModules, objectBeatSender, beatPort, globalVariables.debug);
+                                //serialPort.write("ok\n");
+                                //todo send init to internal modules
+                                console.log("have created a new object");
+
+                                for (var keyint in internalModules) {
+                                    internalModules[keyint].init();
+                                }
+                                console.log("have initialized the moduels");
+                                res.status(200);
+                                res.send("done");
+                            });
+
+                            unzipper.on('progress', function (fileIndex, fileCount) {
+                                if (globalVariables.debug) console.log('Extracted file ' + (fileIndex + 1) + ' of ' + fileCount);
+                            });
+
+                            unzipper.extract({
+                                path: folderD + "/target",
+                                filter: function (file) {
+                                    return file.type !== "SymbolicLink";
+                                }
+                            });
+                        } catch (err) {
+                            if (globalVariables.debug) console.log("could not unzip file");
+                        }
+                    } else {
+                        res.status(200);
+                        res.send("done");
+                    }
+                });
+            });
+    } else {
+        webServer.get(objectInterfaceFolder, function (req, res) {
+         //   if(globalVariables.debug) console.log("GET 21");
+            res.send("Hybrid Objects<br>Developer functions are off");
+        });
     }
 }
+
+// relies on ip
+
+//createObjectFromTarget(ObjectExp, objectExp, tmpFolderFile, __dirname, objectLookup, internalModules, objectBeatSender, beatPort, globalVariables.debug);
+
+function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, objectLookup, internalModules, objectBeatSender, beatPort, debug) {
+console.log("I can start");
+
+
+    var folder = __dirname + '/objects/' + folderVar + '/';
+    if (globalVariables.debug) console.log(folder);
+
+    if (fs.existsSync(folder)) {
+        if (globalVariables.debug)  console.log("folder exists");
+        var objectIDXML = HybridObjectsUtilities.getObjectIdFromTarget(folderVar,  __dirname);
+        if (globalVariables.debug) console.log("got ID: objectIDXML");
+        if (typeof objectIDXML !== "undefined" && objectIDXML !== null) {
+            if (objectIDXML.length > 13) {
+
+                objectExp[objectIDXML] = new ObjectExp();
+                objectExp[objectIDXML].folder = folderVar;
+                objectExp[objectIDXML].objectId = objectIDXML;
+
+               if(globalVariables.debug) console.log("this should be the IP"+objectIDXML);
+
+                try {
+                    objectExp[objectIDXML] = JSON.parse(fs.readFileSync(__dirname + "/objects/" + folderVar + "/object.json", "utf8"));
+                    objectExp[objectIDXML].ip = ip.address();
+                    if (globalVariables.debug)  console.log("testing: " + objectExp[objectIDXML].ip);
+                } catch (e) {
+                    objectExp[objectIDXML].ip = ip.address();
+                    if (globalVariables.debug) console.log("testing: " + objectExp[objectIDXML].ip);
+                    if (globalVariables.debug) console.log("No saved data for: " + objectIDXML);
+                }
+
+
+                if (HybridObjectsUtilities.readObject(objectLookup, folderVar) !== objectIDXML) {
+                    delete objectExp[HybridObjectsUtilities.readObject(objectLookup, folderVar)];
+                }
+                HybridObjectsUtilities.writeObject(objectLookup, folderVar, objectIDXML);
+                // entering the obejct in to the lookup table
+
+                // ask the object to reinitialize
+                //serialPort.write("ok\n");
+                // todo send init to internal
+                for (var keyint in internalModules) {
+                    internalModules[keyint].init();
+                }
+
+
+
+                if (globalVariables.debug) console.log("weiter im text " + objectIDXML);
+               HybridObjectsUtilities.writeObjectToFile(objectExp, objectIDXML, __dirname);
+
+                objectBeatSender(beatPort, objectIDXML, objectExp[objectIDXML].ip);
+
+            }
+        }
+
+    }
+
+}
+
+var thisPos = 0;
 
 /**
  * @desc Check for incoming MSG from other objects or the User. Make changes to the objectValues if changes occur.

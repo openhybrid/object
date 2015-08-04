@@ -136,7 +136,7 @@ HybridObjectsWebFrontend.debug = globalVariables.debug;
 function ObjectExp() {
     this.objectId = null;
     this.ip = ip.address();
-    this.version = "0.3.1";
+    this.version = "0.3.2";
     this.rotation = 0;
     this.x = 0;
     this.y = 0;

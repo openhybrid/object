@@ -670,7 +670,7 @@ function objectWebServer() {
         res.send("deleted: " + thisLinkId + " in object: " + req.params[0]);
 
         var checkIfIpIsUsed = false;
-
+        var checkerKey, subCheckerKey;
         for (checkerKey in objectExp) {
             for (subCheckerKey in objectExp[checkerKey].objectLinks) {
                 if (objectExp[checkerKey].objectLinks[subCheckerKey].ObjectB === fullEntry.ObjectB) {
@@ -727,49 +727,55 @@ function objectWebServer() {
     // ****************************************************************************************************************
     webServer.get('/object/*/html', function (req, res) {
         //  if(globalVariables.debug) console.log("get 5");
-        var msg = "<html><head><meta http-equiv='refresh' content='3.3' /><title>" + req.params[0] + "</title></head><body>";
-        msg += "<table border='0'  cellpadding='10'><tr> <td  align='left' valign='top'>";
-        msg += "Values for " + req.params[0] + ":<br><table border='1'><tr> <td>ID</td><td>Value</td></tr>";
-        var tempArray = objectExp[req.params[0]].objectValues;
-        for (subKey in tempArray) {
-            msg += "<tr> <td>" + subKey + "</td><td>" + tempArray[subKey].value + "</td></tr>";
-        }
-        msg += "</table></td><td  align='left' valign='top'>";
+        var msg = [];
+        var tempArray, subKey;
+        msg.push("<html><head><meta http-equiv='refresh' content='3.3' /><title>", req.params[0], "</title></head><body>");
+        msg.push("<table border='0'  cellpadding='10'><tr> <td  align='left' valign='top'>");
+        msg.push("Values for ", req.params[0], ":<br><table border='1'><tr> <td>ID</td><td>Value</td></tr>");
 
-        msg += "Links:<br><table border='1'><tr> <td>ID</td><td>ObjectA</td><td>locationInA</td><td>ObjectB</td><td>locationInB</td></tr>";
-        var tempArray = objectExp[req.params[0]].objectLinks;
+        tempArray = objectExp[req.params[0]].objectValues;
         for (subKey in tempArray) {
-            msg += "<tr> <td>" + subKey + "</td><td>" + tempArray[subKey].ObjectA + "</td><td>" + tempArray[subKey].locationInA + "</td><td>" + tempArray[subKey].ObjectB + "</td><td>" + tempArray[subKey].locationInB + "</td></tr>";
+            msg.push("<tr> <td>", subKey, "</td><td>", tempArray[subKey].value, "</td></tr>");
         }
-        msg += "</table></td></tr></table>";
+        msg.push("</table></td><td  align='left' valign='top'>");
 
-        msg += "<table border='0'  cellpadding='10'><tr> <td  align='left' valign='top'>";
-        msg += "Interface:<br><table border='1'>";
+        msg.push("Links:<br><table border='1'><tr> <td>ID</td><td>ObjectA</td><td>locationInA</td><td>ObjectB</td><td>locationInB</td></tr>");
+        
+        tempArray = objectExp[req.params[0]].objectLinks;
+        for (subKey in tempArray) {
+            msg.push("<tr> <td>", subKey, "</td><td>", tempArray[subKey].ObjectA, "</td><td>", tempArray[subKey].locationInA, "</td>");
+            msg.push("<td>", tempArray[subKey].ObjectB, "</td><td>", tempArray[subKey].locationInB, "</td></tr>");
+        }
+        msg.push("</table></td></tr></table>");
+
+        msg.push("<table border='0'  cellpadding='10'><tr> <td  align='left' valign='top'>");
+        msg.push("Interface:<br><table border='1'>");
+        
         tempArray = objectExp[req.params[0]];
         for (subKey in tempArray) {
-            msg += "<tr> <td>" + subKey + "</td><td>" + tempArray[subKey] + "</td></tr>";
+            msg.push("<tr> <td>", subKey, "</td><td>", tempArray[subKey], "</td></tr>");
         }
-        msg += "</table></td><td  align='left' valign='top'>";
+        msg.push("</table></td><td  align='left' valign='top'>");
 
 
-        msg += "Known Objects:<br><table border='1'>";
+        msg.push("Known Objects:<br><table border='1'>");
         for (subKey in knownObjects) {
-            msg += "<tr> <td>" + subKey + "</td><td>" + knownObjects[subKey] + "</td></tr>";
+            msg.push("<tr> <td>", subKey, "</td><td>", knownObjects[subKey], "</td></tr>");
         }
-        msg += "</table></td><td  align='left' valign='top'>";
+        msg.push("</table></td><td  align='left' valign='top'>");
 
-        socketIndicator()
+        socketIndicator();
 
-        msg += "Socket Activity:<br><table border='1'>";
+        msg.push("Socket Activity:<br><table border='1'>");
         for (subKey in sockets) {
             if (subKey !== "socketsOld" && subKey !== "connectedOld" && subKey !== "notConnectedOld")
-                msg += "<tr> <td>" + subKey + "</td><td>" + sockets[subKey] + "</td></tr>";
+                msg.push("<tr> <td>", subKey, "</td><td>", sockets[subKey], "</td></tr>");
         }
 
-        msg += "</table></td></tr></table>";
-        msg += "</body></html>";
+        msg.push("</table></td></tr></table>");
+        msg.push("</body></html>");
 
-        res.send(msg);
+        res.send(msg.join(""));
 
 
     });
@@ -889,7 +895,7 @@ function objectWebServer() {
             // if(globalVariables.debug) console.log("post 22");
             if (req.body.action === "new") {
                 // console.log(req.body);
-                if (req.body.folder != "") {
+                if (req.body.folder !== "") {
 
                     HybridObjectsUtilities.createFolder(req.body.folder, __dirname, globalVariables.debug);
 
@@ -919,14 +925,14 @@ function objectWebServer() {
 
                 if (tempFolderName2 !== null) {
                     if (tempFolderName2 in objectExp) {
-                        if (globalVariables.debug)  console.log("ist noch da")
+                        if (globalVariables.debug)  console.log("ist noch da");
                     } else {
-                        if (globalVariables.debug)  console.log("ist weg")
+                        if (globalVariables.debug)  console.log("ist weg");
                     }
                     if (tempFolderName2 in knownObjects) {
-                        if (globalVariables.debug) console.log("ist noch da")
+                        if (globalVariables.debug) console.log("ist noch da");
                     } else {
-                        if (globalVariables.debug) console.log("ist weg")
+                        if (globalVariables.debug) console.log("ist weg");
                     }
 
                     // remove object from tree
@@ -935,14 +941,14 @@ function objectWebServer() {
                     delete objectLookup[req.body.folder];
 
                     if (tempFolderName2 in objectExp) {
-                        if (globalVariables.debug)  console.log("ist noch da")
+                        if (globalVariables.debug)  console.log("ist noch da");
                     } else {
-                        if (globalVariables.debug)  console.log("ist weg")
+                        if (globalVariables.debug)  console.log("ist weg");
                     }
                     if (tempFolderName2 in knownObjects) {
-                        if (globalVariables.debug)  console.log("ist noch da")
+                        if (globalVariables.debug)  console.log("ist noch da");
                     } else {
-                        if (globalVariables.debug) console.log("ist weg")
+                        if (globalVariables.debug) console.log("ist weg");
                     }
                 }
 
@@ -1316,11 +1322,12 @@ function socketServer() {
 
         socket.on('object', function (msg) {
             var msgContent = JSON.parse(msg);
+            var objSend;
             if ((msgContent.obj in objectExp) && typeof msgContent.value !== "undefined") {
                 if (msgContent.pos in objectExp[msgContent.obj].objectValues) {
                     objectExp[msgContent.obj].objectValues[msgContent.pos].value = msgContent.value;
 
-                    var objSend = objectExp[msgContent.obj].objectValues[msgContent.pos];
+                    objSend = objectExp[msgContent.obj].objectValues[msgContent.pos];
                     objSend.value = msgContent.value;
 
                     if (internalModules.hasOwnProperty(objSend.type)) {
@@ -1337,7 +1344,7 @@ function socketServer() {
                 } else {
                     for (var thisKey in objectExp[msgContent.obj].objectValues) {
                         if (msgContent.pos === objectExp[msgContent.obj].objectValues[thisKey].name) {
-                            var objSend = objectExp[msgContent.obj].objectValues[msgContent.pos + msgContent.obj];
+                            objSend = objectExp[msgContent.obj].objectValues[msgContent.pos + msgContent.obj];
                             objSend.value = msgContent.value;
 
                             if (internalModules.hasOwnProperty(objSend.type)) {
@@ -1408,7 +1415,7 @@ function socketServer() {
 
 function objectEngine(obj, pos, objectExp, pluginModules) {
     // console.log("engine started");
-
+    var key;
     for (key in objectExp[obj].objectLinks) {
         if (objectExp[obj].objectLinks[key].locationInA === pos) {
             var endlessLoop = false;
@@ -1449,7 +1456,7 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 
     if (!(link.ObjectB in objectExp)) {
         // check if object is in the same object
-        socketSender(obj, linkPos, processedValue, mode)
+        socketSender(obj, linkPos, processedValue, mode);
     }
     else {
 
@@ -1510,6 +1517,8 @@ function socketSender(obj, linkPos, processedValue, mode) {
 function socketUpdater() {
     // console.log(knownObjects);
     // delete unconnected connections
+    var sockKey, objKey, posKey;
+
     for (sockKey in  socketArray) {
         var socketIsUsed = false;
 
@@ -1546,8 +1555,9 @@ function socketUpdater() {
 
     socketIndicator();
 
+    var sockKey3, objKey2;
     if (sockets.socketsOld !== sockets.sockets || sockets.notConnectedOld !== sockets.notConnected || sockets.connectedOld !== sockets.connected) {
-        for (sockKey3 in  socketArray) {
+        for (sockKey3 in socketArray) {
             if (!socketArray[sockKey3].io.connected) {
                 for (objKey2 in knownObjects) {
                     if (knownObjects[objKey2] === sockKey3) {
@@ -1575,8 +1585,7 @@ function socketIndicator() {
     sockets.connected = 0;
     sockets.notConnected = 0;
 
-
-    for (sockKey2 in  socketArray) {
+    for (var sockKey2 in socketArray) {
         if (socketArray[sockKey2].io.connected) {
             sockets.connected++;
         } else {
@@ -1584,8 +1593,6 @@ function socketIndicator() {
         }
         sockets.sockets++;
     }
-
-
 }
 
 /**
@@ -1596,10 +1603,7 @@ function socketIndicator() {
  **/
 
 function socketUpdaterInterval() {
-
-
     setInterval(function () {
-
         socketUpdater();
     }, socketUpdateInterval);
 }

@@ -1,0 +1,118 @@
+    <div class="title">
+        <h3><span class="glyphicon glyphicon-picture" aria-hidden="true"></span> Target Manager : {{name}}</h3>
+        <a href="/" class="back-nav"><span aria-hidden="true">&larr;</span> Back</a>
+    </div>
+
+    <div id="actions" class="row">
+        <div class="col-xs-7">
+            <b>1. Upload your target source image (jpg only, &lt; 0.5 MB)</b>
+            <br> 2. Login to the Vuforia Target Manager.
+            <br> 3. Create a new or open a Device Databases.
+            <br> 4. Create a target for your Object and name it exactly:
+            <br><b>{{objectName}}</b>
+            <br> 5. Make sure that only this one Target is Activated.
+            <br> 6. Download the database and then upload it here:
+            <br> (You can just drag and drop the files anywhere in the striped area)  <br> <br>
+        </div>
+        <div class="col-xs-3 right">
+
+
+
+
+            <button class="btn btn-info zeroclipboard-is-hover" id="copy-button" data-clipboard-text="{{objectName}}" title="Click to copy me.">Copy Object Name to Clipboard </button>
+            <script src="/js/ZeroClipboard.js"></script>
+            <script>
+                var client = new ZeroClipboard(document.getElementById("copy-button"));
+            </script>
+            <br>
+            <br>
+            <span class="fileupload-process">
+              <div id="total-progress" class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="opacity:0">
+                <div class="progress-bar progress-bar-success" style="width:100%;" data-dz-uploadprogress=""></div>
+              </div>
+            </span>
+            <span class="btn btn-primary fileinput-button dz-clickable" id="targetButton">
+              <span>&nbsp;Upload Target zip and jpg Files&nbsp;</span>
+            </span>
+            <div class="table table-striped" class="files" id="previews" style="visibility:hidden">
+                <div id="template" class="file-row">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dropzoneBox">
+        <h2><span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span></h2>
+        <h3>Drop files here.</h3>
+        <span class="note">Allowed extensions : <em>.jpg, .zip</em></span>
+    </div>
+
+    <script>
+        var previewNode = document.querySelector("#template");
+        var dropzoneBox = document.querySelector("#dropzoneBox");
+        previewNode.id = "";
+        var previewTemplate = previewNode.parentNode.innerHTML;
+        previewNode.parentNode.removeChild(previewNode);
+        var myDropzone = new Dropzone(document.body, {
+            url: "/content/{{name}}",
+            autoProcessQueue: true,
+            thumbnailWidth: 80,
+            thumbnailHeight: 80,
+            acceptedFiles: ".jpg,.zip",
+            headers: {
+                "type": "targetUpload"
+            },
+            parallelUploads: 20,
+            createImageThumbnails: false,
+            previewTemplate: previewTemplate,
+            autoQueue: true,
+            previewsContainer: "#previews",
+            clickable: ".fileinput-button"
+        });
+
+        var lastTarget = null;
+        myDropzone.on("dragenter", function(e) {
+            lastTarget = e.target;
+            dropzoneBox.style.visibility = "visible";
+            dropzoneBox.style.opacity = 1;
+        });
+ 
+        myDropzone.on("dragleave", function(e) {
+           if(e.target === lastTarget)
+            {
+                dropzoneBox.style.visibility = "hidden";
+                dropzoneBox.style.opacity = 0;
+            }
+        });
+        myDropzone.on("addedfile", function(file) {});
+        myDropzone.on("drop", function(file) {
+            dropzoneBox.style.visibility = "hidden";
+
+            myDropzone.enqueueFiles(myDropzone.getFilesWithStatus(Dropzone.ADDED));
+        });
+        myDropzone.on("totaluploadprogress", function(progress) {
+            document.querySelector("#total-progress").style.width = progress + "%";
+        });
+        myDropzone.on("sending", function(file) {
+            console.log(document.querySelector("#total-progress"));
+            document.querySelector("#total-progress").style.opacity = "1";
+        });
+
+        myDropzone.on("removedfile", function(file) {
+            console.log("canceled" + file);
+        });
+
+        myDropzone.on("queuecomplete", function(progress) {
+                        document.querySelector("#total-progress").style.opacity = "0";
+
+        });
+        myDropzone.on("success", function(file, responseText) {
+             console.log(responseText);
+            if (responseText === "done") {
+                document.querySelector("#total-progress").style.opacity = "0";
+                document.getElementById("targetButton").className = "btn btn-success fileinput-button";
+            }
+        });
+    </script>
+
+    <iframe src="https://developer.vuforia.com/targetmanager/project/checkDeviceProjectsCreated?dataRequestedForUserId=" width="100%" height="1000px" frameborder="0"></iframe>

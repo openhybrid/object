@@ -1,0 +1,78 @@
+<script>
+    var popupInteraction = function() {
+        var popupCreate = document.getElementsByClassName("create")[0];
+        var popupBackup = document.getElementsByClassName("backup")[0];
+        var click_overlay = document.getElementsByClassName("click_overlay")[0];
+
+        document.getElementById("cn").addEventListener('click', function() {
+            popupCreate.style.visibility = "visible";
+            click_overlay.className += " enabled";
+        });
+        document.getElementById("bc").addEventListener('click', function() {
+            popupBackup.style.visibility = "visible";
+            click_overlay.className += " enabled";
+        });
+        click_overlay.addEventListener('click', function() {
+            popupBackup.style.visibility = "hidden";
+            popupCreate.style.visibility = "hidden";
+            click_overlay.className = "click_overlay";
+        });
+
+
+    };
+    //  popupInteraction();
+    setTimeout(popupInteraction, 300);
+</script>
+<div class="click_overlay"></div>
+
+<div class="sidebar">
+    <h1>Open Hybrid</h1>
+    <nav>
+        <h2>Objects</h2>
+        <ul>
+            <li><a href="/"><span class="glyphicon glyphicon-dashboard" aria-hidden="true"></span>Dashboard</a></li>
+            {{sidebarList}}
+            <li class="relative" id="cn">
+                <a href="#"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span>Create new object</a>
+                <div class="popover create fade right in active" role="tooltip" style="visibility: hidden;">
+                    <div class="arrow" style="top: 50%;"></div>
+                    <h3 class="popover-title">Create new object</h3>
+                    <div class="popover-content">
+                        <form id="newFolderForm" action="/" method="post" style="display:inline">
+                            <input type="text" class="form-control" name="folder" id="folder" placeholder="Hybrid Object name">
+                            <input type="hidden" name="action" value="new">
+                            <button class="btn btn-warning center-block">Create</button>
+                        </form>
+                    </div>
+                </div>
+
+            </li>
+        </ul>
+
+        <h2>Advanced</h2>
+        <ul>
+            <li class="relative" id="bc"><a href="#"><span class="glyphicon glyphicon-save" aria-hidden="true"></span>Upload backup</a>
+                <div class="popover backup fade right in active" role="tooltip" style="visibility: hidden;">
+                    <div class="arrow" style="top: 50%;"></div>
+                    <h3 class="popover-title">Upload Backup</h3>
+                    <div class="popover-content">
+                        <span class="btn btn-default fileinput-button dz-clickable" id="targetButton">Select backup file</span>
+                        <span class="fileupload-process">
+                <div id="total-progress" class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                  <div class="progress-bar progress-bar-success" style="width:100%;" data-dz-uploadprogress=""></div>          </div>
+                </span>
+
+                    </div>
+                </div>
+            </li>
+        </ul>
+        <h2>Resources</h2>
+        <ul>
+            <li><a href="http://openhybrid.org/first-steps.html"><span class="glyphicon glyphicon-search" aria-hidden="true"></span>Documentation</a></li>
+        </ul>
+    </nav>
+    <div class="table table-striped" class="files" id="previews" style="visibility: hidden">
+        <div id="template" class="file-row"> </div>
+    </div>
+</div>
+

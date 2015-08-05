@@ -29,7 +29,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "author": "Valentin Heun <heun@mit.edu> (http://openhybrid.com/)",
+  "jshintConfig": {
+    "esnext": true,
+    "laxcomma": true
+  },
   "author": "Valentin Heun <heun@mit.edu> (http://valentinheun.com/)",
   "contributors": "Marc Teyssier <marc.teys@gmail.com> (http://marcteyssier.com)",
   "license": "MPL-2.0"

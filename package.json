@@ -4,34 +4,35 @@
   "description": "",
   "main": "server.js",
   "dependencies": {
-    "cors": "^2.5.0",
+    "archiver": "^0.14.2",
     "body-parser": "^1.9.2",
     "change-case": "^2.2.0",
-    "archiver": "^0.14.2",
-    "decompress-zip": "^0.1.0",
     "cheerio": "0.19.0",
-    "formidable": "^1.0.16",
-    "fstream": "^1.0.4",
+    "cors": "^2.5.0",
+    "decompress-zip": "^0.1.0",
     "express": "^4.11.0",
+    "formidable": "^1.0.16",
     "fs-extra": "^0.12.0",
-    "node-watch": "^0.3.4",
+    "fstream": "^1.0.4",
     "getmac": "^1.0.6",
-    "socket.io": "^1.2.0",
     "ip": "^0.3.2",
-    "socket.io-client": "^1.2.0",
-    "watch": "^0.13.0",
+    "lodash": "^3.10.1",
+    "node-watch": "^0.3.4",
     "serialport": "^1.4.6",
+    "socket.io": "^1.2.0",
+    "socket.io-client": "^1.2.0",
     "unzip": "^0.1.11",
+    "watch": "^0.13.0",
     "xml2js": "^0.4.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openhybrid/object"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
-  },
-  "jshintConfig": {
-    "esnext": true,
-    "laxcomma": true
   },
   "author": "Valentin Heun <heun@mit.edu> (http://valentinheun.com/)",
   "contributors": "Marc Teyssier <marc.teys@gmail.com> (http://marcteyssier.com)",

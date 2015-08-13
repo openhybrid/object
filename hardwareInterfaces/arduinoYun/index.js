@@ -43,14 +43,16 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-
 var fs = require('fs');
-var HybridObjectsUtilities = require(__dirname+'/../../libraries/HybridObjectsUtilities');
-ledBlinker();
+var _  = require('lodash');
+var serialport = require("serialport");
+var HybridObjectsUtilities = require(__dirname + '/../../libraries/HybridObjectsUtilities');
 
-const serialBautRate = 115200; // boutrate for connection to arudino
+const serialBaudRate = 115200; // baud rate for connection to arudino
 const serialSource = "/dev/ttyATH0"; // this is pointing to the arduino
+const GREEN_LED = "/sys/devices/platform/leds-gpio/leds/ds:green:usb/brightness";
 
+ledBlinker();
 
 /**
  * @desc Constructor for each object value
@@ -74,18 +76,17 @@ function ObjectValue() {
 var ArduinoLookupTable = [];
 
 //initialisation of the socket connection
-
-var serialport = require("serialport");
 var SerialP = serialport.SerialPort; // localize object constructor
 var serialPort = new SerialP(serialSource, {
     parser: serialport.parsers.readline("\n"),
-    baudrate: serialBautRate
+    baudrate: serialBaudRate
 }, false);
 
 serialPort.on('error', function (err) {
+    console.error("Serial port error", err);
 });
 
-function serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, globalVariables, __dirname,pluginModules, callback) {
+function serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, globalVariables, __dirname, pluginModules, callback) {
     if (globalVariables.debug)  console.log("opneserial");
     serialPort.open();
     serialPort.on("open", function () {
@@ -108,37 +109,32 @@ function serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, g
             switch (dataSwitch) {
                 case 0:
                     if (data === "f") {
-                        if (globalVariables.clear === true) {
+                        if (globalVariables.clear) {
                             valueMode = "f";
                             dataSwitch = 1;
                         }
                     }
                     else if (data === "d") {
-                        if (globalVariables.clear === true) {
+                        if (globalVariables.clear) {
                             valueMode = "d";
                             dataSwitch = 1;
                         }
                     }
                     else if (data === "p") { // positive step value
-                        if (globalVariables.clear === true) {
+                        if (globalVariables.clear) {
                             valueMode = "p";
                             dataSwitch = 1;
                         }
                     }
                     else if (data === "n") {// negative step value
-                        if (globalVariables.clear === true) {
+                        if (globalVariables.clear) {
                             valueMode = "n";
                             dataSwitch = 1;
                         }
                     }
                     else if (data === "a") {
                         if (globalVariables.debug) console.log("add");
-                        if (globalVariables.clear === false) {
-                            dataSwitch = 20;
-                        }
-                        else {
-                            dataSwitch = 0;
-                        }
+                        dataSwitch = globalVariables.clear ? 0 : 20;
                     }
                     else if (data === "okbird") {
                         globalVariables.clear = false;
@@ -162,13 +158,13 @@ function serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, g
                     break;
                 case 1:
                   // console.log(valueMode);
-                    arrayID = parseInt(data);
+                    arrayID = parseInt(data, 10);
                     dataSwitch = 2;
                     break;
                 case 2:
                     value = parseFloat(data);
                     // console.log(value);
-                    if (typeof ArduinoLookupTable[arrayID] !== 'undefined') {
+                    if (!_.isUndefined(ArduinoLookupTable[arrayID])) {
                         var objKey2 = HybridObjectsUtilities.readObject(objectLookup, ArduinoLookupTable[arrayID].obj);
                         var valueKey = ArduinoLookupTable[arrayID].pos;
 
@@ -178,8 +174,6 @@ function serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, g
                                 objectExp[objKey2].objectValues[valueKey].mode = valueMode;
                                    // console.log("valuemode = "+objectExp[objKey2].objectValues[valueKey].mode);
                                 callback(objKey2, valueKey, objectExp, pluginModules);
-
-
                             }
                         }
                     }
@@ -191,7 +185,7 @@ function serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, g
                     dataSwitch = 21;
                     break;
                 case 21:
-                    arrayID = parseInt(data);
+                    arrayID = parseInt(data, 10);
                     dataSwitch = 23;
                     break;
                 case 23:
@@ -201,11 +195,11 @@ function serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, g
 
                     HybridObjectsUtilities.createFolder(obj, __dirname, globalVariables.debug);
 
-                    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(obj,  __dirname);
+                    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(obj, __dirname);
 
                     objID = pos + objectID;
 
-                    if (typeof objectID !== "undefined" && objectID != null) {
+                    if (!_.isUndefined(objectID) && !_.isNull(objectID)) {
 
                         if (objectID.length > 13) {
 
@@ -243,14 +237,12 @@ function serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, g
                             }
                         }
                     }
+
                     objectID = undefined;
-
-                    var  plugin = "default"; // this might not be relevant
-
                     dataSwitch = 0;
                     break;
                 case 40:
-                    if (parseInt(data) === 1) {
+                    if (parseInt(data, 10) === 1) {
                         globalVariables.developer = true;
                     }
                     else {
@@ -259,43 +251,17 @@ function serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, g
                     dataSwitch = 0;
                     break;
                 case 50:
-                    amount = parseInt(data);
-//clear.log("clearforreal");
-                  clearIO(objectExp, obj, __dirname, amount, globalVariables);
+                    amount = parseInt(data, 10);
 
-                    // check links as well
-                   /* var objectID = HybridObjectsUtilities.getObjectIdFromTarget(obj,  __dirname);
-
-                    if (typeof objectID !== "undefined" && objectID != null) {
-
-                        if (objectID.length > 13) {
-
-                            if (globalVariables.debug)  console.log(objectID + " " + key + " " + amount);
-
-                            for (var key in objectExp[objectID].objectValues) {
-                                if (objectExp[objectID].objectValues[key].index >= amount) {
-                                    delete objectExp[objectID].objectValues[key];
-                                }
-                            }
-                        }
-                    }
-                    objectID = undefined;
-
-                    clear = true;
-*/
-
-
-
+                    clearIO(objectExp, obj, __dirname, amount, globalVariables);
                     dataSwitch = 0;
                     break;
             }
 
         });
 
-
         // this is for when the server is started...
-
-        	serialPort.write(" \n");
+        serialPort.write(" \n");
         serialPort.write("okbird\n");
 
     });
@@ -305,44 +271,36 @@ function serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, g
 
 
 function serialSender(serialPort, objectExp, obj, linkPos, processedValue, mode) {
+    if (objectExp.hasOwnProperty(obj) && objectExp[obj].objectValues.hasOwnProperty(linkPos)) {
 
+        var objTemp = objectExp[obj].objectValues[linkPos];
 
-  //  console.log(obj+ " "+ linkPos + " " +processedValue + " " + mode);
-    if(objectExp.hasOwnProperty(obj))
-        if(objectExp[obj].objectValues.hasOwnProperty(linkPos)){
-
-    var objTemp = objectExp[obj].objectValues[linkPos];
-
-  //  console.log("send: "+mode);
-
-    if (objTemp.type === "arduinoYun") {
-        if(mode == "f")  serialPort.write("f\n");
-        else if(mode == "d")  serialPort.write("d\n");
-        else if(mode == "p")  serialPort.write("p\n");
-        else if(mode == "n")  serialPort.write("n\n");
-        serialPort.write(objTemp.index + "\n");
-        serialPort.write(processedValue + "\n");
-       //  console.log("processed "+processedValue);
-    }}
+        if (objTemp.type === "arduinoYun") {
+            var yunModes = [ "f", "d", "p", "n" ];
+            if (_.includes(yunModes, mode)) {
+                serialPort.write(mode + "\n");
+            }
+            serialPort.write(objTemp.index + "\n");
+            serialPort.write(processedValue + "\n");
+           //  console.log("processed "+processedValue);
+        }
+    }
 }
 
 
-function clearIO (objectExp, obj, Odirname, amount ,globalVariables) {
+function clearIO (objectExp, obj, Odirname, amount, globalVariables) {
     // check links as well
-    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(obj,  Odirname);
+    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(obj, Odirname);
 
-    if (typeof objectID !== "undefined" && objectID != null) {
-
+    if (!_.isUndefined(objectID) && !_.isNull(objectID)) {
         if (objectID.length > 13) {
-
-            if (globalVariables.debug)  console.log("------del---");
-
+            if (globalVariables.debug) console.log("------del---");
 
             for (var key in objectExp[objectID].objectValues) {
-                if (globalVariables.debug)  console.log("key in: " +objectID + " " + key + " " + amount);
+                if (globalVariables.debug) console.log("key in: " + objectID + " " + key + " " + amount);
                 var indexKey = objectExp[objectID].objectValues[key].index;
                 if (indexKey >= amount) {
-                    if (globalVariables.debug)  console.log("del:" + objectID + " " + key + " " + amount);
+                    if (globalVariables.debug) console.log("del:" + objectID + " " + key + " " + amount);
                     delete objectExp[objectID].objectValues[key];
                 }
                 if (globalVariables.debug)  console.log("index is: " + indexKey);
@@ -350,13 +308,12 @@ function clearIO (objectExp, obj, Odirname, amount ,globalVariables) {
         }
     }
     objectID = undefined;
-
     globalVariables.clear = true;
 
-    if (globalVariables.debug)   if(globalVariables.clear) {console.log("its all cleared");};
+    if (globalVariables.debug) console.log("it's all cleared");
 }
 
-// todo simplify API with clean calls for communicating with the object
+// TODO simplify API with clean calls for communicating with the object
 function addIO () {
 // this has to be filled with content
 }
@@ -370,39 +327,38 @@ function developerIO () {
 }
 
 
-
-exports.receive= function (objectExp, objectLookup,globalVariables, dirnameO, pluginModules, callback){
-    serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, globalVariables, dirnameO,pluginModules, callback);
+exports.receive = function (objectExp, objectLookup, globalVariables, dirnameO, pluginModules, callback) {
+    serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, globalVariables, dirnameO, pluginModules, callback);
 };
 
-exports.send= function(objectExp,obj, pos, value, mode){
-    serialSender(serialPort, objectExp, obj, pos, value, mode)
+exports.send = function (objectExp,obj, pos, value, mode) {
+    serialSender(serialPort, objectExp, obj, pos, value, mode);
 };
 
-exports.init= function(){
-		        	serialPort.write(" \n");
-        serialPort.write("okbird\n");
+exports.init = function() {
+	serialPort.write(" \n");
+    serialPort.write("okbird\n");
+};
 
-   };
+function noop_cb() {}
 
+function blinkLed() {
+    var onTime = 300;
 
+    // Turn on the LED
+    fs.writeFile(GREEN_LED, 1, noop_cb);
 
-/**
- * @desc blinking the LED of the Arduino in a defined interval. This indicates if the code is still running.
- **/
-
-function ledBlinker() {
-    fs.writeFile("/sys/devices/platform/leds-gpio/leds/ds:green:usb/brightness", 0, "utf8", function () {
-    });
-    setInterval(function () {
-        fs.writeFile("/sys/devices/platform/leds-gpio/leds/ds:green:usb/brightness", 1, "utf8", function () {
-        });
-        setTimeout(function () {
-            fs.writeFile("/sys/devices/platform/leds-gpio/leds/ds:green:usb/brightness", 0, "utf8", function () {
-            });
-        }, 300);
-        ledBlink = false;
-    }, 4000);
+    // Schedule turning it off
+    setTimeout(function() {
+      fs.writeFile(GREEN_LED, 0, noop_cb);
+    }, onTime);
 }
 
-var ledBlink = false;
+/**
+ * Every 4 seconds, flash the LED for 300ms.
+ * @desc blinking the LED of the Arduino in a defined interval. This indicates if the code is still running.
+ **/
+function ledBlinker() {
+    fs.writeFile(GREEN_LED, 0, noop_cb);
+    setInterval(blinkLed, 4000);
+}

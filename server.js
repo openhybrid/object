@@ -54,7 +54,7 @@
  *  something to remember: hexString = yourNumber.toString(16); and reverse the process with: yourNumber = parseInt(hexString, 16);
  *
  * TODO - check any collision with knownObjects -> Show collision with other object....
- * TODO - Check if Targets are double somehwere. And iff Target has more then one target in the file...
+ * TODO - Check if Targets are double somehwere. And iff Target has more than one target in the file...
  *
  * TODO - Check the socket connections
  * TODO - stream of values for the user device
@@ -70,13 +70,11 @@
  ******************************************** constant settings *******************************************************
  **********************************************************************************************************************/
 
-
 var globalVariables = {
     clear: false,    // stops or starts the system
     developer: true, // show developer UI
     debug: true      // debug messages to console
 };
-
 
 // ports used to define the server behaviour
 const serverPort = 8080;
@@ -112,9 +110,9 @@ var formidable = require('formidable'); // Multiple file upload library
 //var xml2js = require('xml2js');
 
 // additional required code
-var HybridObjectsUtilities = require(__dirname + '/libraries/HybridObjectsUtilities');
+var HybridObjectsUtilities   = require(__dirname + '/libraries/HybridObjectsUtilities');
 var HybridObjectsWebFrontend = require(__dirname + '/libraries/HybridObjectsWebFrontend');
-var templateModule = require(__dirname + '/libraries/templateModule');
+var templateModule           = require(__dirname + '/libraries/templateModule');
 
 // Set web frontend debug to inherit from global debug
 HybridObjectsWebFrontend.debug = globalVariables.debug;
@@ -362,7 +360,7 @@ function loadHybridObjects() {
             }
 
         } else {
-            if (globalVariables.debug) console.log(" object " + tempFolderName + " has no marker jet");
+            if (globalVariables.debug) console.log(" object " + tempFolderName + " has no marker yet");
         }
     }
 
@@ -543,7 +541,7 @@ function objectBeatServer() {
             if (globalVariables.debug) console.log("knownObjectfound:" + knownObjects + "this message: ");
         }
         // check if action 'ping'
-        if (msgContent.action == "ping") {
+        if (msgContent.action === "ping") {
             if (globalVariables.debug)  console.log(msgContent.action);
             for (var key in objectExp) {
                 objectBeatSender(beatPort, key, objectExp[key].ip, true);
@@ -722,54 +720,54 @@ function objectWebServer() {
         var objectName = req.params[0];
         var hybridObject = objectExp[objectName];
 
-        msg.push("<html><head><meta http-equiv='refresh' content='3.3' /><title>", objectName, "</title></head><body>");
-        msg.push("<table border='0'  cellpadding='10'><tr> <td  align='left' valign='top'>");
-        msg.push("Values for ", objectName, ":<br><table border='1'><tr> <td>ID</td><td>Value</td></tr>");
+        msg.push("<html><head><meta http-equiv='refresh' content='3.3' /><title>", objectName, "</title></head>\n<body>\n");
+        msg.push("<table border='0' cellpadding='10'>\n<tr>\n<td align='left' valign='top'>\n");
+        msg.push("Values for ", objectName, ":<br>\n\n<table border='1'>\n<tr><td>ID</td><td>Value</td></tr>\n");
 
         if (!_.isUndefined(hybridObject)) {
             hoVals = hybridObject.objectValues;
-            for (subKey in tempArray) {
-                msg.push("<tr> <td>", subKey, "</td><td>", tempArray[subKey].value, "</td></tr>");
+            for (subKey in hoVals) {
+                msg.push("<tr><td>", subKey, "</td><td>", hoVals[subKey].value, "</td></tr>\n");
             }
         }
-        msg.push("</table></td><td  align='left' valign='top'>");
+        msg.push("</table>\n</td>\n<td align='left' valign='top'>\n\n");
 
-        msg.push("Links:<br><table border='1'><tr> <td>ID</td><td>ObjectA</td><td>locationInA</td><td>ObjectB</td><td>locationInB</td></tr>");
+        msg.push("Links:<br>\n\n<table border='1'>\n<tr><td>ID</td><td>ObjectA</td><td>locationInA</td><td>ObjectB</td><td>locationInB</td></tr>\n");
         
         if (!_.isUndefined(hybridObject)) {
             hoLinks = hybridObject.objectLinks;
-            for (subKey in tempArray) {
-                msg.push("<tr> <td>", subKey, "</td><td>", tempArray[subKey].ObjectA, "</td><td>", tempArray[subKey].locationInA, "</td>");
-                msg.push("<td>", tempArray[subKey].ObjectB, "</td><td>", tempArray[subKey].locationInB, "</td></tr>");
+            for (subKey in hoLinks) {
+                msg.push("  <tr><td>", subKey, "</td><td>", hoLinks[subKey].ObjectA, "</td><td>", hoLinks[subKey].locationInA, "</td>");
+                msg.push("<td>", hoLinks[subKey].ObjectB, "</td><td>", hoLinks[subKey].locationInB, "</td></tr>\n");
             }
         }
 
-        msg.push("</table></td></tr></table>");
+        msg.push("</table>\n</td></tr>\n</table>\n");
 
-        msg.push("<table border='0'  cellpadding='10'><tr> <td  align='left' valign='top'>");
-        msg.push("Interface:<br><table border='1'>");
+        msg.push("<table border='0' cellpadding='10'>\n<tr><td align='left' valign='top'>\n");
+        msg.push("Interface:<br>\n\n<table border='1'>\n");
         
         for (subKey in hybridObject) {
-            msg.push("<tr> <td>", subKey, "</td><td>", tempArray[subKey], "</td></tr>");
+            msg.push("  <tr><td>", subKey, "</td><td>", hybridObject[subKey], "</td></tr>\n");
         }
-        msg.push("</table></td><td  align='left' valign='top'>");
+        msg.push("</table>\n</td>\n<td align='left' valign='top'>");
 
 
-        msg.push("Known Objects:<br><table border='1'>");
+        msg.push("Known Objects:<br>\n\n<table border='1'>\n");
         for (subKey in knownObjects) {
-            msg.push("<tr> <td>", subKey, "</td><td>", knownObjects[subKey], "</td></tr>");
+            msg.push("  <tr><td>", subKey, "</td><td>", knownObjects[subKey], "</td></tr>\n");
         }
-        msg.push("</table></td><td  align='left' valign='top'>");
+        msg.push("</table>\n</td><td align='left' valign='top'>");
 
         socketIndicator();
 
-        msg.push("Socket Activity:<br><table border='1'>");
+        msg.push("Socket Activity:<br>\n<table border='1'>\n");
         for (subKey in sockets) {
             if (subKey !== "socketsOld" && subKey !== "connectedOld" && subKey !== "notConnectedOld")
-                msg.push("<tr> <td>", subKey, "</td><td>", sockets[subKey], "</td></tr>");
+                msg.push("  <tr><td>", subKey, "</td><td>", sockets[subKey], "</td></tr>\n");
         }
 
-        msg.push("</table></td></tr></table>");
+        msg.push("</table>\n</td></tr>\n</table>\n");
         msg.push("</body></html>");
 
         res.send(msg.join(""));
@@ -1135,7 +1133,7 @@ function objectWebServer() {
                                 fs.mkdirSync(folderD + "/target/", 0766, function (err) {
                                     if (err) {
                                         console.log(err);
-                                        response.send("ERROR! Can't make the directory! \n");    // echo the result back
+                                        res.send("ERROR! Can't make the directory! \n");    // echo the result back
                                     }
                                 });
                             }
@@ -1152,17 +1150,16 @@ function objectWebServer() {
                                 '   </Tracking>\n' +
                                 '   </ARConfig>';
 
-
-                            if (!fs.existsSync(folderD + "/target/target.xml")) {
-                                fs.writeFile(folderD + "/target/target.xml", documentcreate, function (err) {
+                            var xmlOutFile = folderD + "/target/target.xml";
+                            if (!fs.existsSync(xmlOutFile)) {
+                                fs.writeFile(xmlOutFile, documentcreate, function (err) {
                                     if (err) {
                                         console.log(err);
                                     } else {
-                                        if (globalVariables.debug)  console.log("XML saved to " + outputFilename);
+                                        if (globalVariables.debug) console.log("XML saved to " + xmlOutFile);
                                     }
                                 });
                             }
-
 
                             res.status(200);
                             res.send("done");
@@ -1201,14 +1198,14 @@ function objectWebServer() {
                                     if (globalVariables.debug) console.log("creating object from target file " + tmpFolderFile);
                                     // createObjectFromTarget(tmpFolderFile);
                                     createObjectFromTarget(ObjectExp, objectExp, tmpFolderFile, __dirname, objectLookup, internalModules, objectBeatSender, beatPort, globalVariables.debug);
-                                    //serialPort.write("ok\n");
+
                                     //todo send init to internal modules
                                     console.log("have created a new object");
 
                                     for (var keyint in internalModules) {
                                         internalModules[keyint].init();
                                     }
-                                    console.log("have initialized the moduels");
+                                    console.log("have initialized the modules");
                                     res.status(200);
                                     res.send("done");
                                 });
@@ -1254,7 +1251,6 @@ function objectWebServer() {
 function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, objectLookup, internalModules, objectBeatSender, beatPort, debug) {
     console.log("I can start");
 
-
     var folder = __dirname + '/objects/' + folderVar + '/';
     if (globalVariables.debug) console.log(folder);
 
@@ -1262,7 +1258,7 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
         if (globalVariables.debug)  console.log("folder exists");
         var objectIDXML = HybridObjectsUtilities.getObjectIdFromTarget(folderVar, __dirname);
         if (globalVariables.debug) console.log("got ID: objectIDXML");
-        if (typeof objectIDXML !== "undefined" && objectIDXML !== null) {
+        if (!_.isUndefined(objectIDXML) && !_.isNull(objectIDXML)) {
             if (objectIDXML.length > 13) {
 
                 objectExp[objectIDXML] = new ObjectExp();
@@ -1281,7 +1277,6 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
                     if (globalVariables.debug) console.log("No saved data for: " + objectIDXML);
                 }
 
-
                 if (HybridObjectsUtilities.readObject(objectLookup, folderVar) !== objectIDXML) {
                     delete objectExp[HybridObjectsUtilities.readObject(objectLookup, folderVar)];
                 }
@@ -1295,17 +1290,13 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
                     internalModules[keyint].init();
                 }
 
-
                 if (globalVariables.debug) console.log("weiter im text " + objectIDXML);
                 HybridObjectsUtilities.writeObjectToFile(objectExp, objectIDXML, __dirname);
 
                 objectBeatSender(beatPort, objectIDXML, objectExp[objectIDXML].ip);
-
             }
         }
-
     }
-
 }
 
 var thisPos = 0;

@@ -72,36 +72,33 @@
 
 
 var globalVariables = {
-    clear: false, // stops or starts the system
+    clear: false,    // stops or starts the system
     developer: true, // show developer UI
-    debug: true // debug messages to console
-
+    debug: true      // debug messages to console
 };
 
 
 // ports used to define the server behaviour
-const serverPort = 8080; // server and socket port are always identical
-const socketPort = 8080;
-const beatPort = 52316; // this is the port for UDP broadcasting so that the objects find each other.
-const beatInterval = 3000; // how often is the heard beat send
+const serverPort = 8080;
+const socketPort = serverPort;     // server and socket port are always identical
+const beatPort = 52316;            // this is the port for UDP broadcasting so that the objects find each other.
+const beatInterval = 3000;         // how often is the heartbeat sent
 const socketUpdateInterval = 2000; // how often the system checks if the socket connections are still up and running.
 
 //origins
-const objectPath = __dirname + "/objects"; // definition where all the objects are stored.
-const modulePath = __dirname + "/dataPointInterfaces"; // all the visual UI interfaces are stored here.
-const internalPath = __dirname + "/hardwareInterfaces"; // all the visual UI interfaces are stored here.
-const objectInterfaceFolder = "/"; // the level on which the webservice is accessible
+const objectPath   = __dirname + "/objects";             // where all the objects are stored.
+const modulePath   = __dirname + "/dataPointInterfaces"; // all the visual UI interfaces are stored here.
+const internalPath = __dirname + "/hardwareInterfaces";  // all the visual UI interfaces are stored here.
+const objectInterfaceFolder = "/";                       // the level on which the webservice is accessible
 
 /**********************************************************************************************************************
  ******************************************** Requirements ************************************************************
  **********************************************************************************************************************/
 
-// Filesystem library
-var fs = require('fs');
-// UDP Broadcasting library
-var dgram = require('dgram');
-// get the device IP address library
-var ip = require("ip");
+var _ = require('lodash');
+var fs = require('fs');       // Filesystem library
+var dgram = require('dgram'); // UDP Broadcasting library
+var ip = require("ip");       // get the device IP address library
 var bodyParser = require('body-parser');
 var express = require('express');
 var webServer = express();
@@ -110,10 +107,8 @@ var http = require('http').createServer(webServer).listen(serverPort, function (
 });
 var io = require('socket.io')(http);
 var socket = require('socket.io-client');
-// Library for HTTP CORS
-var cors = require('cors');
-// Multiple file upload library
-var formidable = require('formidable');
+var cors = require('cors');             // Library for HTTP Cross-Origin-Resource-Sharing
+var formidable = require('formidable'); // Multiple file upload library
 //var xml2js = require('xml2js');
 
 // additional required code
@@ -121,7 +116,7 @@ var HybridObjectsUtilities = require(__dirname + '/libraries/HybridObjectsUtilit
 var HybridObjectsWebFrontend = require(__dirname + '/libraries/HybridObjectsWebFrontend');
 var templateModule = require(__dirname + '/libraries/templateModule');
 
-// sync debugging with the additional code
+// Set web frontend debug to inherit from global debug
 HybridObjectsWebFrontend.debug = globalVariables.debug;
 
 /**********************************************************************************************************************
@@ -263,7 +258,7 @@ var modulesList = ['base',
 
 templateModule.loadAllModules(modulesList, function () {
     // start system
-    initSystem();
+    loadHybridObjects();
     startSystem();
 
 });
@@ -304,7 +299,7 @@ if (globalVariables.debug)console.log("starting internal Server.");
  * @desc Add objects from the objects folder to the system
  **/
 
-function initSystem() {
+function loadHybridObjects() {
 
     // check for objects in the objects folder by reading the objects directory content.
     // get all directory names within the objects directory
@@ -339,7 +334,7 @@ function initSystem() {
                 objectExp[tempFolderName].ip = ip.address();
 
 // adding the values to the arduino lookup table so that the serial connection can take place.
-                // todo this is maybe obsolet.
+                // todo this is maybe obsolete.
                 for (var tempkey in objectExp[tempFolderName].objectValues) {
                     ArduinoLookupTable.push({obj: tempFiles[i], pos: tempkey});
                 }
@@ -420,14 +415,14 @@ function startSystem() {
 /**
  * @desc Sends out a Heartbeat broadcast via UDP in the local network.
  * @param {Number} PORT The port where to start the Beat
- * @param {String} thisId The name of the Object
- * @param {String} thisIp The IP of the Object
- * @param {String} oneTimeOnly if true the beat will only be send once.
+ * @param {string} thisId The name of the Object
+ * @param {string} thisIp The IP of the Object
+ * @param {boolean} oneTimeOnly if true the beat will only be sent once.
  **/
 
 function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
-    if (typeof oneTimeOnly === 'undefined') {
-        oneTimeOnly = 'false';
+    if (_.isUndefined(oneTimeOnly)) {
+        oneTimeOnly = false;
     }
 
     var HOST = '255.255.255.255';
@@ -446,7 +441,7 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
         client.setMulticastTTL(2);
     });
 
-    if (oneTimeOnly === 'false') { // this is used for actions to send only one time if nessesary
+    if (!oneTimeOnly) {
         setInterval(function () {
             // send the beat#
             // if(thisId in objectLookup)
@@ -456,38 +451,32 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
             if (thisId in objectExp && thisId.length > 12) {
                 //  if (globalVariables.debug) console.log("Sending beats... Content: " + JSON.stringify({id: thisId, ip: thisIp}));
 
-
-// this is an uglly trick to sync each object with being a developer object
-                if (globalVariables.developer) {
-                    objectExp[thisId].developer = true;
-                } else {
-                    objectExp[thisId].developer = false;
-                }
-                //console.log(globalVariables.developer);
+                // this is an ugly hack to sync each object with being a developer object
+                objectExp[thisId].developer = globalVariables.developer;
 
                 client.send(message, 0, message.length, PORT, HOST, function (err) {
                     if (err) {
                         console.log("error ");
                         throw err;
-
                     }
-
                     // client is not being closed, as the beat is send ongoing
                 });
             }
-        }, (beatInterval + (Math.floor(Math.random() * 500) + 1) * (Math.floor(Math.random() * 2) == 1 ? 1 : -1)));
+        }, beatInterval + _.random(-500, 500));
     }
     else {
+        // Single-shot, one-time heartbeat
         // delay the signal with timeout so that not all objects send the beat in the same time.
         setTimeout(function () {
             // send the beat
-            if (thisId in objectExp)
+            if (thisId in objectExp) {
                 client.send(message, 0, message.length, PORT, HOST, function (err) {
                     if (err) throw err;
                     // close the socket as the function is only called once.
                     client.close();
                 });
-        }, (Math.floor(Math.random() * 500) + 1) * (Math.floor(Math.random() * 2) == 1 ? 1 : -1));
+            }
+        }, _.random(1, 500));
     }
 }
 
@@ -512,7 +501,9 @@ function actionSender(action) {
     });
     // send the datagram
     client.send(message, 0, message.length, beatPort, HOST, function (err) {
-        if (err) throw err;
+        if (err) {
+            throw err;
+        }
         client.close();
     });
 }
@@ -555,7 +546,7 @@ function objectBeatServer() {
         if (msgContent.action == "ping") {
             if (globalVariables.debug)  console.log(msgContent.action);
             for (var key in objectExp) {
-                objectBeatSender(beatPort, key, objectExp[key].ip, 'true');
+                objectBeatSender(beatPort, key, objectExp[key].ip, true);
             }
         }
     });
@@ -723,36 +714,42 @@ function objectWebServer() {
     });
 
 
-    // general overview of all the hybrid objects - html respond
+    // general overview of all the hybrid objects - html response
     // ****************************************************************************************************************
     webServer.get('/object/*/html', function (req, res) {
-        //  if(globalVariables.debug) console.log("get 5");
         var msg = [];
-        var tempArray, subKey;
-        msg.push("<html><head><meta http-equiv='refresh' content='3.3' /><title>", req.params[0], "</title></head><body>");
-        msg.push("<table border='0'  cellpadding='10'><tr> <td  align='left' valign='top'>");
-        msg.push("Values for ", req.params[0], ":<br><table border='1'><tr> <td>ID</td><td>Value</td></tr>");
+        var hoVals, hoLinks, subKey;
+        var objectName = req.params[0];
+        var hybridObject = objectExp[objectName];
 
-        tempArray = objectExp[req.params[0]].objectValues;
-        for (subKey in tempArray) {
-            msg.push("<tr> <td>", subKey, "</td><td>", tempArray[subKey].value, "</td></tr>");
+        msg.push("<html><head><meta http-equiv='refresh' content='3.3' /><title>", objectName, "</title></head><body>");
+        msg.push("<table border='0'  cellpadding='10'><tr> <td  align='left' valign='top'>");
+        msg.push("Values for ", objectName, ":<br><table border='1'><tr> <td>ID</td><td>Value</td></tr>");
+
+        if (!_.isUndefined(hybridObject)) {
+            hoVals = hybridObject.objectValues;
+            for (subKey in tempArray) {
+                msg.push("<tr> <td>", subKey, "</td><td>", tempArray[subKey].value, "</td></tr>");
+            }
         }
         msg.push("</table></td><td  align='left' valign='top'>");
 
         msg.push("Links:<br><table border='1'><tr> <td>ID</td><td>ObjectA</td><td>locationInA</td><td>ObjectB</td><td>locationInB</td></tr>");
         
-        tempArray = objectExp[req.params[0]].objectLinks;
-        for (subKey in tempArray) {
-            msg.push("<tr> <td>", subKey, "</td><td>", tempArray[subKey].ObjectA, "</td><td>", tempArray[subKey].locationInA, "</td>");
-            msg.push("<td>", tempArray[subKey].ObjectB, "</td><td>", tempArray[subKey].locationInB, "</td></tr>");
+        if (!_.isUndefined(hybridObject)) {
+            hoLinks = hybridObject.objectLinks;
+            for (subKey in tempArray) {
+                msg.push("<tr> <td>", subKey, "</td><td>", tempArray[subKey].ObjectA, "</td><td>", tempArray[subKey].locationInA, "</td>");
+                msg.push("<td>", tempArray[subKey].ObjectB, "</td><td>", tempArray[subKey].locationInB, "</td></tr>");
+            }
         }
+
         msg.push("</table></td></tr></table>");
 
         msg.push("<table border='0'  cellpadding='10'><tr> <td  align='left' valign='top'>");
         msg.push("Interface:<br><table border='1'>");
         
-        tempArray = objectExp[req.params[0]];
-        for (subKey in tempArray) {
+        for (subKey in hybridObject) {
             msg.push("<tr> <td>", subKey, "</td><td>", tempArray[subKey], "</td></tr>");
         }
         msg.push("</table></td><td  align='left' valign='top'>");
@@ -1411,7 +1408,7 @@ function socketServer() {
  * All links that use the id will fire up the engine to process the link.
  **/
 
-// dependenses afterPluginProcessing
+// dependencies afterPluginProcessing
 
 function objectEngine(obj, pos, objectExp, pluginModules) {
     // console.log("engine started");
@@ -1511,7 +1508,7 @@ function socketSender(obj, linkPos, processedValue, mode) {
 
 /**
  * @desc  Watches the connections to all objects that have stored links within the object.
- * If an object is disconnected, the object tries to reconnect on a regular bases.
+ * If an object is disconnected, the object tries to reconnect on a regular basis.
  **/
 
 function socketUpdater() {

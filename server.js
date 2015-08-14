@@ -281,10 +281,21 @@ for (var i = 0; i < tempFilesInternal.length; i++) {
     });
 }
 
-
 if (globalVariables.debug) console.log("found " + tempFilesInternal.length + " internal server");
 if (globalVariables.debug) console.log("starting internal Server.");
 
+
+/**
+ * Returns the file extension (portion after the last dot) of the given filename.
+ * If a file name starts with a dot, returns an empty string.
+ *
+ * @author VisioN @ StackOverflow
+ * @param {string} fileName - The name of the file, such as foo.zip
+ * @return The lowercase extension of the file, such has "zip"
+ */
+function getFileExtension(fileName) {
+  return fileName.substr((~-fileName.lastIndexOf(".") >>> 0) + 2).toLowerCase();
+}
 
 /**
  * @desc Add objects from the objects folder to the system
@@ -370,19 +381,21 @@ function loadHybridObjects() {
 
 function startSystem() {
 
-    // generating a udp heard beat signal for ever object that is hosted in this device
+    // generating a udp heartbeat signal for every object that is hosted in this device
     for (var key in objectExp) {
         objectBeatSender(beatPort, key, objectExp[key].ip);
     }
-    // receiving heard beat messages and adding new objects to the knownObjects Array
+
+    // receiving heartbeat messages and adding new objects to the knownObjects Array
     objectBeatServer();
+
     // serving the visual frontend with web content as well serving the REST API for add/remove links and changing
-    // objects sizes and positions
-
+    // object sizes and positions
     objectWebServer();
-    // receives all socket connections and processes the data
 
+    // receives all socket connections and processes the data
     socketServer();
+
     // receives all serial calls and processes the data
 
 
@@ -393,7 +406,6 @@ function startSystem() {
     socketUpdaterInterval();
 
     // blink the LED at the arduino board
-
 
 }
 
@@ -982,25 +994,23 @@ function objectWebServer() {
                     var folderD = form.uploadDir;
                     if (globalVariables.debug) console.log("------------" + form.uploadDir + " " + filename);
 
-                    if (filename.substr(filename.lastIndexOf('.') + 1) === "zip") {
+                    if (getFileExtension(filename) === "zip") {
 
                         if (globalVariables.debug) console.log("I found a zip file");
 
                         try {
-
                             var DecompressZip = require('decompress-zip');
                             var unzipper = new DecompressZip(folderD + "/" + filename);
 
                             unzipper.on('error', function (err) {
-                                if (globalVariables.debug)   console.log('Caught an error');
+                                if (globalVariables.debug)  console.log('Caught an error');
                             });
 
                             unzipper.on('extract', function (log) {
-                                if (globalVariables.debug)  console.log('Finished extracting');
+                                if (globalVariables.debug) console.log('Finished extracting');
                                 console.log("have created a new object");
                                 //createObjectFromTarget(filename.substr(0, filename.lastIndexOf('.')));
                                 createObjectFromTarget(ObjectExp, objectExp, filename.substr(0, filename.lastIndexOf('.')), __dirname, objectLookup, internalModules, objectBeatSender, beatPort, globalVariables.debug);
-
 
 //todo add object to the beatsender.
 
@@ -1013,7 +1023,7 @@ function objectWebServer() {
                             });
 
                             unzipper.on('progress', function (fileIndex, fileCount) {
-                                if (globalVariables.debug)  console.log('Extracted file ' + (fileIndex + 1) + ' of ' + fileCount);
+                                if (globalVariables.debug) console.log('Extracted file ' + (fileIndex + 1) + ' of ' + fileCount);
                             });
 
                             unzipper.extract({
@@ -1117,7 +1127,8 @@ function objectWebServer() {
                     if (globalVariables.debug)  console.log("------------" + form.uploadDir + "/" + filename);
 
                     if (req.headers.type === "targetUpload") {
-                        if (filename.substr(filename.lastIndexOf('.') + 1).toLowerCase() === "jpg") {
+                        var fileExtension = getFileExtension(filename);
+                        if (fileExtension === "jpg") {
                             if (!fs.existsSync(folderD + "/target/")) {
                                 fs.mkdirSync(folderD + "/target/", 0766, function (err) {
                                     if (err) {
@@ -1156,7 +1167,7 @@ function objectWebServer() {
                         }
 
 
-                        else if (filename.substr(filename.lastIndexOf('.') + 1).toLowerCase() === "zip") {
+                        else if (fileExtension === "zip") {
 
                             if (globalVariables.debug) console.log("I found a zip file");
 
@@ -1170,14 +1181,13 @@ function objectWebServer() {
 
                                 unzipper.on('extract', function (log) {
                                     var folderFile = fs.readdirSync(folderD + "/target");
+                                    var folderFileType;
 
                                     for (var i = 0; i < folderFile.length; i++) {
                                         if (globalVariables.debug) console.log(folderFile[i]);
-                                        if (folderFile[i].substr(folderFile[i].lastIndexOf('.') + 1) === "xml") {
-                                            fs.renameSync(folderD + "/target/" + folderFile[i], folderD + "/target/target.xml");
-                                        }
-                                        if (folderFile[i].substr(folderFile[i].lastIndexOf('.') + 1) === "dat") {
-                                            fs.renameSync(folderD + "/target/" + folderFile[i], folderD + "/target/target.dat");
+                                        folderFileType = folderFile[i].substr(folderFile[i].lastIndexOf('.') + 1);
+                                        if (folderFileType === "xml" || folderFileType === "dat") {
+                                            fs.renameSync(folderD + "/target/" + folderFile[i], folderD + "/target/target." + folderFileType);
                                         }
                                     }
                                     fs.unlinkSync(folderD + "/" + filename);
@@ -1548,13 +1558,12 @@ function socketUpdater() {
     sockets.socketsOld = sockets.sockets;
     sockets.connectedOld = sockets.connected;
     sockets.notConnectedOld = sockets.notConnected;
-
-
 }
 
 
-// updates the global saved sockets data
-
+/**
+ * Updates the global saved sockets data
+ */
 function socketIndicator() {
     sockets.sockets = 0;
     sockets.connected = 0;

@@ -202,20 +202,14 @@ function ObjectSockets(socketPort, ip) {
 
 // Initializing the object tree
 var objectExp = {};
-// the pluginModule, that will hold all available plugins
-var pluginModules = {};
-// the modules that will hold all internal connectors
-var internalModules = {};
 
 
-// list of ids linked with ips of all objects found via udp heartbeats
-var knownObjects = {};
+var pluginModules = {};   // the pluginModule, that will hold all available plugins
+var internalModules = {}; // the modules that will hold all internal connectors
+var knownObjects = {};    // list of ids linked with ips of all objects found via udp heartbeats
+var objectLookup = {};    // objectID lookup table
+var socketArray = {};     // all socket connections that are kept alive
 
-// objectID lookup table
-var objectLookup = {};
-
-// all socket connections that are kept alive
-var socketArray = {};
 // counter for the socket connections
 var sockets = {
     sockets: 0,
@@ -226,8 +220,7 @@ var sockets = {
     notConnectedOld: 0
 };
 
-
-if (globalVariables.debug)console.log("got it started");
+if (globalVariables.debug) console.log("got it started");
 
 // get the directory names of all available plugins for the 3D-UI
 var tempFiles = fs.readdirSync(modulePath).filter(function (file) {
@@ -289,14 +282,13 @@ for (var i = 0; i < tempFilesInternal.length; i++) {
 }
 
 
-if (globalVariables.debug)console.log("found " + tempFilesInternal.length + " internal server");
-if (globalVariables.debug)console.log("starting internal Server.");
+if (globalVariables.debug) console.log("found " + tempFilesInternal.length + " internal server");
+if (globalVariables.debug) console.log("starting internal Server.");
 
 
 /**
  * @desc Add objects from the objects folder to the system
  **/
-
 function loadHybridObjects() {
 
     // check for objects in the objects folder by reading the objects directory content.
@@ -311,7 +303,6 @@ function loadHybridObjects() {
             tempFiles.splice(0, 1);
         }
     } catch (e) {
-
         if (globalVariables.debug) console.log("no hidden files");
     }
 
@@ -343,7 +334,7 @@ function loadHybridObjects() {
                 // todo Instead keep the board clear=false forces to read the data points from the arduino every time.
                 // todo this is not true the datapoints are writen in to the object. the sizes are wrong
                 // if not uncommented the code does not connect to the arduino side.
-                // data comes allways from the arduino....
+                // data comes always from the arduino....
                 // clear = true;
 
                 if (globalVariables.debug) {
@@ -985,7 +976,6 @@ function objectWebServer() {
                 form.parse(req, function (err, fields, files) {
                     var old_path = files.file.path,
                         file_size = files.file.size;
-
                 });
 
                 form.on('end', function () {
@@ -1120,7 +1110,6 @@ function objectWebServer() {
                     var old_path = files.file.path,
                         file_size = files.file.size;
                     // new_path = path.join(__dirname, '/uploads/', files.file.name);
-
                 });
 
                 form.on('end', function () {
@@ -1169,14 +1158,14 @@ function objectWebServer() {
 
                         else if (filename.substr(filename.lastIndexOf('.') + 1).toLowerCase() === "zip") {
 
-                            if (globalVariables.debug)  console.log("I found a zip file");
+                            if (globalVariables.debug) console.log("I found a zip file");
 
                             try {
                                 var DecompressZip = require('decompress-zip');
                                 var unzipper = new DecompressZip(folderD + "/" + filename);
 
                                 unzipper.on('error', function (err) {
-                                    if (globalVariables.debug)   console.log('Caught an error');
+                                    if (globalVariables.debug) console.log('Caught an error');
                                 });
 
                                 unzipper.on('extract', function (log) {
@@ -1298,8 +1287,6 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
         }
     }
 }
-
-var thisPos = 0;
 
 /**
  * @desc Check for incoming MSG from other objects or the User. Make changes to the objectValues if changes occur.

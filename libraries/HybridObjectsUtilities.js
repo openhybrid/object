@@ -61,17 +61,15 @@ var fs = require('fs');
 
 exports.writeObject = function (objectLookup, folder, id) {
     objectLookup[folder] = {id: id};
-}
-
-
-
+};
 
 exports.readObject = function (objectLookup, folder) {
     if (objectLookup.hasOwnProperty(folder)) {
-        return objectLookup[folder].id
+        return objectLookup[folder].id;
+    } else {
+        return null;
     }
-    else return null;
-}
+};
 
 exports.createFolder = function (folderVar, dirnameO, debug) {
 
@@ -81,7 +79,7 @@ exports.createFolder = function (folderVar, dirnameO, debug) {
         fs.mkdirSync(folder, 0766, function (err) {
             if (err) {
                 console.log(err);
-                res.send("ERROR! Can't make the directory! \n");    // echo the result back
+                res.send("ERROR! Can't make the directory! \n"); // echo the result back
             }
         });
 
@@ -92,63 +90,69 @@ exports.createFolder = function (folderVar, dirnameO, debug) {
             fs.createReadStream(dirnameO + "/libraries/objectDefaultFiles/bird.png").pipe(fs.createWriteStream(dirnameO + "/objects/" + folderVar + "/bird.png"));
 
         } catch (e) {
-            if (debug)  console.log("Could not copy source files");
+            if (debug) console.log("Could not copy source files", e);
         }
 
         //  writeObjectToFile(tempFolderName);
     }
+};
 
+/**
+ * Generates a random number between the two inputs, inclusive.
+ * @param {number} min - The minimum possible value.
+ * @param {number} max - The maximum possible value.
+ */
+exports.randomIntInc = function (min, max) {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+};
 
-}
-
-exports.randomIntInc = function (low, high) {
-    return Math.floor(Math.random() * (high - low + 1) + low);
-}
-
-exports.uuidTime= function () {
+/**
+ * Generates a 12-digit unique identifier string, much of which is based on the current time.
+ */
+exports.uuidTime = function () {
     var dateUuidTime = new Date();
     var abcUuidTime = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     var stampUuidTime = parseInt(Math.floor((Math.random() * 199) + 1) + "" + dateUuidTime.getTime()).toString(36);
     while (stampUuidTime.length < 12) stampUuidTime = abcUuidTime.charAt(Math.floor(Math.random() * abcUuidTime.length)) + stampUuidTime;
-    return stampUuidTime
-}
-
+    return stampUuidTime;
+};
 
 exports.getObjectIdFromTarget = function (folderName, dirnameO) {
 
     var xmlFile = dirnameO + '/objects/' + folderName + '/target/target.xml';
 
     if (fs.existsSync(xmlFile)) {
-
         var resultXML = "";
         xml2js.
             Parser().
             parseString(fs.readFileSync(xmlFile, "utf8"),
             function (err, result) {
-                for(var first in result) {
+                for (var first in result) {
                     resultXML = result[first].Tracking[0].ImageTarget[0].$.name;
                     break;
                 }
             });
 
         return resultXML;
-    } else return null;
-}
+    } else {
+        return null;
+    }
+};
 
 /**
- * @desc
- * @param
- * @param
- * @return
+ * Saves the HybridObject as "object.json"
+ *
+ * @param {Object[]} objectExp - The array of objects
+ * @param {string}   object    - The key used to look up the object in the objectExp array
+ * @param {string}   dirnameO  - The base directory name in which an "objects" directory resides. 
  **/
-
 exports.writeObjectToFile = function (objectExp, object, dirnameO) {
     var outputFilename = dirnameO + '/objects/' + objectExp[object].folder + '/object.json';
     fs.writeFile(outputFilename, JSON.stringify(objectExp[object]), function (err) {
         if (err) {
             console.log(err);
         } else {
-            if (debug)  console.log("JSON saved to " + outputFilename);
+            if (debug) console.log("JSON saved to " + outputFilename);
         }
     });
-}
+};

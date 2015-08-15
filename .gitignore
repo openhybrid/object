@@ -25,6 +25,9 @@ coverage
 # osx directory files
 .DS_Store
 
+# ignore personal objects in the object folder.
+objects/*
+
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
 

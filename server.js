@@ -291,7 +291,7 @@ if (globalVariables.debug) console.log("starting internal Server.");
  *
  * @author VisioN @ StackOverflow
  * @param {string} fileName - The name of the file, such as foo.zip
- * @return The lowercase extension of the file, such has "zip"
+ * @return {string} The lowercase extension of the file, such has "zip"
  */
 function getFileExtension(fileName) {
   return fileName.substr((~-fileName.lastIndexOf(".") >>> 0) + 2).toLowerCase();
@@ -463,7 +463,7 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
                     // client is not being closed, as the beat is send ongoing
                 });
             }
-        }, beatInterval + _.random(-500, 500));
+        }, beatInterval + _.random(-250, 250));
     }
     else {
         // Single-shot, one-time heartbeat
@@ -477,7 +477,7 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
                     client.close();
                 });
             }
-        }, _.random(1, 500));
+        }, _.random(1, 250));
     }
 }
 

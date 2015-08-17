@@ -63,7 +63,7 @@ var loadBaseTemplate = function() {
     var tempFiles = fs.readdirSync(objectPath).filter(function (file) {
         return fs.statSync(objectPath + '/' + file).isDirectory();
     });
-        var sidebarElems = "";
+     var sidebarElems = "";
 
         if (typeof tempFiles[0] !== "undefined") {
             while (tempFiles[0][0] === ".") {
@@ -93,7 +93,7 @@ var loadBaseTemplate = function() {
 
 exports.printFolder = function (objectExp, dirnameO, debug, objectInterfaceFolder, objectLookup) {
 
-    if(baseTemplate == null) baseTemplate = loadBaseTemplate();
+    baseTemplate = loadBaseTemplate();
     clearInterval(realoadInterfaceTimeout);
     $ = cheerio.load(baseTemplate);
 

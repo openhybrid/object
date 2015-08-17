@@ -116,88 +116,60 @@ exports.loadTemplate =  function(templateName, data)
    return htmlTemplate;
 }
 
- exports.updateTemplate = function(objectId, parentNode, data, realTimeUpdate)
-  {
-    var $ = cheerio.load(parentNode);
-    //get the element to update
-    var elementToUpdate  = $;
+exports.updateTemplate = function(objectId, parentNode, data, realTimeUpdate)
+{
+  var $ = cheerio.load(parentNode);
+  //get the element to update
+  var elementToUpdate  = $;
 
-    if(realTimeUpdate) { 
-  //TODO : not sure to do that
-     elementToUpdate = $('[data-id="'+objectId+'"]');
-    } 
+  if(realTimeUpdate) { 
+//TODO : not sure to do that
+   elementToUpdate = $('[data-id="'+objectId+'"]');
+  } 
 
-    for(var i=0;i<data.length;i++){
-      var obj = data[i];
+  for(var i=0;i<data.length;i++){
+    var obj = data[i];
 
-      //extract each value and attribute the 
-      for(var key in obj)
+    //extract each value and attribute the 
+    for(var key in obj)
+    {
+      var attrName = key;
+      var attrValue = obj[key];
+ 
+      if(typeof attrValue === 'string')  // if it's a single element (update the home page etc)
       {
-        var attrName = key;
-        var attrValue = obj[key];
-   
-        if(typeof attrValue === 'string')  // if it's a single element (update the home page etc)
-        {
-          elementToUpdate('[data-'+attrName+']').text(attrValue);
+        elementToUpdate('[data-'+attrName+']').text(attrValue);
 
+      }
+      else
+      {
+           //for each item, we delete the tbody content, and replace with new columns  
+          var subObject = $('[data-'+attrName+']');
+
+
+          subObject.html("");
+
+          for(var key in attrValue){
+
+            //create the new html content from string
+            var subAttrName = key;
+            var newHtml = "<tr>";
+            var subAttrValue = attrValue[key];
+
+            if(typeof subAttrValue === 'object') // if it's containing an array
+            {
+                 for(var item in subAttrValue){
+                  var itemName = item;
+                  var itemValue = subAttrValue[item];
+
+                  newHtml += "<td>"+itemValue+"</td>";
+                }
+                newHtml += "</tr>";
+                subObject.append(newHtml); // append the content
+            }
         }
-        else
-        {
-             //for each item, we delete the tbody content, and replace with new columns  
-            var subObject = $('[data-'+attrName+']');
-
-
-            subObject.html("");
-
-            for(var key in attrValue){
-
-              //create the new html content from string
-              var subAttrName = key;
-              var newHtml = "<tr>";
-              var subAttrValue = attrValue[key];
-
-              if(typeof subAttrValue === 'object') // if it's containing an array
-              {
-                   for(var item in subAttrValue){
-                    var itemName = item;
-                    var itemValue = subAttrValue[item];
-
-                    newHtml += "<td>"+itemValue+"</td>";
-                  }
-                  newHtml += "</tr>";
-                  subObject.append(newHtml); // append the content
-              }
-          }
-        } // end if != string
-      } // end key extraction
-    }
-    return elementToUpdate.html();
+      } // end if != string
+    } // end key extraction
   }
-
-
- exports.getTemplateData = function() {
-  var ajax = "";
-  var d = new Date();
-
- var monitor = [
-  {
-      "variables" : [
-        {"index":"0", "IOName" : "led", "value": d.getDate() },
-        {"index":"1", "IOName" : "knob", "value": d.getMilliseconds() },
-        {"index":"2", "IOName" : "timerTarget", "value": d.getSeconds()},
-        {"index":"3", "IOName" : "virtualKnob", "value":"0.55"}
-      ],
-      "links" : [
-        {"id": "EV1inyjn", "origin" : "HybridLightcv8ofwf2qppj","locationO" : "knob","destination" : "timerTarget","locationD" : "timerTarget" },
-        {"id": "cg17208z", "origin" : "HybridLightcv8ofwf2qppj","locationO" : "timer","destination" : "timerTarget","locationD" : "ledCircle" }
-      ]
-  }];
-
-
-//   updateElement("Test", monitor);
-
-  ajax = monitor;
-
-  return ajax;
-
+  return elementToUpdate.html();
 }

@@ -27,7 +27,7 @@
         <br>
         <br>
         <span class="fileupload-process">
-              <div id="total-progress" class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="opacity:0">
+              <div id="total-progress-interface" class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="opacity:0">
                 <div class="progress-bar progress-bar-success" style="width:100%;" data-dz-uploadprogress=""></div>
               </div>
         </span>
@@ -83,17 +83,17 @@
      
 
         myDropzone.on("totaluploadprogress", function(progress) {
-            document.querySelector("#total-progress").style.width = progress + "%";
+            document.querySelector("#total-progress-interface").style.width = progress + "%";
         });
         myDropzone.on("sending", function(file) {
-            document.querySelector("#total-progress").style.opacity = "1";
+            document.querySelector("#total-progress-interface").style.opacity = "1";
         });
         myDropzone.on("queuecomplete", function(progress) {
-            document.querySelector("#total-progress").style.opacity = "0";
+            document.querySelector("#total-progress-interface").style.opacity = "0";
         });
         myDropzone.on("success", function(file, responseText) {
             if (responseText === "done") {
-                document.querySelector("#total-progress").style.opacity = "0";
+                document.querySelector("#total-progress-interface").style.opacity = "0";
                 location.reload();
             }
         });

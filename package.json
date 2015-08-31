@@ -34,7 +34,52 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "author": "Valentin Heun <heun@mit.edu> (http://valentinheun.com/)",
-  "contributors": "Marc Teyssier <marc.teys@gmail.com> (http://marcteyssier.com)",
+  "author":
+  {
+    "name": "Valentin Heun",
+    "email": "heun@media.mit.edu"
+  },
+  "contributors": [
+    {
+      "name": "Shunichi Kasahara",
+      "email": ""
+    },
+    {
+      "name": "James Hobin",
+      "email": ""
+    },
+    {
+      "name": "Kevin Wong",
+      "email": ""
+    },
+    {
+      "name": "Kenny Friedman",
+      "email": ""
+    },
+    {
+      "name": "Michelle Suh",
+      "email": ""
+    },
+    {
+      "name": "Andrew Mendez",
+      "email": ""
+    },
+    {
+      "name": "Benjamin F Reynolds ",
+      "email": ""
+    },
+    {
+      "name": "Eva Stern-Rodriguez",
+      "email": ""
+    },
+    {
+      "name": "Marc Teyssier",
+      "email": "marc.teys@gmail.com"
+    },
+    {
+      "name": "Afika A Nyati",
+      "email": ""
+    }
+  ],
   "license": "MPL-2.0"
 }

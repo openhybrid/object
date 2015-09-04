@@ -611,7 +611,7 @@ function objectWebServer() {
         }
     });
 
-    // changing the size and possition of an item. *1 is the object *2 is the link id
+    // changing the size and possition of an item. *1 is the object *2 is the datapoint id
     // ****************************************************************************************************************
     webServer.post('/object/*/size/*/', function (req, res) {
         // if(globalVariables.debug) console.log("post 2");
@@ -622,7 +622,7 @@ function objectWebServer() {
         // check that the numbers are valid numbers..
         if (typeof req.body.x === "number" && typeof req.body.y === "number" && typeof req.body.scale === "number") {
 
-            // if the object is equal the link id, the item is actually the object it self.
+            // if the object is equal the datapoint id, the item is actually the object it self.
             if (thisObject === thisValue) {
                 objectExp[thisObject].x = req.body.x;
                 objectExp[thisObject].y = req.body.y;

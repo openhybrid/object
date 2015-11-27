@@ -193,60 +193,23 @@ function serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, g
                     obj = object[1];
                     pos = object[0];
 
-                    HybridObjectsUtilities.createFolder(obj, __dirname, globalVariables.debug);
-
+                    addIO(obj, pos, arrayID, thisPlugin, objectExp, globalVariables, __dirname);
+                    console.log();
                     var objectID = HybridObjectsUtilities.getObjectIdFromTarget(obj, __dirname);
-
                     objID = pos + objectID;
+                    ArduinoLookupTable.push({ obj: obj, pos: objID });
 
-                    if (!_.isUndefined(objectID) && !_.isNull(objectID)) {
-
-                        if (objectID.length > 13) {
-
-                          /*  for (var key in objectExp[objectID].objectValues) {
-                                if (arrayID === objectExp[objectID].objectValues[key].index) {
-                                    delete objectExp[objectID].objectValues[key];
-                                }
-                            }*/
-
-                            if (globalVariables.debug) console.log("I will save: " + obj + " and: " + pos + " id: " + arrayID);
-
-                            if (objectExp.hasOwnProperty(objectID)) {
-
-                                if (!objectExp[objectID].objectValues.hasOwnProperty(objID)) {
-                                    var thisObject = objectExp[objectID].objectValues[objID] = new ObjectValue();
-                                    thisObject.x = HybridObjectsUtilities.randomIntInc(0, 200) - 100;
-                                    thisObject.y = HybridObjectsUtilities.randomIntInc(0, 200) - 100;
-                                    thisObject.frameSizeX = 47;
-                                    thisObject.frameSizeY = 47;
-                                }
-
-                                ArduinoLookupTable.push({obj: obj, pos: objID});
-
-                                //todo check if this is written to file in the right way
-                                // todo this adds no value just error possibility...
-                                // writeObjectToFile(obj);
-
-                                // here you need to add the id of the object
-                                var thisObj = objectExp[objectID].objectValues[objID];
-                                thisObj.name = pos;
-                                thisObj.plugin = thisPlugin;
-                                // this clames the datapoint to be of type serial....
-                                thisObj.type = "arduinoYun";
-                                thisObj.index = arrayID;
-                            }
-                        }
-                    }
-
-                    objectID = undefined;
+                    
                     dataSwitch = 0;
                     break;
                 case 40:
                     if (parseInt(data, 10) === 1) {
-                        globalVariables.developer = true;
+                        developerIO(true, globalVariables);
+                        //globalVariables.developer = true;
                     }
                     else {
-                        globalVariables.developer = false;
+                        //globalVariables.developer = false;
+                        developerIO(false, globalVariables);
                     }
                     dataSwitch = 0;
                     break;
@@ -291,11 +254,11 @@ function serialSender(serialPort, objectExp, obj, linkPos, processedValue, mode)
 function clearIO (objectExp, obj, Odirname, amount, globalVariables) {
     // check links as well
     var objectID = HybridObjectsUtilities.getObjectIdFromTarget(obj, Odirname);
+    if (globalVariables.debug) console.log("ClearIO objectID: " + objectID );
 
     if (!_.isUndefined(objectID) && !_.isNull(objectID)) {
         if (objectID.length > 13) {
             if (globalVariables.debug) console.log("------del---");
-
             for (var key in objectExp[objectID].objectValues) {
                 if (globalVariables.debug) console.log("key in: " + objectID + " " + key + " " + amount);
                 var indexKey = objectExp[objectID].objectValues[key].index;
@@ -313,17 +276,64 @@ function clearIO (objectExp, obj, Odirname, amount, globalVariables) {
     if (globalVariables.debug) console.log("it's all cleared");
 }
 
-// TODO simplify API with clean calls for communicating with the object
-function addIO () {
-// this has to be filled with content
+
+function addIO (obj, pos, index, plugin, objectExp, globalVariables, Odirname) {
+    HybridObjectsUtilities.createFolder(obj, Odirname, globalVariables.debug);
+
+    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(obj, Odirname);
+    if (globalVariables.debug) console.log("AddIO objectID: " + objectID);
+
+    objID = pos + objectID;
+
+    if (!_.isUndefined(objectID) && !_.isNull(objectID)) {
+
+        if (objectID.length > 13) {
+
+            /*  for (var key in objectExp[objectID].objectValues) {
+                  if (arrayID === objectExp[objectID].objectValues[key].index) {
+                      delete objectExp[objectID].objectValues[key];
+                  }
+              }*/
+
+            if (globalVariables.debug) console.log("I will save: " + obj + " and: " + pos + " id: " + index);
+
+            if (objectExp.hasOwnProperty(objectID)) {
+
+                if (!objectExp[objectID].objectValues.hasOwnProperty(objID)) {
+                    var thisObject = objectExp[objectID].objectValues[objID] = new ObjectValue();
+                    thisObject.x = HybridObjectsUtilities.randomIntInc(0, 200) - 100;
+                    thisObject.y = HybridObjectsUtilities.randomIntInc(0, 200) - 100;
+                    thisObject.frameSizeX = 47;
+                    thisObject.frameSizeY = 47;
+                }
+
+               
+
+                //todo check if this is written to file in the right way
+                // todo this adds no value just error possibility...
+                // writeObjectToFile(obj);
+
+                // here you need to add the id of the object
+                var thisObj = objectExp[objectID].objectValues[objID];
+                thisObj.name = pos;
+                thisObj.plugin = plugin;
+                // this clames the datapoint to be of type serial....
+                thisObj.type = "arduinoYun";
+                thisObj.index = index;
+            }
+        }
+    }
+    objectID = undefined;
 }
 
 function writeIO () {
 // this has to be filled with content
 }
 
-function developerIO () {
-// this has to be filled with content
+function developerIO(developerValue, globalVariables) {
+    if (!_.isUndefined(developerValue) && !_.isNull(developerValue) && _.isBoolean(developerValue)) {
+        globalVariables.developer = developerValue;
+    }
 }
 
 

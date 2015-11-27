@@ -65,13 +65,13 @@ exports.loadAllModules = function(allModules, callback) {
       templates[name] = data;
       console.log(name + " loaded !");
       index++;
-     if (index < allModules.length) {
+      if (index < allModules.length) {
             loadOneTemplate(index);
         } else {
-          callback();
+          //callback();
         }
 
-    }else{
+    } else {
       console.log(err);
     }
   });

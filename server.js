@@ -249,11 +249,15 @@ var modulesList = ['base',
 
 templateModule.loadAllModules(modulesList, function () {
     // start system
+    if (globalVariables.debug) console.log("Starting System: ");
     loadHybridObjects();
     startSystem();
 
 });
 
+if (globalVariables.debug) console.log("Starting System: ");
+loadHybridObjects();
+startSystem();
 
 // add all modules for internal communication
 
@@ -301,7 +305,7 @@ function getFileExtension(fileName) {
  * @desc Add objects from the objects folder to the system
  **/
 function loadHybridObjects() {
-
+    if (globalVariables.debug) console.log("Enter loadHybridObjects");
     // check for objects in the objects folder by reading the objects directory content.
     // get all directory names within the objects directory
     var tempFiles = fs.readdirSync(objectPath).filter(function (file) {
@@ -319,6 +323,7 @@ function loadHybridObjects() {
 
     for (var i = 0; i < tempFiles.length; i++) {
         var tempFolderName = HybridObjectsUtilities.getObjectIdFromTarget(tempFiles[i], __dirname);
+        if (globalVariables.debug) console.log("TempFolderName: " + tempFolderName);
 
         if (tempFolderName !== null) {
             // fill objectExp with objects named by the folders in objects

@@ -30,15 +30,13 @@ exports.writeIOToServer = function (obj, pos, value, mode, objectExp, objectLook
     if (globalVariables.debug) console.log("WriteIOToServer: " + obj + "  " + pos + "  " + value + "  " + mode);
     var objKey2 = HybridObjectsUtilities.readObject(objectLookup, obj);
     var valueKey = pos + objKey2;
-    console.log("ObjectKey: " + objKey2 + "   ValueKey: " + valueKey);
+    if (globalVariables.debug) console.log("ObjectKey: " + objKey2 + "   ValueKey: " + valueKey);
 
     if (objectExp.hasOwnProperty(objKey2)) {
-        console.log("Object found");
         if (objectExp[objKey2].objectValues.hasOwnProperty(valueKey)) {
-            console.log("Value found");
             objectExp[objKey2].objectValues[valueKey].value = value;
             objectExp[objKey2].objectValues[valueKey].mode = mode;
-            console.log("Calling objectEngine");
+            if (globalVariables.debug) console.log("Calling objectEngine");
             callback(objKey2, valueKey, objectExp, pluginModules);
         }
     }

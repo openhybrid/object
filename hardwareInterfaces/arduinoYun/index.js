@@ -208,8 +208,8 @@ exports.receive = function () {
     serialServer(serialPort);
 };
 
-exports.send = function (objName, ioName, value, mode) {
-    serialSender(serialPort, objName, ioName, value, mode);
+exports.send = function (objName, ioName, value, mode, type, index) {
+    serialSender(serialPort, objName, ioName, value, mode, type, index);
 };
 
 exports.init = function() {

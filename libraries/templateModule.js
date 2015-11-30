@@ -68,7 +68,7 @@ exports.loadAllModules = function(allModules, callback) {
       if (index < allModules.length) {
             loadOneTemplate(index);
         } else {
-          //callback();
+          callback();
         }
 
     } else {

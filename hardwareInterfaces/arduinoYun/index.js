@@ -255,7 +255,7 @@ function serialSender(serialPort, objectExp, obj, linkPos, processedValue, mode)
 
 
 function clearIO (objectExp, obj, Odirname, amount, globalVariables) {
-    // check links as well
+    //TODO: check links as well
     var objectID = HybridObjectsUtilities.getObjectIdFromTarget(obj, Odirname);
     if (globalVariables.debug) console.log("ClearIO objectID: " + objectID );
 
@@ -302,8 +302,6 @@ function addIO (obj, pos, index, plugin, type, objectExp, globalVariables, Odirn
             if (globalVariables.debug) console.log("I will save: " + obj + " and: " + pos + " id: " + index);
 
             if (objectExp.hasOwnProperty(objectID)) {
-
-                if (globalVariables.debug) console.log("Entered IF");
                 if (!objectExp[objectID].objectValues.hasOwnProperty(objID)) {
                     var thisObject = objectExp[objectID].objectValues[objID] = new ObjectValue();
                     thisObject.x = HybridObjectsUtilities.randomIntInc(0, 200) - 100;
@@ -327,7 +325,7 @@ function addIO (obj, pos, index, plugin, type, objectExp, globalVariables, Odirn
 }
 
 function writeIO () {
-// this has to be filled with content
+ 
 }
 
 function developerIO(developerValue, globalVariables) {

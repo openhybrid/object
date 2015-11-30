@@ -249,9 +249,9 @@ var modulesList = ['base',
 
 templateModule.loadAllModules(modulesList, function () {
     // start system
-    if (globalVariables.debug) console.log("Starting System: ");
-    loadHybridObjects();
-    startSystem();
+    //if (globalVariables.debug) console.log("Starting System: ");
+    //loadHybridObjects();
+    //startSystem();
 
 });
 
@@ -1596,3 +1596,6 @@ function socketUpdaterInterval() {
         socketUpdater();
     }, socketUpdateInterval);
 }
+
+
+

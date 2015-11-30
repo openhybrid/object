@@ -52,7 +52,7 @@ const serialBaudRate = 115200; // baud rate for connection to arudino
 const serialSource = "/dev/ttyATH0"; // this is pointing to the arduino
 const GREEN_LED = "/sys/devices/platform/leds-gpio/leds/ds:green:usb/brightness";
 
-ledBlinker();
+//ledBlinker();
 
 /**
  * @desc Constructor for each object value
@@ -336,16 +336,16 @@ function developerIO(developerValue, globalVariables) {
 
 
 exports.receive = function (objectExp, objectLookup, globalVariables, dirnameO, pluginModules, callback) {
-    serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, globalVariables, dirnameO, pluginModules, callback);
+    //serialServer(serialPort, objectExp, objectLookup, ArduinoLookupTable, globalVariables, dirnameO, pluginModules, callback);
 };
 
 exports.send = function (objectExp,obj, pos, value, mode) {
-    serialSender(serialPort, objectExp, obj, pos, value, mode);
+    //serialSender(serialPort, objectExp, obj, pos, value, mode);
 };
 
 exports.init = function() {
-	serialPort.write(" \n");
-    serialPort.write("okbird\n");
+	//serialPort.write(" \n");
+    //serialPort.write("okbird\n");
 };
 
 function noop_cb() {}

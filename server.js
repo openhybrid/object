@@ -112,6 +112,7 @@ var formidable = require('formidable'); // Multiple file upload library
 // additional required code
 var HybridObjectsUtilities   = require(__dirname + '/libraries/HybridObjectsUtilities');
 var HybridObjectsWebFrontend = require(__dirname + '/libraries/HybridObjectsWebFrontend');
+var HybridObjectsHardwareInterfaces = require(__dirname + '/libraries/HybridObjectsHardwareInterfaces');
 var templateModule           = require(__dirname + '/libraries/templateModule');
 
 // Set web frontend debug to inherit from global debug
@@ -161,7 +162,7 @@ function ObjectLink() {
  * @desc Constructor for each object value
  **/
 
-function ObjectValue() {
+ObjectValue = function () {
     this.name = "";
     this.value = null;
     this.mode = "f"; // this is for (f) floating point, (d) digital or (s) step and finally (m) media
@@ -257,6 +258,9 @@ templateModule.loadAllModules(modulesList, function () {
 });
 
 if (globalVariables.debug) console.log("Starting System: ");
+HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, __dirname, pluginModules, function (objKey2, valueKey, objectExp, pluginModules) {
+    objectEngine(objKey2, valueKey, objectExp, pluginModules);
+}, ObjectValue);
 loadHybridObjects();
 startSystem();
 
@@ -281,9 +285,9 @@ for (var i = 0; i < tempFilesInternal.length; i++) {
 
 // starting the internal servers (receive)
 for (var i = 0; i < tempFilesInternal.length; i++) {
-    internalModules[tempFilesInternal[i]].receive(objectExp, objectLookup, globalVariables, __dirname, pluginModules, function (objKey2, valueKey, objectExp, pluginModules) {
-        objectEngine(objKey2, valueKey, objectExp, pluginModules);
-    });
+    //internalModules[tempFilesInternal[i]].receive(objectExp, objectLookup, globalVariables, __dirname, pluginModules, function (objKey2, valueKey, objectExp, pluginModules) {
+    //    objectEngine(objKey2, valueKey, objectExp, pluginModules);
+    internalModules[tempFilesInternal[i]].receive();
 }
 
 if (globalVariables.debug) console.log("found " + tempFilesInternal.length + " internal server");

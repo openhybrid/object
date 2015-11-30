@@ -3,19 +3,27 @@ var HybridObjectsUtilities = require(__dirname + '/HybridObjectsUtilities');
 var _ = require('lodash');
 
 
-function ObjectValue() {
-    this.name = "";
-    this.value = null;
-    this.mode = "f"; // this is for (f) floating point, (d) digital or (s) step and finally (m) media
-    this.rotation = 0;
-    this.x = 0;
-    this.y = 0;
-    this.scale = 1;
-    this.plugin = "default";
-    this.pluginParameter = null;
-    this.index = null;
-    this.type = "arduinoYun"; // todo "arduinoYun", "virtual", "edison", ... make sure to define yours in your internal_module file
-}
+//function ObjectValue() {
+//    this.name = "";
+//    this.value = null;
+//    this.mode = "f"; // this is for (f) floating point, (d) digital or (s) step and finally (m) media
+//    this.rotation = 0;
+//    this.x = 0;
+//    this.y = 0;
+//    this.scale = 1;
+//    this.plugin = "default";
+//    this.pluginParameter = null;
+//    this.index = null;
+//    this.type = "arduinoYun"; // todo "arduinoYun", "virtual", "edison", ... make sure to define yours in your internal_module file
+//}
+
+var objectExp;
+var objectLookup;
+var globalVariables;
+var dirnameO;
+var pluginModules;
+var callback;
+var ObjectValue;
 
 /*
  *
@@ -25,8 +33,8 @@ function ObjectValue() {
  *
  */
 
-
-exports.writeIOToServer = function (objName, ioName, value, mode, objectExp, objectLookup, globalVariables, pluginModules, callback) {
+exports.writeIOToServer = function (objName, ioName, value, mode) {
+//exports.writeIOToServer = function (objName, ioName, value, mode, objectExp, objectLookup, globalVariables, pluginModules, callback) {
     if (globalVariables.debug) console.log("WriteIOToServer: " + objName + "  " + ioName + "  " + value + "  " + mode);
     var objKey2 = HybridObjectsUtilities.readObject(objectLookup, objName);
     var valueKey = ioName + objKey2;
@@ -43,9 +51,10 @@ exports.writeIOToServer = function (objName, ioName, value, mode, objectExp, obj
 };
 
 
-exports.clearIO = function (objectExp, objName, Odirname, amount, globalVariables) {
+exports.clearIO = function (objName, amount) {
+//exports.clearIO = function (objectExp, objName, Odirname, amount, globalVariables) {
     // check links as well
-    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, Odirname);
+    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
     if (globalVariables.debug) console.log("ClearIO objectID: " + objectID);
 
     if (!_.isUndefined(objectID) && !_.isNull(objectID)) {
@@ -69,10 +78,12 @@ exports.clearIO = function (objectExp, objName, Odirname, amount, globalVariable
     if (globalVariables.debug) console.log("it's all cleared");
 };
 
-exports.addIO = function (objName, ioName, index, plugin, type, objectExp, globalVariables, Odirname) {
-    HybridObjectsUtilities.createFolder(objName, Odirname, globalVariables.debug);
 
-    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, Odirname);
+exports.addIO = function (objName, ioName, index, plugin, type) {
+//exports.addIO = function (objName, ioName, index, plugin, type, objectExp, globalVariables, Odirname) {
+    HybridObjectsUtilities.createFolder(objName, dirnameO, globalVariables.debug);
+
+    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
     if (globalVariables.debug) console.log("philipsHue AddIO objectID: " + objectID);
 
     objID = ioName + objectID;
@@ -107,8 +118,20 @@ exports.addIO = function (objName, ioName, index, plugin, type, objectExp, globa
     objectID = undefined;
 };
 
-exports.developerIO = function (developerValue, globalVariables) {
+
+exports.developerIO = function (developerValue) {
+//exports.developerIO = function (developerValue, globalVariables) {
     if (!_.isUndefined(developerValue) && !_.isNull(developerValue) && _.isBoolean(developerValue)) {
         globalVariables.developer = developerValue;
     }
+};
+
+exports.setup = function (objExp, objLookup, glblVars, dir, plugins, cb, objValue) {
+    objectExp = objExp;
+    objectLookup = objLookup;
+    globalVariables = glblVars;
+    dirnameO = dir;
+    pluginModules = plugins;
+    callback = cb;
+    ObjectValue = objValue;
 };

@@ -26,10 +26,10 @@ function ObjectValue() {
  */
 
 
-exports.writeIOToServer = function (obj, pos, value, mode, objectExp, objectLookup, globalVariables, pluginModules, callback) {
-    if (globalVariables.debug) console.log("WriteIOToServer: " + obj + "  " + pos + "  " + value + "  " + mode);
-    var objKey2 = HybridObjectsUtilities.readObject(objectLookup, obj);
-    var valueKey = pos + objKey2;
+exports.writeIOToServer = function (objName, ioName, value, mode, objectExp, objectLookup, globalVariables, pluginModules, callback) {
+    if (globalVariables.debug) console.log("WriteIOToServer: " + objName + "  " + ioName + "  " + value + "  " + mode);
+    var objKey2 = HybridObjectsUtilities.readObject(objectLookup, objName);
+    var valueKey = ioName + objKey2;
     if (globalVariables.debug) console.log("ObjectKey: " + objKey2 + "   ValueKey: " + valueKey);
 
     if (objectExp.hasOwnProperty(objKey2)) {
@@ -43,9 +43,9 @@ exports.writeIOToServer = function (obj, pos, value, mode, objectExp, objectLook
 };
 
 
-exports.clearIO = function (objectExp, obj, Odirname, amount, globalVariables) {
+exports.clearIO = function (objectExp, objName, Odirname, amount, globalVariables) {
     // check links as well
-    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(obj, Odirname);
+    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, Odirname);
     if (globalVariables.debug) console.log("ClearIO objectID: " + objectID);
 
     if (!_.isUndefined(objectID) && !_.isNull(objectID)) {
@@ -69,27 +69,22 @@ exports.clearIO = function (objectExp, obj, Odirname, amount, globalVariables) {
     if (globalVariables.debug) console.log("it's all cleared");
 };
 
-exports.addIO = function (obj, pos, index, plugin, type, objectExp, globalVariables, Odirname) {
-    HybridObjectsUtilities.createFolder(obj, Odirname, globalVariables.debug);
+exports.addIO = function (objName, ioName, index, plugin, type, objectExp, globalVariables, Odirname) {
+    HybridObjectsUtilities.createFolder(objName, Odirname, globalVariables.debug);
 
-    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(obj, Odirname);
+    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, Odirname);
     if (globalVariables.debug) console.log("philipsHue AddIO objectID: " + objectID);
 
-    objID = pos + objectID;
+    objID = ioName + objectID;
 
     if (!_.isUndefined(objectID) && !_.isNull(objectID)) {
 
         if (objectID.length > 13) {
 
-            /*  for (var key in objectExp[objectID].objectValues) {
-                  if (arrayID === objectExp[objectID].objectValues[key].index) {
-                      delete objectExp[objectID].objectValues[key];
-                  }
-              }*/
-
-            if (globalVariables.debug) console.log("I will save: " + obj + " and: " + pos + " id: " + index);
+            if (globalVariables.debug) console.log("I will save: " + objName + " and: " + ioName + " id: " + index);
 
             if (objectExp.hasOwnProperty(objectID)) {
+                objectExp[objectID].name = objName;
                 if (!objectExp[objectID].objectValues.hasOwnProperty(objID)) {
                     var thisObject = objectExp[objectID].objectValues[objID] = new ObjectValue();
                     thisObject.x = HybridObjectsUtilities.randomIntInc(0, 200) - 100;
@@ -101,7 +96,7 @@ exports.addIO = function (obj, pos, index, plugin, type, objectExp, globalVariab
 
                 // here you need to add the id of the object
                 var thisObj = objectExp[objectID].objectValues[objID];
-                thisObj.name = pos;
+                thisObj.name = ioName;
                 thisObj.plugin = plugin;
                 // this clames the datapoint to be of type serial....
                 thisObj.type = type;

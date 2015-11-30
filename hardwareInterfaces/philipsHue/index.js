@@ -66,13 +66,14 @@ function Light() {
     this.port;
 }
 
-function setup(objectExp, globalVariables, Odirname) {
+function setup(objectExp, objectLookup, globalVariables, pluginModules, Odirname, callback) {
     lights = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
     
     for (var key in lights) {
         server.addIO(key, "switch", 0, "default", "philipsHue", objectExp, globalVariables, Odirname);
         server.addIO(key, "generatorOnOff", 1, "default", "philipsHue", objectExp, globalVariables, Odirname);
         server.clearIO(objectExp, key, Odirname, 2, globalVariables);
+        startGeneratorOnOff(lights[key], objectExp, objectLookup, globalVariables, pluginModules, callback);
     }
     
 }
@@ -96,15 +97,28 @@ function getSwitchState(light, callback, objectExp, objectLookup, globalVariable
 
         response.on('end', function () {
             state = JSON.parse(str).state;
-            callback(light.id, "switch", state.on, "d", objectExp, objectLookup, globalVariables, pluginModules, callback2);
+            callback(light.id, "switch", state.on, "b", objectExp, objectLookup, globalVariables, pluginModules, callback2);
         });
     }
 
     http.request(options, callbackHttp).end();
 }
 
+function writeSwitchState(light, state) {
+    var options = {
+        host: light.host,
+        path: light.url + "/state",
+        port: light.port,
+        method: 'PUT',
+    };
+
+    var req = http.request(options, function () { });
+    req.write('{"on":' + state + '}');
+    req.end();
+}
+
 function philipsHueServer(objectExp, objectLookup, globalVariables,dirnameO, pluginModules, callback) {  
-    setup(objectExp, globalVariables, dirnameO);
+    setup(objectExp, objectLookup, globalVariables, pluginModules, dirnameO, callback);
 
     for (var key in lights) {
         setInterval(function (light) {
@@ -114,13 +128,29 @@ function philipsHueServer(objectExp, objectLookup, globalVariables,dirnameO, plu
     
 }
 
+function startGeneratorOnOff(light, objectExp, objectLookup, globalVariables, pluginModules, callback) {
+    var state = false;
+    setInterval(function (l) {
+        server.writeIOToServer(l.id, "generatorOnOff", state, "b", objectExp, objectLookup, globalVariables, pluginModules, callback);
+        if (state) {
+            state = false;
+        } else {
+            state = true;
+        }
+    }, 5000 + _.random(-250, 250), light);
+}
+
 
 exports.receive = function (objectExp, objectLookup, globalVariables, dirnameO, pluginModules, callback) {
     philipsHueServer(objectExp,objectLookup, globalVariables,dirnameO, pluginModules, callback);
 };
 
-exports.send = function (objectExp,obj, pos, value, mode) {
-    
+exports.send = function (objName, ioName, value, mode) {
+    if (lights.hasOwnProperty(objName)) {
+        if (ioName == "switch" && _.isBoolean(value)) {
+            writeSwitchState(light[objName], value);
+        }
+    }
 };
 
 exports.init = function() {

@@ -127,6 +127,7 @@ HybridObjectsWebFrontend.debug = globalVariables.debug;
 
 function ObjectExp() {
     this.objectId = null;
+    this.name = "";
     this.ip = ip.address();
     this.version = "0.3.2";
     this.rotation = 0;
@@ -1321,7 +1322,8 @@ function socketServer() {
                     objSend.value = msgContent.value;
 
                     if (internalModules.hasOwnProperty(objSend.type)) {
-                        internalModules[objSend.type].send(objectExp, msgContent.obj, msgContent.pos, msgContent.value, msgContent.mode);
+                        internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode);
+                        //internalModules[objSend.type].send(objectExp, msgContent.obj, msgContent.pos, msgContent.value, msgContent.mode);
                     }
 
                     // trigger the data flow engine
@@ -1338,7 +1340,8 @@ function socketServer() {
                             objSend.value = msgContent.value;
 
                             if (internalModules.hasOwnProperty(objSend.type)) {
-                                internalModules[objSend.type].send(objectExp, msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value, msgContent.mode);
+                                internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode);
+                                //internalModules[objSend.type].send(objectExp, msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value, msgContent.mode);
                             }
 
                             //serialSender(serialPort, objectExp, msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value);

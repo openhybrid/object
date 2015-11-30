@@ -1326,8 +1326,7 @@ function socketServer() {
                     objSend.value = msgContent.value;
 
                     if (internalModules.hasOwnProperty(objSend.type)) {
-                        internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode);
-                        //internalModules[objSend.type].send(objectExp, msgContent.obj, msgContent.pos, msgContent.value, msgContent.mode);
+                        internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type, msgContent.index);
                     }
 
                     // trigger the data flow engine
@@ -1344,8 +1343,7 @@ function socketServer() {
                             objSend.value = msgContent.value;
 
                             if (internalModules.hasOwnProperty(objSend.type)) {
-                                internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode);
-                                //internalModules[objSend.type].send(objectExp, msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value, msgContent.mode);
+                                internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type, msgContent.index);
                             }
 
                             //serialSender(serialPort, objectExp, msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value);

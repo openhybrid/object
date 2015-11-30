@@ -3,20 +3,6 @@ var HybridObjectsUtilities = require(__dirname + '/HybridObjectsUtilities');
 var _ = require('lodash');
 
 
-//function ObjectValue() {
-//    this.name = "";
-//    this.value = null;
-//    this.mode = "f"; // this is for (f) floating point, (d) digital or (s) step and finally (m) media
-//    this.rotation = 0;
-//    this.x = 0;
-//    this.y = 0;
-//    this.scale = 1;
-//    this.plugin = "default";
-//    this.pluginParameter = null;
-//    this.index = null;
-//    this.type = "arduinoYun"; // todo "arduinoYun", "virtual", "edison", ... make sure to define yours in your internal_module file
-//}
-
 var objectExp;
 var objectLookup;
 var globalVariables;
@@ -34,7 +20,6 @@ var ObjectValue;
  */
 
 exports.writeIOToServer = function (objName, ioName, value, mode) {
-//exports.writeIOToServer = function (objName, ioName, value, mode, objectExp, objectLookup, globalVariables, pluginModules, callback) {
     if (globalVariables.debug) console.log("WriteIOToServer: " + objName + "  " + ioName + "  " + value + "  " + mode);
     var objKey2 = HybridObjectsUtilities.readObject(objectLookup, objName);
     var valueKey = ioName + objKey2;
@@ -52,7 +37,6 @@ exports.writeIOToServer = function (objName, ioName, value, mode) {
 
 
 exports.clearIO = function (objName, amount) {
-//exports.clearIO = function (objectExp, objName, Odirname, amount, globalVariables) {
     // check links as well
     var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
     if (globalVariables.debug) console.log("ClearIO objectID: " + objectID);
@@ -80,7 +64,6 @@ exports.clearIO = function (objName, amount) {
 
 
 exports.addIO = function (objName, ioName, index, plugin, type) {
-//exports.addIO = function (objName, ioName, index, plugin, type, objectExp, globalVariables, Odirname) {
     HybridObjectsUtilities.createFolder(objName, dirnameO, globalVariables.debug);
 
     var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
@@ -120,9 +103,22 @@ exports.addIO = function (objName, ioName, index, plugin, type) {
 
 
 exports.developerIO = function (developerValue) {
-//exports.developerIO = function (developerValue, globalVariables) {
     if (!_.isUndefined(developerValue) && !_.isNull(developerValue) && _.isBoolean(developerValue)) {
         globalVariables.developer = developerValue;
+    }
+};
+
+exports.getDebug = function () {
+    return globalVariables.debug;
+};
+
+exports.getClear = function () {
+    return globalVariables.clear;
+};
+
+exports.setDebug = function (debugValue) {
+    if (!_.isUndefined(debugValue) && !_.isNull(debugValue) && _.isBoolean(debugValue)) {
+        globalVariables.debug = debugValue;
     }
 };
 

@@ -145,7 +145,7 @@ exports.receive = function () {
     philipsHueServer();
 };
 
-exports.send = function (objName, ioName, value, mode) {
+exports.send = function (objName, ioName, value, mode, type, index) {
     if (lights.hasOwnProperty(objName)) {
         if (ioName == "switch" && _.isBoolean(value)) {
             writeSwitchState(light[objName], value);

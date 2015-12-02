@@ -249,10 +249,12 @@ var modulesList = ['base',
 
 templateModule.loadAllModules(modulesList, function () {
     // start system
-    loadHybridObjects();
-    startSystem();
+
 
 });
+
+loadHybridObjects();
+startSystem();
 
 
 // add all modules for internal communication

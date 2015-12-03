@@ -52,6 +52,15 @@ const serialBaudRate = 115200; // baud rate for connection to arudino
 const serialSource = "/dev/ttyATH0"; // this is pointing to the arduino
 const GREEN_LED = "/sys/devices/platform/leds-gpio/leds/ds:green:usb/brightness";
 
+function ArduinoIndex() {
+    this.objName;
+    this.ioName;
+    this.index;
+}
+
+var ArduinoLookup = {};
+
+
 ledBlinker();
 
 
@@ -90,37 +99,36 @@ function serialServer(serialPort) {
             switch (dataSwitch) {
                 case 0:
                     if (data === "f") {
-                        if (server.getClear()) {
+                        //if (server.getClear()) {
                             valueMode = "f";
                             dataSwitch = 1;
-                        }
+                        //}
                     }
                     else if (data === "d") {
-                        if (server.getClear()) {
+                        //if (server.getClear()) {
                             valueMode = "d";
                             dataSwitch = 1;
-                        }
+                        //}
                     }
                     else if (data === "p") { // positive step value
-                        if (server.getClear()) {
+                        //if (server.getClear()) {
                             valueMode = "p";
                             dataSwitch = 1;
-                        }
+                        //}
                     }
                     else if (data === "n") {// negative step value
-                        if (server.getClear()) {
+                        //if (server.getClear()) {
                             valueMode = "n";
                             dataSwitch = 1;
-                        }
+                        //}
                     }
                     else if (data === "a") {
-                        if (server.getDebug()) console.log("add");
-                        dataSwitch = server.getClear() ? 0 : 20;
+                        dataSwitch = 20;
                     }
                     else if (data === "okbird") {
 
   						serialPort.write(" \n");
-                        serialPort.write("okbird\n");
+  						serialPort.write("okbird\n");
                         if (server.getDebug()) console.log("ok as respond");
                         dataSwitch = 0;
                     }
@@ -159,23 +167,35 @@ function serialServer(serialPort) {
                     obj = object[1];
                     pos = object[0];
 
-                    addIO(obj, pos, arrayID, thisPlugin, "arduinoYun");
-                                    
+                    if (server.getDebug()) console.log("Add Arduino Yun");
+
+                    ArduinoLookup[obj + pos] = new ArduinoIndex();
+                    ArduinoLookup[obj + pos].objName = obj;
+                    ArduinoLookup[obj + pos].ioName = pos;
+                    ArduinoLookup[obj + pos].index = arrayID;
+
+                    server.addIO(obj, pos, thisPlugin, "arduinoYun");
+                    
                     dataSwitch = 0;
                     break;
                 case 40:
                     if (parseInt(data, 10) === 1) {
-                        developerIO(true);
+                        server.developerIO(true);
                     }
                     else {
-                        developerIO(false);
+                       server.developerIO(false);
                     }
                     dataSwitch = 0;
                     break;
                 case 50:
                     amount = parseInt(data, 10);
-
-                    clearIO(obj, amount);
+                    var ioPoints = [];
+                    for (key in ArduinoLookup) {
+                        if (ArduinoLookup[key].objName == obj) {
+                            ioPoints.push(ArduinoLookup[key].ioName);
+                        }
+                    }
+                    server.clearIO(obj, ioPoints);
                     dataSwitch = 0;
                     break;
             }
@@ -191,16 +211,17 @@ function serialServer(serialPort) {
 }
 
 
-function serialSender(serialPort, objName, ioName, value, mode, type, index) {
+function serialSender(serialPort, objName, ioName, value, mode, type) {
 
-        if (type === "arduinoYun") {
-            var yunModes = [ "f", "d", "p", "n" ];
-            if (_.includes(yunModes, mode)) {
-                serialPort.write(mode + "\n");
-            }
-            serialPort.write(index + "\n");
-            serialPort.write(value + "\n");
-        }
+    if (type === "arduinoYun") {
+        var index = ArduinoLookup[objName + ioName];
+        var yunModes = [ "f", "d", "p", "n" ];
+        if (_.includes(yunModes, mode)) {
+            serialPort.write(mode + "\n");
+         }
+         serialPort.write(index + "\n");
+         serialPort.write(value + "\n");
+    }
 }
 
 
@@ -208,8 +229,8 @@ exports.receive = function () {
     serialServer(serialPort);
 };
 
-exports.send = function (objName, ioName, value, mode, type, index) {
-    serialSender(serialPort, objName, ioName, value, mode, type, index);
+exports.send = function (objName, ioName, value, mode, type) {
+    serialSender(serialPort, objName, ioName, value, mode, type);
 };
 
 exports.init = function() {

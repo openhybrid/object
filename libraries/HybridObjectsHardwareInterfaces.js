@@ -36,7 +36,7 @@ exports.writeIOToServer = function (objName, ioName, value, mode) {
 };
 
 
-exports.clearIO = function (objName, amount) {
+exports.clearIO = function (objName, ioPoints) {
     // check links as well
     var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
     if (globalVariables.debug) console.log("ClearIO objectID: " + objectID);
@@ -44,15 +44,17 @@ exports.clearIO = function (objName, amount) {
     if (!_.isUndefined(objectID) && !_.isNull(objectID)) {
 
         if (objectID.length > 13) {
-            if (globalVariables.debug) console.log("------del---");
             for (var key in objectExp[objectID].objectValues) {
-                if (globalVariables.debug) console.log("key in: " + objectID + " " + key + " " + amount);
-                var indexKey = objectExp[objectID].objectValues[key].index;
-                if (indexKey >= amount) {
-                    if (globalVariables.debug) console.log("del:" + objectID + " " + key + " " + amount);
+                if (_.isArray(ioPoints) && _.indexOf(ioPoints, objectExp[objectID].objectValues[key].name) == -1) {
+                    if (globalVariables.debug) console.log("del:" + objectID + " " + key);
                     delete objectExp[objectID].objectValues[key];
                 }
-                if (globalVariables.debug) console.log("index is: " + indexKey);
+                //var indexKey = objectExp[objectID].objectValues[key].index;
+                //if (indexKey >= amount) {
+                //    if (globalVariables.debug) console.log("del:" + objectID + " " + key + " " + amount);
+                //    delete objectExp[objectID].objectValues[key];
+                //}
+                //if (globalVariables.debug) console.log("index is: " + indexKey);
             }
         }
     }
@@ -63,11 +65,11 @@ exports.clearIO = function (objName, amount) {
 };
 
 
-exports.addIO = function (objName, ioName, index, plugin, type) {
+exports.addIO = function (objName, ioName, plugin, type) {
     HybridObjectsUtilities.createFolder(objName, dirnameO, globalVariables.debug);
 
     var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
-    if (globalVariables.debug) console.log("philipsHue AddIO objectID: " + objectID);
+    if (globalVariables.debug) console.log("AddIO objectID: " + objectID + "   " + type);
 
     objID = ioName + objectID;
 
@@ -75,7 +77,7 @@ exports.addIO = function (objName, ioName, index, plugin, type) {
 
         if (objectID.length > 13) {
 
-            if (globalVariables.debug) console.log("I will save: " + objName + " and: " + ioName + " id: " + index);
+            if (globalVariables.debug) console.log("I will save: " + objName + " and: " + ioName);
 
             if (objectExp.hasOwnProperty(objectID)) {
                 objectExp[objectID].name = objName;
@@ -94,7 +96,6 @@ exports.addIO = function (objName, ioName, index, plugin, type) {
                 thisObj.plugin = plugin;
                 // this clames the datapoint to be of type serial....
                 thisObj.type = type;
-                thisObj.index = index;
             }
         }
     }
@@ -114,6 +115,14 @@ exports.getDebug = function () {
 
 exports.getClear = function () {
     return globalVariables.clear;
+};
+
+exports.setClear = function (clearValue) {
+    console.log("Set clear called: " + clearValue);
+    if (!_.isUndefined(clearValue) && !_.isNull(clearValue) && _.isBoolean(clearValue)) {
+        console.log("Set clear: " + clearValue);
+        globalVariables.clear = clearValue;
+    }
 };
 
 exports.setDebug = function (debugValue) {

@@ -70,9 +70,9 @@ function setup() {
     lights = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
     
     for (var key in lights) {
-        server.addIO(key, "switch", 0, "default", "philipsHue");
-        server.addIO(key, "generatorOnOff", 1, "default", "philipsHue");
-        server.clearIO(key, 2);
+        server.addIO(key, "switch", "default", "philipsHue");
+        server.addIO(key, "generatorOnOff", "default", "philipsHue");
+        server.clearIO(key, ["switch","generatorOnOff"]);
         startGeneratorOnOff(lights[key]);
     }
     

@@ -172,7 +172,6 @@ ObjectValue = function () {
     this.scale = 1;
     this.plugin = "default";
     this.pluginParameter = null;
-    this.index = null;
     this.type = "arduinoYun"; // todo "arduinoYun", "virtual", "edison", ... make sure to define yours in your internal_module file
 }
 
@@ -1326,7 +1325,7 @@ function socketServer() {
                     objSend.value = msgContent.value;
 
                     if (internalModules.hasOwnProperty(objSend.type)) {
-                        internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type, msgContent.index);
+                        internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type);
                     }
 
                     // trigger the data flow engine
@@ -1343,7 +1342,7 @@ function socketServer() {
                             objSend.value = msgContent.value;
 
                             if (internalModules.hasOwnProperty(objSend.type)) {
-                                internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type, msgContent.index);
+                                internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type);
                             }
 
                             //serialSender(serialPort, objectExp, msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value);
@@ -1462,7 +1461,7 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 
 
         if (internalModules.hasOwnProperty(objSend.type)) {
-            internalModules[objSend.type].send(objectExp[link.ObjectB].name, objSend.name, objSend.value, objSend.mode, objSend.type, objSend.index);
+            internalModules[objSend.type].send(objectExp[link.ObjectB].name, objSend.name, objSend.value, objSend.mode, objSend.type);
             //internalModules[objSend.type].send(objectExp, link.ObjectB, link.locationInB, processedValue, mode);
         }
 

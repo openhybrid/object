@@ -1462,7 +1462,8 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 
 
         if (internalModules.hasOwnProperty(objSend.type)) {
-            internalModules[objSend.type].send(objectExp, link.ObjectB, link.locationInB, processedValue, mode);
+            internalModules[objSend.type].send(objectExp[link.ObjectB].name, objSend.name, objSend.value, objSend.mode, objSend.type, objSend.index);
+            //internalModules[objSend.type].send(objectExp, link.ObjectB, link.locationInB, processedValue, mode);
         }
 
 

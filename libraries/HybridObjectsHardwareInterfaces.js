@@ -20,16 +20,16 @@ var ObjectValue;
  */
 
 exports.writeIOToServer = function (objName, ioName, value, mode) {
-    if (globalVariables.debug) console.log("WriteIOToServer: " + objName + "  " + ioName + "  " + value + "  " + mode);
+    //if (globalVariables.debug) console.log("WriteIOToServer: " + objName + "  " + ioName + "  " + value + "  " + mode);
     var objKey2 = HybridObjectsUtilities.readObject(objectLookup, objName);
     var valueKey = ioName + objKey2;
-    if (globalVariables.debug) console.log("ObjectKey: " + objKey2 + "   ValueKey: " + valueKey);
+    //if (globalVariables.debug) console.log("ObjectKey: " + objKey2 + "   ValueKey: " + valueKey);
 
     if (objectExp.hasOwnProperty(objKey2)) {
         if (objectExp[objKey2].objectValues.hasOwnProperty(valueKey)) {
             objectExp[objKey2].objectValues[valueKey].value = value;
             objectExp[objKey2].objectValues[valueKey].mode = mode;
-            if (globalVariables.debug) console.log("Calling objectEngine");
+            //if (globalVariables.debug) console.log("Calling objectEngine");
             callback(objKey2, valueKey, objectExp, pluginModules);
         }
     }

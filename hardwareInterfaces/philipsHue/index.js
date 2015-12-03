@@ -146,9 +146,10 @@ exports.receive = function () {
 };
 
 exports.send = function (objName, ioName, value, mode, type, index) {
+    console.log("Incoming: " + objName + "  " + ioName + "  " + value + "  " + mode);
     if (lights.hasOwnProperty(objName)) {
         if (ioName == "switch" && _.isBoolean(value)) {
-            writeSwitchState(light[objName], value);
+            writeSwitchState(lights[objName], value);
         }
     }
 };

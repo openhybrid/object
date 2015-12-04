@@ -179,9 +179,9 @@ function serialServer(serialPort) {
                     dataSwitch = 0;
                     break;
                 case 40:
-                    if (parseInt(data, 10) === 1) {
-                        server.enableDeveloperMode(true);
-                    }
+                    //if (parseInt(data, 10) === 1) {
+                    //    server.enableDeveloperMode(true);
+                    //}
                     dataSwitch = 0;
                     break;
                 case 50:

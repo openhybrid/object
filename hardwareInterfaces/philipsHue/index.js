@@ -68,7 +68,6 @@ function Light() {
 
 function setup() {
     lights = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
-    server.enableDeveloperMode();
     
     for (var key in lights) {
         server.addIO(key, "switch", "default", "philipsHue");

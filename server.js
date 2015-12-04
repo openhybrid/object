@@ -71,7 +71,6 @@
  **********************************************************************************************************************/
 
 var globalVariables = {
-    clear: false,    // stops or starts the system
     developer: true, // show developer UI
     debug: true      // debug messages to console
 };
@@ -273,10 +272,17 @@ var tempFilesInternal = fs.readdirSync(internalPath).filter(function (file) {
 while (tempFilesInternal[0][0] === ".") {
     tempFilesInternal.splice(0, 1);
 }
-// add all plugins to the pluginModules object.
-for (var i = 0; i < tempFilesInternal.length; i++) {
-    internalModules[tempFilesInternal[i]] = require(internalPath + "/" + tempFilesInternal[i] + "/index.js");
+// add all plugins to the pluginModules object. Iterate backwards because splice works inplace
+for (var i = tempFiles.length - 1; i >= 0; i--) {
+    //check if hardwareInterface is enabled, if it is, add it to the internalModules
+    if (require(internalPath + "/" + tempFilesInternal[i] + "/index.js").enabled) {
+        internalModules[tempFilesInternal[i]] = require(internalPath + "/" + tempFilesInternal[i] + "/index.js");
+    } else {
+        console.log("Removing " + tempFilesInternal[i]);
+        tempFilesInternal.splice(i, 1);
+    }
 }
+
 /*
  for (var i = 0; i < tempFilesInternal.length; i++) {
  internalModules[tempFilesInternal[i]].debug(globalVariables.debug);
@@ -286,6 +292,7 @@ for (var i = 0; i < tempFilesInternal.length; i++) {
 for (var i = 0; i < tempFilesInternal.length; i++) {
     //internalModules[tempFilesInternal[i]].receive(objectExp, objectLookup, globalVariables, __dirname, pluginModules, function (objKey2, valueKey, objectExp, pluginModules) {
     //    objectEngine(objKey2, valueKey, objectExp, pluginModules);
+    console.log("Calling " + tempFilesInternal[i] + ".receive()");
     internalModules[tempFilesInternal[i]].receive();
 }
 

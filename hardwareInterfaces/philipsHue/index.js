@@ -68,11 +68,12 @@ function Light() {
 
 function setup() {
     lights = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
+    server.enableDeveloperMode();
     
     for (var key in lights) {
         server.addIO(key, "switch", "default", "philipsHue");
         server.addIO(key, "generatorOnOff", "default", "philipsHue");
-        server.clearIO(key, ["switch","generatorOnOff"]);
+        server.clearIO("philipsHue");
         startGeneratorOnOff(lights[key]);
     }
     
@@ -145,7 +146,7 @@ exports.receive = function () {
     philipsHueServer();
 };
 
-exports.send = function (objName, ioName, value, mode, type, index) {
+exports.send = function (objName, ioName, value, mode, type) {
     console.log("Incoming: " + objName + "  " + ioName + "  " + value + "  " + mode);
     if (lights.hasOwnProperty(objName)) {
         if (ioName == "switch" && _.isBoolean(value)) {
@@ -156,3 +157,5 @@ exports.send = function (objName, ioName, value, mode, type, index) {
 
 exports.init = function() {
 };
+
+exports.enabled = true;

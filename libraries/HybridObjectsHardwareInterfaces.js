@@ -11,6 +11,21 @@ var pluginModules;
 var callback;
 var ObjectValue;
 
+function HardwareInterface() {
+    this.hybridObjects = {};
+}
+
+function HybridObject(objName) {
+    this.name = objName;
+    this.ioPoints = {};
+}
+
+function IOPoint(ioName) {
+    this.name = ioName;
+}
+
+var hardwareInterfaces = {};
+
 /*
  *
  *
@@ -36,31 +51,22 @@ exports.writeIOToServer = function (objName, ioName, value, mode) {
 };
 
 
-exports.clearIO = function (objName, ioPoints) {
-    // check links as well
-    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
-    if (globalVariables.debug) console.log("ClearIO objectID: " + objectID);
+exports.clearIO = function (type) {
+    if(hardwareInterfaces.hasOwnProperty(type)) {
+        for (var objName in hardwareInterfaces[type].hybridObjects) {
+            objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
 
-    if (!_.isUndefined(objectID) && !_.isNull(objectID)) {
-
-        if (objectID.length > 13) {
-            for (var key in objectExp[objectID].objectValues) {
-                if (_.isArray(ioPoints) && _.indexOf(ioPoints, objectExp[objectID].objectValues[key].name) == -1) {
-                    if (globalVariables.debug) console.log("del:" + objectID + " " + key);
-                    delete objectExp[objectID].objectValues[key];
+            if (!_.isUndefined(objectID) && !_.isNull(objectID) && objectID.length > 13) {
+                for (var key in objectExp[objectID].objectValues) {
+                    if (!hardwareInterfaces[type].hybridObjects[objName].ioPoints.hasOwnProperty(objectExp[objectID].objectValues[key].name)) {
+                        delete objectExp[objectID].objectValues[key];
+                    }
                 }
-                //var indexKey = objectExp[objectID].objectValues[key].index;
-                //if (indexKey >= amount) {
-                //    if (globalVariables.debug) console.log("del:" + objectID + " " + key + " " + amount);
-                //    delete objectExp[objectID].objectValues[key];
-                //}
-                //if (globalVariables.debug) console.log("index is: " + indexKey);
+
             }
+
         }
     }
-    objectID = undefined;
-    globalVariables.clear = true;
-
     if (globalVariables.debug) console.log("it's all cleared");
 };
 
@@ -96,6 +102,18 @@ exports.addIO = function (objName, ioName, plugin, type) {
                 thisObj.plugin = plugin;
                 // this clames the datapoint to be of type serial....
                 thisObj.type = type;
+
+                if(!hardwareInterfaces.hasOwnProperty(type)){
+                    hardwareInterfaces[type] = new HardwareInterface();
+                }
+                
+                if(!hardwareInterfaces[type].hybridObjects.hasOwnProperty(objName)){
+                    hardwareInterfaces[type].hybridObjects[objName] = new HybridObject(objName);
+                }
+               
+                if(!hardwareInterfaces[type].hybridObjects[objName].ioPoints.hasOwnProperty(ioName)){
+                    hardwareInterfaces[type].hybridObjects[objName].ioPoints[ioName] = new IOPoint(ioName);
+                }
             }
         }
     }
@@ -103,32 +121,13 @@ exports.addIO = function (objName, ioName, plugin, type) {
 };
 
 
-exports.developerIO = function (developerValue) {
-    if (!_.isUndefined(developerValue) && !_.isNull(developerValue) && _.isBoolean(developerValue)) {
-        globalVariables.developer = developerValue;
-    }
+exports.enableDeveloperMode = function () {
+    console.log("Enable developer mode");
+        globalVariables.developer = true;
 };
 
 exports.getDebug = function () {
     return globalVariables.debug;
-};
-
-exports.getClear = function () {
-    return globalVariables.clear;
-};
-
-exports.setClear = function (clearValue) {
-    console.log("Set clear called: " + clearValue);
-    if (!_.isUndefined(clearValue) && !_.isNull(clearValue) && _.isBoolean(clearValue)) {
-        console.log("Set clear: " + clearValue);
-        globalVariables.clear = clearValue;
-    }
-};
-
-exports.setDebug = function (debugValue) {
-    if (!_.isUndefined(debugValue) && !_.isNull(debugValue) && _.isBoolean(debugValue)) {
-        globalVariables.debug = debugValue;
-    }
 };
 
 exports.setup = function (objExp, objLookup, glblVars, dir, plugins, cb, objValue) {

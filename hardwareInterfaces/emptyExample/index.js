@@ -44,8 +44,7 @@
  */
 
 
-var fs = require('fs');
-var HybridObjectsUtilities = require(__dirname+'/../../libraries/HybridObjectsUtilities');
+
 
 /**
  * @desc prototype for an interface input. The input is something like a server that waits for incoming data.
@@ -60,7 +59,7 @@ var HybridObjectsUtilities = require(__dirname+'/../../libraries/HybridObjectsUt
  * @note make sure that the name of the new object is added to objectLookup. The ID is the object name + uuidTime() from the HybridObjectsUtilities file.
  **/
 
-exports.receive= function (objectExp, objectLookup, clear, developer, directoryName, callback){
+exports.receive= function (){
 
     // todo simplify the API to "clear", "add", "write", "developer"
 
@@ -74,7 +73,7 @@ exports.receive= function (objectExp, objectLookup, clear, developer, directoryN
  * @param {number} value defines the actual value that is send to the object.
  **/
 
-exports.send= function(objectExp, object, position, value){
+exports.send = function (objName, ioName, value, mode, type) {
 
 };
 
@@ -87,11 +86,4 @@ exports.init= function(){
 
 };
 
-/**
- * @desc debug switch.
- * @param {boolean} debugEx represents if debugging is switched on in the main programm.
- **/
-
-exports.debug = function  (debugE){
-    debug = debugE;
-};
+exports.enabled = false;

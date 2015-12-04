@@ -180,10 +180,7 @@ function serialServer(serialPort) {
                     break;
                 case 40:
                     if (parseInt(data, 10) === 1) {
-                        server.developerIO(true);
-                    }
-                    else {
-                       server.developerIO(false);
+                        server.enableDeveloperMode(true);
                     }
                     dataSwitch = 0;
                     break;
@@ -195,7 +192,7 @@ function serialServer(serialPort) {
                             ioPoints.push(ArduinoLookup[key].ioName);
                         }
                     }
-                    server.clearIO(obj, ioPoints);
+                    server.clearIO("arduinoYun");
                     dataSwitch = 0;
                     break;
             }
@@ -237,6 +234,8 @@ exports.init = function() {
 	serialPort.write(" \n");
     serialPort.write("okbird\n");
 };
+
+exports.enabled = false;
 
 function noop_cb() {}
 

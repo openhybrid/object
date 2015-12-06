@@ -33,6 +33,7 @@
  *             ╩ ╩ ┴ └─┘┴└─┴─┴┘  ╚═╝└─┘└┘└─┘└─┘ ┴ └─┘
  *
  * Created by Valentin on 10/22/14.
+ * Modified by Carsten on 12/06/15.
  *
  * Copyright (c) 2015 Valentin Heun
  *
@@ -71,7 +72,7 @@
  **********************************************************************************************************************/
 
 var globalVariables = {
-    developer: true, // show developer UI
+    webdeveloper: true, // show developer web GUI
     debug: true      // debug messages to console
 };
 
@@ -137,7 +138,7 @@ function ObjectExp() {
     this.visible = false;
     this.visibleText = false;
     this.visibleEditing = false;
-    this.developer = false;
+    this.developer = true;
     this.matrix3dMemory = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // TODO use this to store UI interface for image later.
     this.objectLinks = {}; // Array of ObjectLink()
     this.objectValues = {}; // Array of ObjectValue()
@@ -469,7 +470,7 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
                 //  if (globalVariables.debug) console.log("Sending beats... Content: " + JSON.stringify({id: thisId, ip: thisIp}));
 
                 // this is an ugly hack to sync each object with being a developer object
-                objectExp[thisId].developer = globalVariables.developer;
+                //objectExp[thisId].developer = globalVariables.developer;
 
                 client.send(message, 0, message.length, PORT, HOST, function (err) {
                     if (err) {
@@ -593,7 +594,7 @@ function objectWebServer() {
     // devine a couple of static directory routs
     webServer.use("/obj", express.static(__dirname + '/objects/'));
 
-    if (globalVariables.developer === true) {
+    if (globalVariables.webdeveloper === true) {
         webServer.use("/public", express.static(__dirname + '/libraries/webInterface/'));
         webServer.use(express.static(__dirname + '/libraries/webInterface/'));
     }
@@ -833,7 +834,7 @@ function objectWebServer() {
     // ****************************************************************************************************************
 
 
-    if (globalVariables.developer === true) {
+    if (globalVariables.webdeveloper === true) {
 
         // sends the info page for the object :id
         // ****************************************************************************************************************

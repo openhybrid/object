@@ -180,7 +180,9 @@ function serialServer(serialPort) {
                     break;
                 case 40:
                     //if (parseInt(data, 10) === 1) {
-                    //    server.enableDeveloperMode(true);
+                    //    server.developerOn("");
+                    //} else {
+                    //    server.developerOff("");
                     //}
                     dataSwitch = 0;
                     break;

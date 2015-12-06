@@ -48,15 +48,7 @@
 
 /**
  * @desc prototype for an interface input. The input is something like a server that waits for incoming data.
- * @param {object} objectExp is the object that holds all data about the object. - check structure in main program.
- * @param {object} objectLookup holds object names with their ids
- * @param {boolean} clear tells the system to hold until new data is written and then it continues again.
- * @param {boolean} developer is set to true means that the developer tools are accessible.
- * @param {string} directoryName is set to the root of the main program
- * @param {function} callback sends back the values that just has been changed and should be run with the engine.
- * @note you have to give the call back an object and possition like so: callback(objKey2, valueKey);
- * @note when adding a new object to objectExp. make sure that the object has the type of your folder name.
- * @note make sure that the name of the new object is added to objectLookup. The ID is the object name + uuidTime() from the HybridObjectsUtilities file.
+ * 
  **/
 
 exports.receive= function (){

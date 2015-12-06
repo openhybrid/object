@@ -1,4 +1,13 @@
-﻿/**
+﻿/*
+ *   Created by Carsten on 12/06/2015.
+ *   Copyright (c) 2015 Carsten Strunk
+ *
+ *   This Source Code Form is subject to the terms of the Mozilla Public
+ *   License, v. 2.0. If a copy of the MPL was not distributed with this
+ *   file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+/*
  * Hybrid Objecst Hardware Interface API
  * 
  * This API is intended for users who want to create their own hardware interfaces.
@@ -148,10 +157,19 @@ exports.addIO = function (objName, ioName, plugin, type) {
  * @desc getDeveloperMode() checks if developer mode is turned on
  * @return {boolean} true if developer mode is on, false otherwise
 **/
-exports.getDeveloperMode = function () {
-        return globalVariables.developer;
+exports.developerOn = function (objName) {
+    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
+    if (!_.isUndefined(objectID) && !_.isNull(objectID) && objectID.length > 13 && objectExp.hasOwnProperty(objectID)) {
+        objectExp[objectID].developer = true;
+    }
 };
 
+exports.developerOff = function (objName) {
+    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
+    if (!_.isUndefined(objectID) && !_.isNull(objectID) && objectID.length > 13 && objectExp.hasOwnProperty(objectID)) {
+        objectExp[objectID].developer = false;
+    }
+};
 
 /**
  * @desc getDebug() checks if debug mode is turned on

@@ -154,8 +154,8 @@ exports.addIO = function (objName, ioName, plugin, type) {
 };
 
 /**
- * @desc getDeveloperMode() checks if developer mode is turned on
- * @return {boolean} true if developer mode is on, false otherwise
+ * @desc developerOn() Enables the developer mode for the specified HybridObject
+ * @param {string} objName The name of the HybridObject
 **/
 exports.developerOn = function (objName) {
     var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
@@ -164,6 +164,10 @@ exports.developerOn = function (objName) {
     }
 };
 
+/**
+ * @desc developerOff() Disables the developer mode for the specified HybridObject
+ * @param {string} objName The name of the HybridObject
+**/
 exports.developerOff = function (objName) {
     var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
     if (!_.isUndefined(objectID) && !_.isNull(objectID) && objectID.length > 13 && objectExp.hasOwnProperty(objectID)) {

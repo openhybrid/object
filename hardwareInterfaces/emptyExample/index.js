@@ -33,6 +33,7 @@
  *             ╩ ╩ ┴ └─┘┴└─┴─┴┘  ╚═╝└─┘└┘└─┘└─┘ ┴ └─┘
  *
  * Created by Valentin on 10/22/14.
+ * Modified by Carsten on 12/06/15.
  *
  * Copyright (c) 2015 Valentin Heun
  *
@@ -47,24 +48,23 @@
 
 
 /**
- * @desc prototype for an interface input. The input is something like a server that waits for incoming data.
- * 
+ * @desc This function is called once by the server. Place calls to addIO(), clearIO(), developerOn(), developerOff(), writeIOToServer() here.
+ *       Start the event loop of your hardware interface in here. Call clearIO() after you have added all the IO points with addIO() calls.
  **/
 
 exports.receive= function (){
 
-    // todo simplify the API to "clear", "add", "write", "developer"
-
 };
 
 /**
- * @desc prototype for an interface output. The output is something like a sender that sends present data to an external source.
- * @param {object} objectExp is the object that holds all data about the object. - check structure in main program.
- * @param {string} object defines the object that the output should change.
- * @param {string} position defines the data point within the object
- * @param {number} value defines the actual value that is send to the object.
+ * @desc This function is called by the server whenever data for one of your HybridObject's IO points arrives. Parse the input and write the
+ *       value to your hardware.
+ * @param {string} objName Name of the HybridObject
+ * @param {string} ioName Name of the IO point
+ * @param {value} value The value
+ * @param {string} mode Specifies the datatype of value
+ * @param {type} type The type
  **/
-
 exports.send = function (objName, ioName, value, mode, type) {
 
 };
@@ -78,4 +78,7 @@ exports.init= function(){
 
 };
 
+/**
+ * Set to true to enable the hardware interface
+ **/
 exports.enabled = false;

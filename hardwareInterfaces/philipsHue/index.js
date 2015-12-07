@@ -41,6 +41,7 @@ function Light() {
  * @desc setup() runs once, adds and clears the IO points
  **/
 function setup() {
+    server.developerOn();
     //load the config file
     lights = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
     

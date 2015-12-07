@@ -72,7 +72,7 @@
  **********************************************************************************************************************/
 
 var globalVariables = {
-    webdeveloper: true, // show developer web GUI
+    developer: true, // show developer web GUI
     debug: true      // debug messages to console
 };
 
@@ -138,7 +138,7 @@ function ObjectExp() {
     this.visible = false;
     this.visibleText = false;
     this.visibleEditing = false;
-    this.developer = true;
+    this.developer = false;
     this.matrix3dMemory = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // TODO use this to store UI interface for image later.
     this.objectLinks = {}; // Array of ObjectLink()
     this.objectValues = {}; // Array of ObjectValue()
@@ -279,21 +279,13 @@ for (var i = tempFiles.length - 1; i >= 0; i--) {
     if (require(internalPath + "/" + tempFilesInternal[i] + "/index.js").enabled) {
         internalModules[tempFilesInternal[i]] = require(internalPath + "/" + tempFilesInternal[i] + "/index.js");
     } else {
-        console.log("Removing " + tempFilesInternal[i]);
         tempFilesInternal.splice(i, 1);
     }
 }
 
-/*
- for (var i = 0; i < tempFilesInternal.length; i++) {
- internalModules[tempFilesInternal[i]].debug(globalVariables.debug);
- }*/
 
 // starting the internal servers (receive)
 for (var i = 0; i < tempFilesInternal.length; i++) {
-    //internalModules[tempFilesInternal[i]].receive(objectExp, objectLookup, globalVariables, __dirname, pluginModules, function (objKey2, valueKey, objectExp, pluginModules) {
-    //    objectEngine(objKey2, valueKey, objectExp, pluginModules);
-    console.log("Calling " + tempFilesInternal[i] + ".receive()");
     internalModules[tempFilesInternal[i]].receive();
 }
 
@@ -594,7 +586,7 @@ function objectWebServer() {
     // devine a couple of static directory routs
     webServer.use("/obj", express.static(__dirname + '/objects/'));
 
-    if (globalVariables.webdeveloper === true) {
+    if (globalVariables.developer === true) {
         webServer.use("/public", express.static(__dirname + '/libraries/webInterface/'));
         webServer.use(express.static(__dirname + '/libraries/webInterface/'));
     }
@@ -834,7 +826,7 @@ function objectWebServer() {
     // ****************************************************************************************************************
 
 
-    if (globalVariables.webdeveloper === true) {
+    if (globalVariables.developer === true) {
 
         // sends the info page for the object :id
         // ****************************************************************************************************************

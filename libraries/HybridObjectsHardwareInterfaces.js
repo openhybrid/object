@@ -119,7 +119,9 @@ exports.addIO = function (objName, ioName, plugin, type) {
             if (globalVariables.debug) console.log("I will save: " + objName + " and: " + ioName);
 
             if (objectExp.hasOwnProperty(objectID)) {
+                objectExp[objectID].developer = globalVariables.developer;
                 objectExp[objectID].name = objName;
+
                 if (!objectExp[objectID].objectValues.hasOwnProperty(objID)) {
                     var thisObject = objectExp[objectID].objectValues[objID] = new ObjectValue();
                     thisObject.x = HybridObjectsUtilities.randomIntInc(0, 200) - 100;
@@ -154,26 +156,16 @@ exports.addIO = function (objName, ioName, plugin, type) {
 };
 
 /**
- * @desc developerOn() Enables the developer mode for the specified HybridObject
- * @param {string} objName The name of the HybridObject
+ * @desc developerOn() Enables the developer mode for all HybridObjects and enables the developer web interface
 **/
-exports.developerOn = function (objName) {
-    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
-    if (!_.isUndefined(objectID) && !_.isNull(objectID) && objectID.length > 13 && objectExp.hasOwnProperty(objectID)) {
+exports.developerOn = function () {
+    globalVariables.developer = true;
+    for (var objectID in objectExp) {
         objectExp[objectID].developer = true;
     }
 };
 
-/**
- * @desc developerOff() Disables the developer mode for the specified HybridObject
- * @param {string} objName The name of the HybridObject
-**/
-exports.developerOff = function (objName) {
-    var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
-    if (!_.isUndefined(objectID) && !_.isNull(objectID) && objectID.length > 13 && objectExp.hasOwnProperty(objectID)) {
-        objectExp[objectID].developer = false;
-    }
-};
+
 
 /**
  * @desc getDebug() checks if debug mode is turned on

@@ -33,6 +33,7 @@
  *             ╩ ╩ ┴ └─┘┴└─┴─┴┘  ╚═╝└─┘└┘└─┘└─┘ ┴ └─┘
  *
  * Created by Valentin on 10/22/14.
+ * Modified by Carsten on 12/06/15.
  *
  * Copyright (c) 2015 Valentin Heun
  *
@@ -44,37 +45,27 @@
  */
 
 
-var fs = require('fs');
-var HybridObjectsUtilities = require(__dirname+'/../../libraries/HybridObjectsUtilities');
+
 
 /**
- * @desc prototype for an interface input. The input is something like a server that waits for incoming data.
- * @param {object} objectExp is the object that holds all data about the object. - check structure in main program.
- * @param {object} objectLookup holds object names with their ids
- * @param {boolean} clear tells the system to hold until new data is written and then it continues again.
- * @param {boolean} developer is set to true means that the developer tools are accessible.
- * @param {string} directoryName is set to the root of the main program
- * @param {function} callback sends back the values that just has been changed and should be run with the engine.
- * @note you have to give the call back an object and possition like so: callback(objKey2, valueKey);
- * @note when adding a new object to objectExp. make sure that the object has the type of your folder name.
- * @note make sure that the name of the new object is added to objectLookup. The ID is the object name + uuidTime() from the HybridObjectsUtilities file.
+ * @desc This function is called once by the server. Place calls to addIO(), clearIO(), developerOn(), developerOff(), writeIOToServer() here.
+ *       Start the event loop of your hardware interface in here. Call clearIO() after you have added all the IO points with addIO() calls.
  **/
 
-exports.receive= function (objectExp, objectLookup, clear, developer, directoryName, callback){
-
-    // todo simplify the API to "clear", "add", "write", "developer"
+exports.receive= function (){
 
 };
 
 /**
- * @desc prototype for an interface output. The output is something like a sender that sends present data to an external source.
- * @param {object} objectExp is the object that holds all data about the object. - check structure in main program.
- * @param {string} object defines the object that the output should change.
- * @param {string} position defines the data point within the object
- * @param {number} value defines the actual value that is send to the object.
+ * @desc This function is called by the server whenever data for one of your HybridObject's IO points arrives. Parse the input and write the
+ *       value to your hardware.
+ * @param {string} objName Name of the HybridObject
+ * @param {string} ioName Name of the IO point
+ * @param {value} value The value
+ * @param {string} mode Specifies the datatype of value
+ * @param {type} type The type
  **/
-
-exports.send= function(objectExp, object, position, value){
+exports.send = function (objName, ioName, value, mode, type) {
 
 };
 
@@ -88,10 +79,6 @@ exports.init= function(){
 };
 
 /**
- * @desc debug switch.
- * @param {boolean} debugEx represents if debugging is switched on in the main programm.
+ * Set to true to enable the hardware interface
  **/
-
-exports.debug = function  (debugE){
-    debug = debugE;
-};
+exports.enabled = false;

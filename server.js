@@ -33,6 +33,7 @@
  *             ╩ ╩ ┴ └─┘┴└─┴─┴┘  ╚═╝└─┘└┘└─┘└─┘ ┴ └─┘
  *
  * Created by Valentin on 10/22/14.
+ * Modified by Carsten on 12/06/15.
  *
  * Copyright (c) 2015 Valentin Heun
  *
@@ -71,8 +72,7 @@
  **********************************************************************************************************************/
 
 var globalVariables = {
-    clear: false,    // stops or starts the system
-    developer: true, // show developer UI
+    developer: true, // show developer web GUI
     debug: true      // debug messages to console
 };
 
@@ -112,6 +112,7 @@ var formidable = require('formidable'); // Multiple file upload library
 // additional required code
 var HybridObjectsUtilities   = require(__dirname + '/libraries/HybridObjectsUtilities');
 var HybridObjectsWebFrontend = require(__dirname + '/libraries/HybridObjectsWebFrontend');
+var HybridObjectsHardwareInterfaces = require(__dirname + '/libraries/HybridObjectsHardwareInterfaces');
 var templateModule           = require(__dirname + '/libraries/templateModule');
 
 // Set web frontend debug to inherit from global debug
@@ -127,6 +128,7 @@ HybridObjectsWebFrontend.debug = globalVariables.debug;
 
 function ObjectExp() {
     this.objectId = null;
+    this.name = "";
     this.ip = ip.address();
     this.version = "0.3.2";
     this.rotation = 0;
@@ -160,7 +162,7 @@ function ObjectLink() {
  * @desc Constructor for each object value
  **/
 
-function ObjectValue() {
+ObjectValue = function () {
     this.name = "";
     this.value = null;
     this.mode = "f"; // this is for (f) floating point, (d) digital or (s) step and finally (m) media
@@ -170,7 +172,6 @@ function ObjectValue() {
     this.scale = 1;
     this.plugin = "default";
     this.pluginParameter = null;
-    this.index = null;
     this.type = "arduinoYun"; // todo "arduinoYun", "virtual", "edison", ... make sure to define yours in your internal_module file
 }
 
@@ -249,13 +250,18 @@ var modulesList = ['base',
 
 templateModule.loadAllModules(modulesList, function () {
     // start system
-
+    //if (globalVariables.debug) console.log("Starting System: ");
+    //loadHybridObjects();
+    //startSystem();
 
 });
 
+if (globalVariables.debug) console.log("Starting System: ");
+HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, __dirname, pluginModules, function (objKey2, valueKey, objectExp, pluginModules) {
+    objectEngine(objKey2, valueKey, objectExp, pluginModules);
+}, ObjectValue);
 loadHybridObjects();
 startSystem();
-
 
 // add all modules for internal communication
 
@@ -267,20 +273,20 @@ var tempFilesInternal = fs.readdirSync(internalPath).filter(function (file) {
 while (tempFilesInternal[0][0] === ".") {
     tempFilesInternal.splice(0, 1);
 }
-// add all plugins to the pluginModules object.
-for (var i = 0; i < tempFilesInternal.length; i++) {
-    internalModules[tempFilesInternal[i]] = require(internalPath + "/" + tempFilesInternal[i] + "/index.js");
+// add all plugins to the pluginModules object. Iterate backwards because splice works inplace
+for (var i = tempFiles.length - 1; i >= 0; i--) {
+    //check if hardwareInterface is enabled, if it is, add it to the internalModules
+    if (require(internalPath + "/" + tempFilesInternal[i] + "/index.js").enabled) {
+        internalModules[tempFilesInternal[i]] = require(internalPath + "/" + tempFilesInternal[i] + "/index.js");
+    } else {
+        tempFilesInternal.splice(i, 1);
+    }
 }
-/*
- for (var i = 0; i < tempFilesInternal.length; i++) {
- internalModules[tempFilesInternal[i]].debug(globalVariables.debug);
- }*/
+
 
 // starting the internal servers (receive)
 for (var i = 0; i < tempFilesInternal.length; i++) {
-    internalModules[tempFilesInternal[i]].receive(objectExp, objectLookup, globalVariables, __dirname, pluginModules, function (objKey2, valueKey, objectExp, pluginModules) {
-        objectEngine(objKey2, valueKey, objectExp, pluginModules);
-    });
+    internalModules[tempFilesInternal[i]].receive();
 }
 
 if (globalVariables.debug) console.log("found " + tempFilesInternal.length + " internal server");
@@ -303,7 +309,7 @@ function getFileExtension(fileName) {
  * @desc Add objects from the objects folder to the system
  **/
 function loadHybridObjects() {
-
+    if (globalVariables.debug) console.log("Enter loadHybridObjects");
     // check for objects in the objects folder by reading the objects directory content.
     // get all directory names within the objects directory
     var tempFiles = fs.readdirSync(objectPath).filter(function (file) {
@@ -321,6 +327,7 @@ function loadHybridObjects() {
 
     for (var i = 0; i < tempFiles.length; i++) {
         var tempFolderName = HybridObjectsUtilities.getObjectIdFromTarget(tempFiles[i], __dirname);
+        if (globalVariables.debug) console.log("TempFolderName: " + tempFolderName);
 
         if (tempFolderName !== null) {
             // fill objectExp with objects named by the folders in objects
@@ -455,7 +462,7 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
                 //  if (globalVariables.debug) console.log("Sending beats... Content: " + JSON.stringify({id: thisId, ip: thisIp}));
 
                 // this is an ugly hack to sync each object with being a developer object
-                objectExp[thisId].developer = globalVariables.developer;
+                //objectExp[thisId].developer = globalVariables.developer;
 
                 client.send(message, 0, message.length, PORT, HOST, function (err) {
                     if (err) {
@@ -1318,7 +1325,7 @@ function socketServer() {
                     objSend.value = msgContent.value;
 
                     if (internalModules.hasOwnProperty(objSend.type)) {
-                        internalModules[objSend.type].send(objectExp, msgContent.obj, msgContent.pos, msgContent.value, msgContent.mode);
+                        internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type);
                     }
 
                     // trigger the data flow engine
@@ -1335,7 +1342,7 @@ function socketServer() {
                             objSend.value = msgContent.value;
 
                             if (internalModules.hasOwnProperty(objSend.type)) {
-                                internalModules[objSend.type].send(objectExp, msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value, msgContent.mode);
+                                internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type);
                             }
 
                             //serialSender(serialPort, objectExp, msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value);
@@ -1454,7 +1461,8 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 
 
         if (internalModules.hasOwnProperty(objSend.type)) {
-            internalModules[objSend.type].send(objectExp, link.ObjectB, link.locationInB, processedValue, mode);
+            internalModules[objSend.type].send(objectExp[link.ObjectB].name, objSend.name, objSend.value, objSend.mode, objSend.type);
+            //internalModules[objSend.type].send(objectExp, link.ObjectB, link.locationInB, processedValue, mode);
         }
 
 
@@ -1593,3 +1601,6 @@ function socketUpdaterInterval() {
         socketUpdater();
     }, socketUpdateInterval);
 }
+
+
+

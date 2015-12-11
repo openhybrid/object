@@ -1,0 +1,10 @@
+{
+  "name": "phillipsHue",
+  "version": "0.0.1",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Carsten Strunk <strunk@teco.edu> (http://teco.edu/)",
+  "license": "MIT"
+}

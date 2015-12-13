@@ -94,7 +94,7 @@ const objectInterfaceFolder = "/";                       // the level on which t
  **********************************************************************************************************************/
 
 var _ = require('lodash');
-var lj = require('longjohn');
+#var lj = require('longjohn');
 var fs = require('fs');       // Filesystem library
 var dgram = require('dgram'); // UDP Broadcasting library
 var ip = require("ip");       // get the device IP address library

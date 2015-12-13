@@ -94,6 +94,7 @@ const objectInterfaceFolder = "/";                       // the level on which t
  **********************************************************************************************************************/
 
 var _ = require('lodash');
+var lj = require('longjohn');
 var fs = require('fs');       // Filesystem library
 var dgram = require('dgram'); // UDP Broadcasting library
 var ip = require("ip");       // get the device IP address library
@@ -274,7 +275,7 @@ while (tempFilesInternal[0][0] === ".") {
     tempFilesInternal.splice(0, 1);
 }
 // add all plugins to the pluginModules object. Iterate backwards because splice works inplace
-for (var i = tempFiles.length - 1; i >= 0; i--) {
+for (var i = tempFilesInternal.length - 1; i >= 0; i--) {
     //check if hardwareInterface is enabled, if it is, add it to the internalModules
     if (require(internalPath + "/" + tempFilesInternal[i] + "/index.js").enabled) {
         internalModules[tempFilesInternal[i]] = require(internalPath + "/" + tempFilesInternal[i] + "/index.js");
@@ -371,7 +372,7 @@ function loadHybridObjects() {
             }
 
         } else {
-            if (globalVariables.debug) console.log(" object " + tempFolderName + " has no marker yet");
+            if (globalVariables.debug) console.log(" object " + tempFiles[i] + " has no marker yet");
         }
     }
 

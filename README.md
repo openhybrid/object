@@ -311,13 +311,13 @@ Arduino Yún's Linux side.
 A this point, you should be able to navigate to port 8080 on your device and find the Object dashboard.
 
 ## Enable led feedback on Raspberry Pi
-By default, the green led on the Pi indicates SD-card activity.  You can choose to repurpose this led as an indicator that OpenHybrid is running on your Pi.  
+By default, the green led on the Pi indicates SD-card activity.  You can choose to repurpose this led to indicate that OpenHybrid is active.  
 
-If you choose to do so, you must grant OpenHybrid access to modify the led's brightness like this.
-    ````
-    sudo chmod oug+rw /sys/class/leds/led0/brightness
-    ````
+To do so, grant OpenHybrid access to modify the led's brightness.
+````
+sudo chmod oug+rw /sys/class/leds/led0/brightness
+````
 
-Once write access has been granted, OpenHybrid will indicate that it is running by causing the green LED to slowly blink off and on.
+Once write has been granted, OpenHybrid will indicate that it is running by causing the green LED to blink every 4 seconds or so.  Note that this change must be made every time the Pi boots up, so if it's a feature that you like, you may want to include this step in a boot script. 
 
 

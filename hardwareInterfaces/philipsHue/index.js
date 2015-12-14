@@ -155,4 +155,4 @@ exports.init = function() {
 };
 
 //Enable this hardware interface
-exports.enabled = true;
+exports.enabled = false;

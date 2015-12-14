@@ -262,3 +262,62 @@ uci commit
 That's it. Restart the Linux part of Yún (reset button near LEDs). After reboot, if you run 
 `free -m` you should see the swap file loaded. You have successfully expanded the RAM on your 
 Arduino Yún's Linux side.
+
+
+# How to install on a Raspberry Pi
+
+1. Use [NOOBS](https://www.raspberrypi.org/downloads/noobs/) to install the base Raspian image.
+
+1. Update the system software.
+    ````
+    sudo apt-get update
+    sudo apt-get upgrade -y
+    ````
+
+1. Free up the Pi's serial communication channel.  By default, the Raspian OS configures the Pi's serial communication channel for console based I/O.  To free up this channel for our own use, we must detach it from console based I/O by editing the *cmdline.txt* file as shown below.  More details on this process can be found on [www.raspberry-projects.com](http://www.raspberry-projects.com/pi/pi-operating-systems/raspbian/io-pins-raspbian/uart-pins) 
+    ````
+    sudo cp /boot/cmdline.txt /boot/cmdline_backup.txt
+    sudo nano /boot/cmdline.txt    
+    ````      
+    Remove all references to "ttyAMA0".  After all references are removed, the file should contain a line that looks something like this.
+    ````
+    dwc_otg.lpm_enable=0 console=tty1 root=/dev/mmcblk0p7 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait
+    ````
+
+1. Reboot your Raspberry Pi
+    ````
+    sudo reboot
+    ````
+
+1. Remove the default nodejs instance and replace it with v0.12 or higher (more details on [nodesource](https://github.com/nodesource/distributions) github)
+    ````
+    sudo apt-get remove nodejs
+    curl -sL https://deb.nodesource.com/setup_0.12 | sudo -E bash -
+    sudo apt-get install -y nodejs
+    ````
+
+1. Get the latest OpenHybrid Object code and download dependencies
+    ````
+    git clone https://github.com/openhybrid/object.git
+    cd object
+    npm install
+    ````
+
+1. Run the OpenHybrid Object code
+    ````
+    node server.js
+    ````
+
+A this point, you should be able to navigate to port 8080 on your device and find the Object dashboard.
+
+## Enable led feedback on Raspberry Pi
+By default, the green led on the Pi indicates SD-card activity.  You can choose to repurpose this led to indicate that OpenHybrid is active.  
+
+To do so, grant OpenHybrid access to modify the led's brightness.
+````
+sudo chmod oug+rw /sys/class/leds/led0/brightness
+````
+
+Once write has been granted, OpenHybrid will indicate that it is running by causing the green LED to blink every 4 seconds or so.  Note that this change must be made every time the Pi boots up, so if it's a feature that you like, you may want to include this step in a boot script. 
+
+

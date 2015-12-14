@@ -234,7 +234,7 @@ exports.init = function() {
     serialPort.write("okbird\n");
 };
 
-exports.enabled = true;
+exports.enabled = false;
 
 function noop_cb() {}
 

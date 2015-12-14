@@ -274,7 +274,7 @@ Arduino Yún's Linux side.
     sudo apt-get upgrade -y
     ````
 
-1. By default, the Raspian OS configures the Pi's serial communication channel for console based I/O.  By disabling this feature, we allow the Pi to talk with other devices via serial communication.  To disable this feature, edit the *cmdline.txt* file as shown below.  More details on [www.raspberry-projects.com](http://www.raspberry-projects.com/pi/pi-operating-systems/raspbian/io-pins-raspbian/uart-pins) 
+1. Free up the Pi's serial communication channel.  By default, the Raspian OS configures the Pi's serial communication channel for console based I/O.  To free up this channel for our own use, we must detach it from console based I/O by editing the *cmdline.txt* file as shown below.  More details on this process can be found on [www.raspberry-projects.com](http://www.raspberry-projects.com/pi/pi-operating-systems/raspbian/io-pins-raspbian/uart-pins) 
     ````
     sudo cp /boot/cmdline.txt /boot/cmdline_backup.txt
     sudo nano /boot/cmdline.txt    
@@ -313,11 +313,11 @@ A this point, you should be able to navigate to port 8080 on your device and fin
 ## Enable led feedback on Raspberry Pi
 By default, the green led on the Pi indicates SD-card activity.  You can choose to repurpose this led as an indicator that OpenHybrid is running on your Pi.  
 
-To do so, you must grant OpenHybrid access to modify the led's brightness like this.
+If you choose to do so, you must grant OpenHybrid access to modify the led's brightness like this.
     ````
     sudo chmod oug+rw /sys/class/leds/led0/brightness
     ````
 
-Once access has been granted, OpenHybrid will cause the green LED to slowly flash, indicating that the service is running.
+Once write access has been granted, OpenHybrid will indicate that it is running by causing the green LED to slowly blink off and on.
 
 

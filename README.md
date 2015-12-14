@@ -264,36 +264,60 @@ That's it. Restart the Linux part of Yún (reset button near LEDs). After reboot
 Arduino Yún's Linux side.
 
 
-How to install on a Raspberry Pi
-================================
+# How to install on a Raspberry Pi
 
 1. Use [NOOBS](https://www.raspberrypi.org/downloads/noobs/) to install the base Raspian image.
 
-2. Update the system software.
+1. Update the system software.
     ````
     sudo apt-get update
     sudo apt-get upgrade -y
     ````
 
-3. Remove the default nodejs instance and replace it with v0.12 or higher (more details on [nodesource](https://github.com/nodesource/distributions) github)
+1. By default, the Raspian OS configures the Pi's serial communication channel for console based I/O.  By disabling this feature, we allow the Pi to talk with other devices via serial communication.  To disable this feature, edit the *cmdline.txt* file as shown below.  More details on [www.raspberry-projects.com](http://www.raspberry-projects.com/pi/pi-operating-systems/raspbian/io-pins-raspbian/uart-pins) 
+    ````
+    sudo cp /boot/cmdline.txt /boot/cmdline_backup.txt
+    sudo nano /boot/cmdline.txt    
+    ````      
+    Remove all references to "ttyAMA0".  After all references are removed, the file should contain a line that looks something like this.
+    ````
+    dwc_otg.lpm_enable=0 console=tty1 root=/dev/mmcblk0p7 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait
+    ````
+
+1. Reboot your Raspberry Pi
+    ````
+    sudo reboot
+    ````
+
+1. Remove the default nodejs instance and replace it with v0.12 or higher (more details on [nodesource](https://github.com/nodesource/distributions) github)
     ````
     sudo apt-get remove nodejs
     curl -sL https://deb.nodesource.com/setup_0.12 | sudo -E bash -
     sudo apt-get install -y nodejs
     ````
 
-4. Get the latest OpenHybrid Object code and download dependencies
+1. Get the latest OpenHybrid Object code and download dependencies
     ````
     git clone https://github.com/openhybrid/object.git
     cd object
     npm install
     ````
 
-5. Run the OpenHybrid Object code
+1. Run the OpenHybrid Object code
     ````
     node server.js
     ````
 
 A this point, you should be able to navigate to port 8080 on your device and find the Object dashboard.
+
+## Enable led feedback on Raspberry Pi
+By default, the green led on the Pi indicates SD-card activity.  You can choose to repurpose this led as an indicator that OpenHybrid is running on your Pi.  
+
+To do so, you must grant OpenHybrid access to modify the led's brightness like this.
+    ````
+    sudo chmod oug+rw /sys/class/leds/led0/brightness
+    ````
+
+Once access has been granted, OpenHybrid will cause the green LED to slowly flash, indicating that the service is running.
 
 

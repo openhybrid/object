@@ -74,7 +74,7 @@ exports.readObject = function (objectLookup, folder) {
 exports.createFolder = function (folderVar, dirnameO, debug) {
 
     var folder = dirnameO + '/objects/' + folderVar + '/';
-    if (debug) console.log("Createing folder: " + folder);
+    if (debug) console.log("Creating folder: " + folder);
 
     if (!fs.existsSync(folder)) {
         fs.mkdirSync(folder, 0766, function (err) {

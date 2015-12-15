@@ -227,8 +227,7 @@ exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, 
         if(typeof objectExp[objectName] === 'undefined' ||
            Object.getOwnPropertyNames(objectExp[objectName].objectValues).length == 0) {
             console.log("error loading the data");
-        }
-        else {
+        } else {
             var uploadInfoTexttempArray = objectExp[objectName].objectLinks;
             var uploadInfoTexttempArrayValue = objectExp[objectName].objectValues;
             

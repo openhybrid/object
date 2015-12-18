@@ -278,8 +278,8 @@ How to install on a Raspberry Pi
 3. Remove the default nodejs instance and replace it with v0.12 or higher (more details on [nodesource](https://github.com/nodesource/distributions) github)
     ````
     sudo apt-get remove nodejs
-    curl -sL https://deb.nodesource.com/setup_0.12 | sudo -E bash -
-    sudo apt-get install -y nodejs
+    curl -sLS https://apt.adafruit.com/add | sudo bash
+    sudo apt-get install -y node
     ````
 
 4. Get the latest OpenHybrid Object code and download dependencies

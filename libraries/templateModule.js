@@ -66,17 +66,21 @@ exports.loadAllModules = function(allModules, callback) {
       console.log(name + " loaded !");
       index++;
       if (index < allModules.length) {
+            console.log("Another...");
             loadOneTemplate(index);
         } else {
+          console.log("callback");
           callback();
         }
 
     } else {
+	console.log("error");
       console.log(err);
     }
   });
 
   }
+    console.log("last one");
     loadOneTemplate(0);
 
 }

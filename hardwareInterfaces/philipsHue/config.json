@@ -1,1 +1,14 @@
-{"Light1":{"host":"192.168.1.3","url":"/api/5afd25a1e0f003c40a570d33c37ea0/lights/1","id":"Light1","port":"80"},"Light2":{"host":"192.168.1.3","url":"/api/5afd25a1e0f003c40a570d33c37ea0/lights/2","id":"Light2","port":"80"}}
+{
+  "Light1": {
+    "host": "192.168.1.3",
+    "url": "/api/5afd25a1e0f003c40a570d33c37ea0/lights/1",
+    "id": "Light1",
+    "port": "80"
+  },
+  "Light2": {
+    "host": "192.168.1.3",
+    "url": "/api/5afd25a1e0f003c40a570d33c37ea0/lights/2",
+    "id": "Light2",
+    "port": "80"
+  }
+}

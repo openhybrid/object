@@ -149,4 +149,4 @@ exports.shutdown = function(){
 /**
  * Set to true to enable the hardware interface
  **/
-exports.enabled = true;
+exports.enabled = false;

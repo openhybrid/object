@@ -164,7 +164,7 @@ function ObjectLink() {
  * @desc Constructor for each object value
  **/
 
-ObjectValue = function () {
+function ObjectValue() {
     this.name = "";
     this.value = null;
     this.mode = "f"; // this is for (f) floating point, (d) digital or (s) step and finally (m) media
@@ -263,12 +263,12 @@ HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, 
     objectEngine(objKey2, valueKey, objectExp, pluginModules);
 }, ObjectValue);
 
-console.log("HW interfaces setup");
+if (globalVariables.debug) console.log("HW interfaces setup");
 loadHybridObjects();
-console.log("loadHybridObjects done");
+if (globalVariables.debug) console.log("loadHybridObjects done");
 
 startSystem();
-console.log("startSystem done");
+if (globalVariables.debug) console.log("startSystem done");
 
 // add all modules for internal communication
 
@@ -290,7 +290,7 @@ for (var i = tempFilesInternal.length - 1; i >= 0; i--) {
     }
 }
 
-console.log("ready to start internal servers");
+if (globalVariables.debug) console.log("ready to start internal servers");
 
 // starting the internal servers (receive)
 for (var i = 0; i < tempFilesInternal.length; i++) {
@@ -1347,14 +1347,7 @@ function socketServer() {
         socket.on('object', function (msg) {
             var msgContent = JSON.parse(msg);
             var objSend;
-
-//            console.log(" "); 
-//            console.log("socketServer receiving");
             if ((msgContent.obj in objectExp) && typeof msgContent.value !== "undefined") {
-
-
-//                console.log("msg value: " +msgContent.value+" "+msgContent.obj+" "+msgContent.pos);
-
                 if (msgContent.pos in objectExp[msgContent.obj].objectValues) {
                     objectExp[msgContent.obj].objectValues[msgContent.pos].value = msgContent.value;
 
@@ -1362,37 +1355,28 @@ function socketServer() {
                     objSend.value = msgContent.value;
 
                     if (internalModules.hasOwnProperty(objSend.type)) {
-                        internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, 
-                        msgContent.value, msgContent.mode, msgContent.type);
+                        internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type);
                     }
 
                     // trigger the data flow engine
-//                      console.log("msg value: " +msgContent.value+" "+msgContent.obj+" "+msgContent.pos);
+                    //  console.log(msgContent.value+" "+msgContent.obj+" "+msgContent.pos);
 
                     // internal.sender(objectExp, obj, pos, value);
                     //   serialSender(serialPort, objectExp, msgContent.obj, msgContent.pos, msgContent.value);
                     objectEngine(msgContent.obj, msgContent.pos, objectExp, pluginModules);
 
                 } else {
-
-
                     for (var thisKey in objectExp[msgContent.obj].objectValues) {
-
-//                        console.log("objectValues: "+objectExp[msgContent.obj].objectValues[thisKey].name);
                         if (msgContent.pos === objectExp[msgContent.obj].objectValues[thisKey].name) {
                             objSend = objectExp[msgContent.obj].objectValues[msgContent.pos + msgContent.obj];
                             objSend.value = msgContent.value;
 
-//                      console.log("msg: " +objectExp[msgContent.obj].name+" "+msgContent.value+" "+msgContent.obj+" "+msgContent.pos + " " + msgContent.mode + " " + objectExp[msgContent.obj].type);
-
-                            // not quite sure how this is supposed to work, but this one functions.  
-                            //I made some minot changes to resolve properly. - PCS
                             if (internalModules.hasOwnProperty(objSend.type)) {
-                                internalModules[objSend.type].send(objectExp[msgContent.obj].name, msgContent.pos, msgContent.value, msgContent.mode, objectExp[msgContent.obj].type);
-                            };
+                                internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type);
+                            }
 
                             //serialSender(serialPort, objectExp, msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value);
-//                            objectEngine(msgContent.obj, msgContent.pos + msgContent.obj, objectExp, pluginModules);
+                            objectEngine(msgContent.obj, msgContent.pos + msgContent.obj, objectExp, pluginModules);
                         }
                     }
                 }
@@ -1647,6 +1631,3 @@ function socketUpdaterInterval() {
         socketUpdater();
     }, socketUpdateInterval);
 }
-
-
-

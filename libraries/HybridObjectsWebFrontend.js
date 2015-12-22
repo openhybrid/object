@@ -243,11 +243,11 @@ exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, 
                 infoCount++;
             }
             //test
-            //jsonVariables.push({
-            //    "test": infoCount,
-            //     "value" : "test",
-            //    "IOName" : d.getMilliseconds()
-            //});
+         /*   jsonVariables.push({
+                "test": infoCount,
+                 "value" : "test",
+                "IOName" : d.getMilliseconds()
+            });*/
 
             // add the links
             infoCount = 0;

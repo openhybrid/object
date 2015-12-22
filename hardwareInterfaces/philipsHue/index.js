@@ -49,8 +49,6 @@ function setup() {
     //load the config file
     lights = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
 
-
-
     console.log("setup philipsHue");    
     for (var key in lights) {
         server.addIO(key, "switch", "default", "philipsHue");
@@ -76,8 +74,6 @@ function getSwitchState(light, callback) {
         port: light.port,
         method: 'GET',
     };
-
-
 
     callbackHttp = function (response) {
         var str = '';
@@ -244,4 +240,4 @@ exports.init = function() {
 
 
 //Enable this hardware interface
-exports.enabled = true;
+exports.enabled = false;

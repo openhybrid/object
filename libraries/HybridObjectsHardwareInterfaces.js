@@ -63,6 +63,8 @@ exports.writeIOToServer = function (objName, ioName, value, mode) {
     var objKey2 = HybridObjectsUtilities.readObject(objectLookup, objName); //get globally unique object id
     var valueKey = ioName + objKey2;
 
+//    console.log("writeIOToServer obj: "+objName + "  name: "+ioName+ "  value: "+value+ "  mode: "+mode);
+
     if (objectExp.hasOwnProperty(objKey2)) {
         if (objectExp[objKey2].objectValues.hasOwnProperty(valueKey)) {
             objectExp[objKey2].objectValues[valueKey].value = value;

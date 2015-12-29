@@ -34,6 +34,7 @@
  *
  * Created by Valentin on 10/22/14.
  * Modified by Carsten on 12/06/15.
+ * Modified by Psomdecerff (PCS) on 12/21/15.
  *
  * Copyright (c) 2015 Valentin Heun
  *
@@ -163,7 +164,7 @@ function ObjectLink() {
  * @desc Constructor for each object value
  **/
 
-ObjectValue = function () {
+function ObjectValue() {
     this.name = "";
     this.value = null;
     this.mode = "f"; // this is for (f) floating point, (d) digital or (s) step and finally (m) media
@@ -261,8 +262,13 @@ if (globalVariables.debug) console.log("Starting System: ");
 HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, __dirname, pluginModules, function (objKey2, valueKey, objectExp, pluginModules) {
     objectEngine(objKey2, valueKey, objectExp, pluginModules);
 }, ObjectValue);
+
+if (globalVariables.debug) console.log("HW interfaces setup");
 loadHybridObjects();
+if (globalVariables.debug) console.log("loadHybridObjects done");
+
 startSystem();
+if (globalVariables.debug) console.log("startSystem done");
 
 // add all modules for internal communication
 
@@ -284,6 +290,7 @@ for (var i = tempFilesInternal.length - 1; i >= 0; i--) {
     }
 }
 
+if (globalVariables.debug) console.log("ready to start internal servers");
 
 // starting the internal servers (receive)
 for (var i = 0; i < tempFilesInternal.length; i++) {
@@ -418,6 +425,28 @@ function startSystem() {
     // blink the LED at the arduino board
 
 }
+
+
+/**********************************************************************************************************************
+ ******************************************** Stopping the System *****************************************************
+ **********************************************************************************************************************/
+
+function exit() {
+    var mod;
+    
+    // shut down the internal servers (teardown)
+    for (var i = 0; i < tempFilesInternal.length; i++) {
+        mod = internalModules[tempFilesInternal[i]];
+        if("shutdown" in mod) {
+            mod.shutdown();
+        }
+    }
+    
+    process.exit();
+}
+
+process.on('SIGINT', exit);
+
 
 /**********************************************************************************************************************
  ******************************************** Emitter/Client/Sender Objects *******************************************
@@ -1602,6 +1631,3 @@ function socketUpdaterInterval() {
         socketUpdater();
     }, socketUpdateInterval);
 }
-
-
-

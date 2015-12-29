@@ -34,6 +34,7 @@
  *
  * Created by Valentin on 10/22/14.
  * Modified by Carsten on 12/06/15.
+ * Modified by Psomdecerff (PCS) on 12/21/15.
  *
  * Copyright (c) 2015 Valentin Heun
  *
@@ -94,6 +95,7 @@ const objectInterfaceFolder = "/";                       // the level on which t
  **********************************************************************************************************************/
 
 var _ = require('lodash');
+//var lj = require('longjohn');
 var fs = require('fs');       // Filesystem library
 var dgram = require('dgram'); // UDP Broadcasting library
 var ip = require("ip");       // get the device IP address library
@@ -162,7 +164,7 @@ function ObjectLink() {
  * @desc Constructor for each object value
  **/
 
-ObjectValue = function () {
+function ObjectValue() {
     this.name = "";
     this.value = null;
     this.mode = "f"; // this is for (f) floating point, (d) digital or (s) step and finally (m) media
@@ -260,8 +262,13 @@ if (globalVariables.debug) console.log("Starting System: ");
 HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, __dirname, pluginModules, function (objKey2, valueKey, objectExp, pluginModules) {
     objectEngine(objKey2, valueKey, objectExp, pluginModules);
 }, ObjectValue);
+
+if (globalVariables.debug) console.log("HW interfaces setup");
 loadHybridObjects();
+if (globalVariables.debug) console.log("loadHybridObjects done");
+
 startSystem();
+if (globalVariables.debug) console.log("startSystem done");
 
 // add all modules for internal communication
 
@@ -274,7 +281,7 @@ while (tempFilesInternal[0][0] === ".") {
     tempFilesInternal.splice(0, 1);
 }
 // add all plugins to the pluginModules object. Iterate backwards because splice works inplace
-for (var i = tempFiles.length - 1; i >= 0; i--) {
+for (var i = tempFilesInternal.length - 1; i >= 0; i--) {
     //check if hardwareInterface is enabled, if it is, add it to the internalModules
     if (require(internalPath + "/" + tempFilesInternal[i] + "/index.js").enabled) {
         internalModules[tempFilesInternal[i]] = require(internalPath + "/" + tempFilesInternal[i] + "/index.js");
@@ -283,6 +290,7 @@ for (var i = tempFiles.length - 1; i >= 0; i--) {
     }
 }
 
+if (globalVariables.debug) console.log("ready to start internal servers");
 
 // starting the internal servers (receive)
 for (var i = 0; i < tempFilesInternal.length; i++) {
@@ -371,7 +379,7 @@ function loadHybridObjects() {
             }
 
         } else {
-            if (globalVariables.debug) console.log(" object " + tempFolderName + " has no marker yet");
+            if (globalVariables.debug) console.log(" object " + tempFiles[i] + " has no marker yet");
         }
     }
 
@@ -417,6 +425,28 @@ function startSystem() {
     // blink the LED at the arduino board
 
 }
+
+
+/**********************************************************************************************************************
+ ******************************************** Stopping the System *****************************************************
+ **********************************************************************************************************************/
+
+function exit() {
+    var mod;
+    
+    // shut down the internal servers (teardown)
+    for (var i = 0; i < tempFilesInternal.length; i++) {
+        mod = internalModules[tempFilesInternal[i]];
+        if("shutdown" in mod) {
+            mod.shutdown();
+        }
+    }
+    
+    process.exit();
+}
+
+process.on('SIGINT', exit);
+
 
 /**********************************************************************************************************************
  ******************************************** Emitter/Client/Sender Objects *******************************************
@@ -1601,6 +1631,3 @@ function socketUpdaterInterval() {
         socketUpdater();
     }, socketUpdateInterval);
 }
-
-
-

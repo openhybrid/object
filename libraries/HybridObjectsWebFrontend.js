@@ -222,12 +222,15 @@ exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, 
     });
 
     function GetAndSendData() {
-    var d = new Date();
-
-        var uploadInfoTexttempArray = objectExp[objectName].objectLinks;
-        var uploadInfoTexttempArrayValue = objectExp[objectName].objectValues;
-
-        if(Object.getOwnPropertyNames(uploadInfoTexttempArrayValue).length != 0) {
+        var d = new Date();
+        
+        if(typeof objectExp[objectName] === 'undefined' ||
+           Object.getOwnPropertyNames(objectExp[objectName].objectValues).length == 0) {
+            console.log("error loading the data");
+        } else {
+            var uploadInfoTexttempArray = objectExp[objectName].objectLinks;
+            var uploadInfoTexttempArrayValue = objectExp[objectName].objectValues;
+            
             // add the variables
            var infoCount = 0;
            var jsonVariables = [];
@@ -240,11 +243,11 @@ exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, 
                 infoCount++;
             }
             //test
-            //jsonVariables.push({
-            //    "test": infoCount,
-            //     "value" : "test",
-            //    "IOName" : d.getMilliseconds()
-            //});
+         /*   jsonVariables.push({
+                "test": infoCount,
+                 "value" : "test",
+                "IOName" : d.getMilliseconds()
+            });*/
 
             // add the links
             infoCount = 0;
@@ -294,10 +297,7 @@ exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, 
             if(sockets) {
                 sockets.emit("getSomeData",updatedMonitor);
             }
-        } else {
-            console.log("error loading the data");
         }
-
     }
 
      realoadInterfaceTimeout = setInterval(GetAndSendData, 100);

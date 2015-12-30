@@ -31,7 +31,7 @@
 
 
 //Enable this hardware interface
-exports.enabled = true;
+exports.enabled = false;
 
 if (exports.enabled) {
     var fs = require('fs');
@@ -101,9 +101,9 @@ if (exports.enabled) {
                 if (state.on != light.switch) {
                     light.switch = state.on;
                     if (state.on) {
-                        callback(light.id, "switch", 1, "f");
+                        callback(light.id, "switch", 1, "d");
                     } else {
-                        callback(light.id, "switch", 0, "f");
+                        callback(light.id, "switch", 0, "d");
                     }
 
                 }

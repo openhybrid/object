@@ -28,19 +28,19 @@
  * 
  * TODO: Add some more functionality, i.e. change color or whatever the philips Hue API offers
  */
-
-
 //Enable this hardware interface
 exports.enabled = false;
 
 if (exports.enabled) {
-    var fs = require('fs');
-    var http = require('http');
-    var _ = require('lodash');
-    var server = require(__dirname + '/../../libraries/HybridObjectsHardwareInterfaces');
 
 
-    var lights = {};
+var fs = require('fs');
+var http = require('http');
+var _ = require('lodash');
+var server = require(__dirname + '/../../libraries/HybridObjectsHardwareInterfaces');
+
+
+var lights = {};
 
     //function Light() {
     //    this.id;
@@ -49,17 +49,17 @@ if (exports.enabled) {
     //    this.port;
     //}
 
-    /**
-     * @desc setup() runs once, adds and clears the IO points
-     **/
-    function setup() {
-        server.developerOn();
-        //load the config file
-        lights = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
+/**
+ * @desc setup() runs once, adds and clears the IO points
+ **/
+function setup() {
+    server.developerOn();
+    //load the config file
+    lights = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
 
         if (server.getDebug()) console.log("setup philipsHue");
-        for (var key in lights) {
-            server.addIO(key, "switch", "default", "philipsHue");
+    for (var key in lights) {
+        server.addIO(key, "switch", "default", "philipsHue");
             server.addIO(key, "brightness", "default", "philipsHue");
             server.addIO(key, "hue", "default", "philipsHue");
             server.addIO(key, "saturation", "default", "philipsHue");
@@ -68,36 +68,36 @@ if (exports.enabled) {
             lights[key].bri = undefined;
             lights[key].hue = undefined;
             lights[key].sat = undefined;
-            server.clearIO("philipsHue");
-        }
-    }
+        server.clearIO("philipsHue");
+    }  
+}
 
 
-    /**
+/**
      * @desc getLightState() communicates with the philipsHue bridge and checks the state of the light
-     * @param {Object} light the light to check
-     * @param {function} callback function to run when the response has arrived
-     **/
+ * @param {Object} light the light to check
+ * @param {function} callback function to run when the response has arrived
+ **/
     function getLightState(light, callback) {
-        var state;
+    var state;
+    
+    var options = {
+        host: light.host,
+        path: light.url,
+        port: light.port,
+        method: 'GET',
+    };
 
-        var options = {
-            host: light.host,
-            path: light.url,
-            port: light.port,
-            method: 'GET',
-        };
+    callbackHttp = function (response) {
+        var str = '';
 
-        callbackHttp = function (response) {
-            var str = '';
+        response.on('data', function (chunk) {
+            str += chunk;
+        });
 
-            response.on('data', function (chunk) {
-                str += chunk;
-            });
-
-            response.on('end', function () {
-                //TODO add some error handling
-                state = JSON.parse(str).state;
+        response.on('end', function () {
+            //TODO add some error handling
+            state = JSON.parse(str).state;
                 if (state.on != light.switch) {
                     light.switch = state.on;
                     if (state.on) {
@@ -106,25 +106,25 @@ if (exports.enabled) {
                         callback(light.id, "switch", 0, "d");
                     }
 
-                }
+            }
 
                 if (state.hue != light.hue) {
                     light.hue = state.hue; // hue is a value between 0 and 65535
                     callback(light.id, "hue", state.hue / 65535, "f"); // map hue to [0,1]
-                }
+               }
 
                 if (state.bri != light.bri) {
                     light.bri = state.bri; // brightness is a value between 1 and 254
                     callback(light.id, "brightness", (state.bri - 1) / 253, "f");
-                }
+            }
 
                 if (state.sat != light.sat) {
                     light.sat = state.sat;
                     callback(light.id, "saturation", state.sat / 254, "f");
                 }
 
-            });
-        }
+        });
+    }
 
 
 
@@ -134,20 +134,20 @@ if (exports.enabled) {
         });
         req.end();
 
-    }
+}
 
 
-    /**
-     * @desc writeSwitchState() turns the specified light on or off
+/**
+ * @desc writeSwitchState() turns the specified light on or off
      * @param {float} state turns the light on if > 0.5, turns it off otherwise
-     **/
-    function writeSwitchState(light, state) {
-        var options = {
-            host: light.host,
-            path: light.url + "/state",
-            port: light.port,
-            method: 'PUT',
-        };
+ **/
+function writeSwitchState(light, state) {
+    var options = {
+        host: light.host,
+        path: light.url + "/state",
+        port: light.port,
+        method: 'PUT',
+    };
 
 
         var req = http.request(options, function () { });
@@ -163,23 +163,23 @@ if (exports.enabled) {
 
 
 
-        req.end();
+    req.end();
 
         //TODO check for success message from the bridge
-    }
+}
 
 
-    /**
+/**
      * @desc writeBrightness() Sets the brightness of the specified light 
      * @param {float} bri is the brightness in the range [0,1]
-     **/
+ **/
     function writeBrightness(light, bri) {
-        var options = {
-            host: light.host,
-            path: light.url + "/state",
-            port: light.port,
-            method: 'PUT',
-        };
+    var options = {
+        host: light.host,
+        path: light.url + "/state",
+        port: light.port,
+        method: 'PUT',
+    };
 
         var req = http.request(options, function () { });
         req.on('error', function (e) {
@@ -204,13 +204,13 @@ if (exports.enabled) {
             method: 'PUT',
         };
 
-        var req = http.request(options, function () { });
+    var req = http.request(options, function () { });
         req.on('error', function (e) {
             console.log('writeSaturation HTTP error: ' + e.message);
         });
         req.write('{"sat":' + _.floor(sat * 254) + '}');
-        req.end();
-    }
+    req.end();
+}
 
 
     /**
@@ -233,55 +233,55 @@ if (exports.enabled) {
         req.end();
     }
 
-    /**
-     * @desc philipsHueServer() The main function, runs the setup and then periodically checks whether the lights are on.
-     **/
-    function philipsHueServer() {
-        console.log("philipsHue starting philipsHue");
+/**
+ * @desc philipsHueServer() The main function, runs the setup and then periodically checks whether the lights are on.
+ **/
+function philipsHueServer() {  
+    console.log("philipsHue starting philipsHue");
 
-        setup();
+    setup();
 
 
         if (server.getDebug()) console.log("philipsHue setup read by poll");
-        //TODO poll more often in productive environment
-        for (var key in lights) {
-            setInterval(function (light) {
+    //TODO poll more often in productive environment
+    for (var key in lights) {
+        setInterval(function (light) {
                 getLightState(light, server.writeIOToServer);
-            }, 1000 + _.random(-250, 250), lights[key]);
-        }
-
+        }, 1000 + _.random(-250, 250), lights[key]);
     }
+    
+}
 
-    /**
-     * @desc startGeneratorOnOff() starts a generator which periodically changes the values of the "generatorOnOff" IO point from true to false and vice versa
-     * @param {Object} light the light to which the specifed IO point belongs
-     **/
-    function startGeneratorOnOff(light) {
-        var state = false;
-        setInterval(function (l) {
+/**
+ * @desc startGeneratorOnOff() starts a generator which periodically changes the values of the "generatorOnOff" IO point from true to false and vice versa
+ * @param {Object} light the light to which the specifed IO point belongs
+ **/
+function startGeneratorOnOff(light) {
+    var state = false;
+    setInterval(function (l) {
             if (server.getDebug()) console.log("startGeneratorOnOff");
-            server.writeIOToServer(l.id, "generatorOnOff", state, "b");
-            if (state) {
-                state = false;
-            } else {
-                state = true;
-            }
-        }, 5000 + _.random(-250, 250), light);
-    }
+        server.writeIOToServer(l.id, "generatorOnOff", state, "b");
+        if (state) {
+            state = false;
+        } else {
+            state = true;
+        }
+    }, 5000 + _.random(-250, 250), light);
+}
 
 
-    exports.receive = function () {
-        philipsHueServer();
-    };
+exports.receive = function () {
+    philipsHueServer();
+};
 
-    exports.send = function (objName, ioName, value, mode, type) {
-        //Write incoming data to the specified light
+exports.send = function (objName, ioName, value, mode, type) {
+    //Write incoming data to the specified light
         if (server.getDebug()) console.log("Incoming: " + objName + "  " + ioName + "  " + value + "  " + mode + "  " + type);
-        if (lights.hasOwnProperty(objName)) {
+    if (lights.hasOwnProperty(objName)) {
             if (server.getDebug()) console.log("name matched");
             if (ioName == "switch") {
-                writeSwitchState(lights[objName], value);
-            }
+            writeSwitchState(lights[objName], value);
+        }
 
             if (ioName == "brightness") {
                 writeBrightness(lights[objName], value);
@@ -293,13 +293,13 @@ if (exports.enabled) {
 
             if (ioName == "hue") {
                 writeHue(lights[objName], value);
-            }
         }
-    };
+    }
+};
 
     exports.init = function () {
         if (server.getDebug()) console.log("export init - empty");
-    };
+};
 
 }
 

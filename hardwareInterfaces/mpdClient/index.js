@@ -54,9 +54,9 @@ if (exports.enabled) {
         });
 
         //add IO points
-        server.addIO("MPD", "volume", "default", "mpd");
-        server.addIO("MPD", "status", "default", "mpd");
-        server.clearIO("mpd");
+        server.addIO("Radio", "volume", "default", "mpdClient");
+        server.addIO("Radio", "status", "default", "mpdClient");
+        server.clearIO("mpdClient");
 
 
         //Create listeners for mpd events
@@ -68,7 +68,7 @@ if (exports.enabled) {
                 else {
                     var status = mpd.parseKeyValueMessage(msg);
                     console.log("Volume: " + status.volume);
-                    server.writeIOToServer("MPD", "volume", status.volume / 100, "f");
+                    server.writeIOToServer("Radio", "volume", status.volume / 100, "f");
                 }
 
             });
@@ -84,11 +84,11 @@ if (exports.enabled) {
                     var status = mpd.parseKeyValueMessage(msg);
                     //console.log(msg);
                     if (status.state == "stop") {
-                        server.writeIOToServer("MPD", "status", 0, "f");
+                        server.writeIOToServer("Radio", "status", 0, "f");
                     } else if (status.state == "play") {
-                        server.writeIOToServer("MPD", "status", 1, "f");
+                        server.writeIOToServer("Radio", "status", 1, "f");
                     } else if (status.state == "pause") {
-                        server.writeIOToServer("MPD", "playing", 0.5, "f");
+                        server.writeIOToServer("Radio", "playing", 0.5, "f");
                     }
                 }
 
@@ -105,9 +105,10 @@ if (exports.enabled) {
     };
 
     exports.send = function (objName, ioName, value, mode, type) {
-        if (objName == "MPD") {
+        console.log("Incoming: " + objName + " " + ioName + " " + value);
+        if (objName == "Radio") {
             if (ioName == "volume") {
-                client.sendCommand(cmd("volume", _.floor(value * 100)), function (err, msg) {
+                client.sendCommand("setvol " + _.floor(value * 100), function (err, msg) {
                     if (err) console.log("Error executing mpd command: " + err);
                 });
             } else if (ioName == "status") {

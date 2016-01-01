@@ -37,7 +37,8 @@ if (exports.enabled) {
     var server = require(__dirname + '/../../libraries/HybridObjectsHardwareInterfaces');
 
 
-
+    var cmd = mpd.cmd;
+    var client;
 
 
     /**
@@ -46,17 +47,15 @@ if (exports.enabled) {
     function setup() {
         server.developerOn();
 
-        var cmd = mpd.cmd;
-        var client = mpd.connect({
+        
+        client = mpd.connect({
             port: 6600,
             host: '192.168.178.48'
         });
 
         //add IO points
         server.addIO("MPD", "volume", "default", "mpd");
-        server.addIO("MPD", "playing", "default", "mpd");
-        server.addIO("MPD", "stopped", "default", "mpd");
-        server.addIO("MPD", "paused", "default", "mpd");
+        server.addIO("MPD", "status", "default", "mpd");
         server.clearIO("mpd");
 
 
@@ -65,7 +64,7 @@ if (exports.enabled) {
         //volume has changed
         client.on('system-mixer', function () {
             client.sendCommand(cmd("status", []), function (err, msg) {
-                if (err) console.log("Error: " + err)
+                if (err) console.log("Error: " + err);
                 else {
                     var status = mpd.parseKeyValueMessage(msg);
                     console.log("Volume: " + status.volume);
@@ -80,22 +79,16 @@ if (exports.enabled) {
         //playing status has changed
         client.on('system-player', function () {
             client.sendCommand(cmd("status", []), function (err, msg) {
-                if (err) console.log("Error: " + err)
+                if (err) console.log("Error executing mpd command: " + err);
                 else {
                     var status = mpd.parseKeyValueMessage(msg);
                     //console.log(msg);
                     if (status.state == "stop") {
-                        server.writeIOToServer("MPD", "playing", 0, "d");
-                        server.writeIOToServer("MPD", "stopped", 1, "d");
-                        server.writeIOToServer("MPD", "paused", 0, "d");
+                        server.writeIOToServer("MPD", "status", 0, "f");
                     } else if (status.state == "play") {
-                        server.writeIOToServer("MPD", "playing", 1, "d");
-                        server.writeIOToServer("MPD", "stopped", 0, "d");
-                        server.writeIOToServer("MPD", "paused", 0, "d");
+                        server.writeIOToServer("MPD", "status", 1, "f");
                     } else if (status.state == "pause") {
-                        server.writeIOToServer("MPD", "playing", 0, "d");
-                        server.writeIOToServer("MPD", "stopped", 0, "d");
-                        server.writeIOToServer("MPD", "paused", 1, "d");
+                        server.writeIOToServer("MPD", "playing", 0.5, "f");
                     }
                 }
 
@@ -112,6 +105,22 @@ if (exports.enabled) {
     };
 
     exports.send = function (objName, ioName, value, mode, type) {
+        if (objName == "MPD") {
+            if (ioName == "volume") {
+                client.sendCommand(cmd("volume", _.floor(value * 100)), function (err, msg) {
+                    if (err) console.log("Error executing mpd command: " + err);
+                });
+            } else if (ioName == "status") {
+                if (value < 0.33) {
+                    client.sendCommand(cmd("play", []));
+                } else if (value < 0.66) {
+                    client.sendCommand(cmd("pause", []));
+                } else {
+                    client.sendCommand(cmd("stop", []));
+                }
+            }
+
+        }
 
     };
 

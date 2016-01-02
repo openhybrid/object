@@ -47,27 +47,22 @@ if (exports.enabled) {
 
                 //Add Event Handlers
                 kodiServer.connection.Application.OnVolumeChanged(function () {
-                    console.log("Kodi Volume changed");
                     var volume = kodiServer.connection.Application.GetProperties({ properties: ['volume'] });
                     volume.then(function (data) {
-                        console.log("KODI Volume: " + data.volume);
                         server.writeIOToServer(key, "volume", data.volume / 100, "f");
                     });
 
                 });
 
                 kodiServer.connection.Player.OnPause(function () {
-                    console.log("Kodi Pause");
                     server.writeIOToServer(key, "status", 0.5, "f");
                 });
 
                 kodiServer.connection.Player.OnPlay(function () {
-                    console.log("Kodi Play");
                     server.writeIOToServer(key, "status", 1, "f");
                 });
 
                 kodiServer.connection.Player.OnStop(function () {
-                    console.log("Kodi Stop");
                     server.writeIOToServer(key, "status", 0, "f");
                 });
 
@@ -91,7 +86,6 @@ if (exports.enabled) {
     };
 
     exports.send = function (objName, ioName, value, mode, type) {
-        console.log("Incoming: " + objName + " " + ioName + " " + value);
         if (kodiServers.hasOwnProperty(objName) && !_.isNull(kodiServers[objName].connection)) {
             if (ioName == "volume") {
                 kodiServers[objName].connection.Application.SetVolume(_.floor(value * 100));

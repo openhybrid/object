@@ -276,21 +276,14 @@ if (exports.enabled) {
 
     exports.send = function (objName, ioName, value, mode, type) {
         //Write incoming data to the specified light
-        if (server.getDebug()) console.log("Incoming: " + objName + "  " + ioName + "  " + value + "  " + mode + "  " + type);
         if (lights.hasOwnProperty(objName)) {
             if (ioName == "switch") {
                 writeSwitchState(lights[objName], value);
-            }
-
-            if (ioName == "brightness") {
+            } else if (ioName == "brightness") {
                 writeBrightness(lights[objName], value);
-            }
-
-            if (ioName == "saturation") {
+            } else if (ioName == "saturation") {
                 writeSaturation(lights[objName], value);
-            }
-
-            if (ioName == "hue") {
+            } else if (ioName == "hue") {
                 writeHue(lights[objName], value);
             }
         }

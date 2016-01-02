@@ -108,7 +108,6 @@ if (exports.enabled) {
     };
 
     exports.send = function (objName, ioName, value, mode, type) {
-        console.log("Incoming: " + objName + " " + ioName + " " + value);
         if (mpdServers.hasOwnProperty(objName)) {
             if (ioName == "volume") {
                 mpdServers[objName].client.sendCommand("setvol " + _.floor(value * 100), function (err, msg) {

@@ -1,5 +1,5 @@
 /**
- * Created by Carsten on 12/06/15.
+ * Created by Carsten on 02/01/16.
  *
  * Copyright (c) 2015 Carsten Strunk
  *
@@ -16,7 +16,7 @@
  *
  */
 //Enable this hardware interface
-exports.enabled = true;
+exports.enabled = false;
 
 if (exports.enabled) {
     var fs = require('fs');
@@ -35,7 +35,7 @@ if (exports.enabled) {
 
         kodiServers = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
 
-        console.log("KODI setup");
+        if (server.getDebug()) console.log("KODI setup");
 
         for (var key in kodiServers) {
             var kodiServer = kodiServers[key];

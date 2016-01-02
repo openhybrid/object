@@ -32,13 +32,13 @@
 exports.enabled = true;
 
 if (exports.enabled) {
+    var fs = require('fs');
     var mpd = require('mpd');
     var _ = require('lodash');
     var server = require(__dirname + '/../../libraries/HybridObjectsHardwareInterfaces');
 
-
+    var mpdServers;
     var cmd = mpd.cmd;
-    var client;
 
 
     /**
@@ -47,55 +47,59 @@ if (exports.enabled) {
     function setup() {
         server.developerOn();
 
-        
-        client = mpd.connect({
-            port: 6600,
-            host: '192.168.178.48'
-        });
+        mpdServers = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
 
-        //add IO points
-        server.addIO("Radio", "volume", "default", "mpdClient");
-        server.addIO("Radio", "status", "default", "mpdClient");
-        server.clearIO("mpdClient");
+        for (var key in mpdServers) {
+            var mpdServer = mpdServers[key];
+            mpdServer.ready = false;
+
+            server.addIO(key, "volume", "default", "mpdClient");
+            server.addIO(key, "status", "default", "mpdClient");
+
+            mpdServer.client = mpd.connect({ port: mpdServer.port, host: mpdServer.host });
 
 
-        //Create listeners for mpd events
-
-        //volume has changed
-        client.on('system-mixer', function () {
-            client.sendCommand(cmd("status", []), function (err, msg) {
-                if (err) console.log("Error: " + err);
-                else {
-                    var status = mpd.parseKeyValueMessage(msg);
-                    console.log("Volume: " + status.volume);
-                    server.writeIOToServer("Radio", "volume", status.volume / 100, "f");
-                }
-
+            //Create listeners for mpd events
+            mpdServer.client.on('ready', function () {
+                mpdServer.ready = true;
             });
 
-        });
-
-
-        //playing status has changed
-        client.on('system-player', function () {
-            client.sendCommand(cmd("status", []), function (err, msg) {
-                if (err) console.log("Error executing mpd command: " + err);
-                else {
-                    var status = mpd.parseKeyValueMessage(msg);
-                    //console.log(msg);
-                    if (status.state == "stop") {
-                        server.writeIOToServer("Radio", "status", 0, "f");
-                    } else if (status.state == "play") {
-                        server.writeIOToServer("Radio", "status", 1, "f");
-                    } else if (status.state == "pause") {
-                        server.writeIOToServer("Radio", "playing", 0.5, "f");
+            //volume has changed
+            mpdServer.client.on('system-mixer', function () {
+                mpdServer.client.sendCommand(cmd("status", []), function (err, msg) {
+                    if (err) console.log("Error: " + err);
+                    else {
+                        var status = mpd.parseKeyValueMessage(msg);
+                        server.writeIOToServer("Radio", "volume", status.volume / 100, "f");
                     }
-                }
+
+                });
 
             });
 
-        });
 
+            //playing status has changed
+            mpdServer.client.on('system-player', function () {
+                mpdServer.client.sendCommand(cmd("status", []), function (err, msg) {
+                    if (err) console.log("Error executing mpd command: " + err);
+                    else {
+                        var status = mpd.parseKeyValueMessage(msg);
+                        //console.log(msg);
+                        if (status.state == "stop") {
+                            server.writeIOToServer("Radio", "status", 0, "f");
+                        } else if (status.state == "play") {
+                            server.writeIOToServer("Radio", "status", 1, "f");
+                        } else if (status.state == "pause") {
+                            server.writeIOToServer("Radio", "playing", 0.5, "f");
+                        }
+                    }
+
+                });
+
+            });
+
+        }
+        server.clearIO("mpdClient");
     }
 
 
@@ -106,18 +110,30 @@ if (exports.enabled) {
 
     exports.send = function (objName, ioName, value, mode, type) {
         console.log("Incoming: " + objName + " " + ioName + " " + value);
-        if (objName == "Radio") {
+        if (mpdServers.hasOwnProperty(objName)) {
             if (ioName == "volume") {
-                client.sendCommand("setvol " + _.floor(value * 100), function (err, msg) {
+                mpdServers[objName].client.sendCommand("setvol " + _.floor(value * 100), function (err, msg) {
                     if (err) console.log("Error executing mpd command: " + err);
                 });
             } else if (ioName == "status") {
                 if (value < 0.33) {
-                    client.sendCommand(cmd("play", []));
+                    if (mpdServers[objName].ready) {
+                        mpdServers[objName].client.sendCommand(cmd("stop", []), function (err, msg) {
+                            if (err) console.log("Error executing mpd command: " + err);
+                        });
+                    }
                 } else if (value < 0.66) {
-                    client.sendCommand(cmd("pause", []));
+                    if (mpdServers[objName].ready) {
+                        mpdServers[objName].client.sendCommand(cmd("pause", []), function (err, msg) {
+                            if (err) console.log("Error executing mpd command: " + err);
+                        });
+                    }
                 } else {
-                    client.sendCommand(cmd("stop", []));
+                    if (mpdServers[objName].ready) {
+                        mpdServers[objName].client.sendCommand(cmd("play", []), function (err, msg) {
+                            if (err) console.log("Error executing mpd command: " + err);
+                        });
+                    }
                 }
             }
 

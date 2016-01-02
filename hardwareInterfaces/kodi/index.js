@@ -13,6 +13,7 @@
  *
  * This hardware interface can communicate with a KODI Media Centre using the JSON RPC API
  *
+ * http://kodi.wiki/view/JSON-RPC_API/v6
  *
  */
 //Enable this hardware interface
@@ -72,9 +73,6 @@ if (exports.enabled) {
             server.addIO(key, "volume", "default", "kodi");
             server.addIO(key, "status", "default", "kodi");
         }
-
-
-
 
         server.clearIO("kodi");
     }

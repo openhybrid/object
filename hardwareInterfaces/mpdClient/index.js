@@ -70,7 +70,7 @@ if (exports.enabled) {
                     if (err) console.log("Error: " + err);
                     else {
                         var status = mpd.parseKeyValueMessage(msg);
-                        server.writeIOToServer("Radio", "volume", status.volume / 100, "f");
+                        server.writeIOToServer(key, "volume", status.volume / 100, "f");
                     }
 
                 });
@@ -84,13 +84,12 @@ if (exports.enabled) {
                     if (err) console.log("Error executing mpd command: " + err);
                     else {
                         var status = mpd.parseKeyValueMessage(msg);
-                        //console.log(msg);
                         if (status.state == "stop") {
-                            server.writeIOToServer("Radio", "status", 0, "f");
+                            server.writeIOToServer(key, "status", 0, "f");
                         } else if (status.state == "play") {
-                            server.writeIOToServer("Radio", "status", 1, "f");
+                            server.writeIOToServer(key, "status", 1, "f");
                         } else if (status.state == "pause") {
-                            server.writeIOToServer("Radio", "playing", 0.5, "f");
+                            server.writeIOToServer(key, "status", 0.5, "f");
                         }
                     }
 

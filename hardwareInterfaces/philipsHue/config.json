@@ -10,5 +10,11 @@
     "url": "/api/newdeveloper/lights/2",
     "id": "Light2",
     "port": "8000"
+  },
+  "Light3": {
+    "host": "localhost",
+    "url": "/api/newdeveloper/lights/2",
+    "id": "Light2",
+    "port": "8000"
   }
 }

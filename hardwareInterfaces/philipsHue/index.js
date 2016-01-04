@@ -29,7 +29,7 @@
  * TODO: Add some more functionality, i.e. change color or whatever the philips Hue API offers
  */
 //Enable this hardware interface
-exports.enabled = false;
+exports.enabled = true;
 
 if (exports.enabled) {
 
@@ -40,7 +40,7 @@ if (exports.enabled) {
     var server = require(__dirname + '/../../libraries/HybridObjectsHardwareInterfaces');
 
 
-    var lights = {};
+    var lights = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
 
     //function Light() {
     //    this.id;
@@ -55,20 +55,20 @@ if (exports.enabled) {
     function setup() {
         server.developerOn();
         //load the config file
-        lights = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
+        //lights = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
 
         if (server.getDebug()) console.log("setup philipsHue");
         for (var key in lights) {
-            server.addIO(key, "switch", "default", "philipsHue");
-            server.addIO(key, "brightness", "default", "philipsHue");
-            server.addIO(key, "hue", "default", "philipsHue");
-            server.addIO(key, "saturation", "default", "philipsHue");
+            //server.addIO(key, "switch", "default", "philipsHue");
+            //server.addIO(key, "brightness", "default", "philipsHue");
+            //server.addIO(key, "hue", "default", "philipsHue");
+            //server.addIO(key, "saturation", "default", "philipsHue");
 
             lights[key].switch = undefined;
             lights[key].bri = undefined;
             lights[key].hue = undefined;
             lights[key].sat = undefined;
-            server.clearIO("philipsHue");
+            //server.clearIO("philipsHue");
         }
     }
 
@@ -290,7 +290,13 @@ if (exports.enabled) {
     };
 
     exports.init = function () {
-        if (server.getDebug()) console.log("export init - empty");
+        for (var key in lights) {
+            server.addIO(key, "switch", "default", "philipsHue");
+            server.addIO(key, "brightness", "default", "philipsHue");
+            server.addIO(key, "hue", "default", "philipsHue");
+            server.addIO(key, "saturation", "default", "philipsHue");
+        }
+        server.clearIO("philipsHue");
     };
 
 }

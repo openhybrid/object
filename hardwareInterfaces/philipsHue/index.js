@@ -28,12 +28,12 @@
  * 
  * TODO: Add some more functionality, i.e. change color or whatever the philips Hue API offers
  */
-
-
 //Enable this hardware interface
 exports.enabled = false;
 
 if (exports.enabled) {
+
+
     var fs = require('fs');
     var http = require('http');
     var _ = require('lodash');
@@ -74,7 +74,7 @@ if (exports.enabled) {
 
 
     /**
-     * @desc getLightState() communicates with the philipsHue bridge and checks the state of the light
+         * @desc getLightState() communicates with the philipsHue bridge and checks the state of the light
      * @param {Object} light the light to check
      * @param {function} callback function to run when the response has arrived
      **/
@@ -139,7 +139,7 @@ if (exports.enabled) {
 
     /**
      * @desc writeSwitchState() turns the specified light on or off
-     * @param {float} state turns the light on if > 0.5, turns it off otherwise
+         * @param {float} state turns the light on if > 0.5, turns it off otherwise
      **/
     function writeSwitchState(light, state) {
         var options = {
@@ -170,8 +170,8 @@ if (exports.enabled) {
 
 
     /**
-     * @desc writeBrightness() Sets the brightness of the specified light 
-     * @param {float} bri is the brightness in the range [0,1]
+         * @desc writeBrightness() Sets the brightness of the specified light 
+         * @param {float} bri is the brightness in the range [0,1]
      **/
     function writeBrightness(light, bri) {
         var options = {
@@ -276,22 +276,14 @@ if (exports.enabled) {
 
     exports.send = function (objName, ioName, value, mode, type) {
         //Write incoming data to the specified light
-        if (server.getDebug()) console.log("Incoming: " + objName + "  " + ioName + "  " + value + "  " + mode + "  " + type);
         if (lights.hasOwnProperty(objName)) {
-            if (server.getDebug()) console.log("name matched");
             if (ioName == "switch") {
                 writeSwitchState(lights[objName], value);
-            }
-
-            if (ioName == "brightness") {
+            } else if (ioName == "brightness") {
                 writeBrightness(lights[objName], value);
-            }
-
-            if (ioName == "saturation") {
+            } else if (ioName == "saturation") {
                 writeSaturation(lights[objName], value);
-            }
-
-            if (ioName == "hue") {
+            } else if (ioName == "hue") {
                 writeHue(lights[objName], value);
             }
         }

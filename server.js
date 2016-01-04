@@ -1348,14 +1348,15 @@ function socketServer() {
             var msgContent = JSON.parse(msg);
             var objSend;
             if ((msgContent.obj in objectExp) && typeof msgContent.value !== "undefined") {
-                if (msgContent.pos in objectExp[msgContent.obj].objectValues) {
-                    objectExp[msgContent.obj].objectValues[msgContent.pos].value = msgContent.value;
+                var objID = msgContent.pos + msgContent.obj;
+                if (objID in objectExp[msgContent.obj].objectValues) {
+                    objectExp[msgContent.obj].objectValues[objID].value = msgContent.value;
 
-                    objSend = objectExp[msgContent.obj].objectValues[msgContent.pos];
+                    objSend = objectExp[msgContent.obj].objectValues[objID];
                     objSend.value = msgContent.value;
 
                     if (internalModules.hasOwnProperty(objSend.type)) {
-                        internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type);
+                        internalModules[objSend.type].send(objectExp[msgContent.obj].name, objectExp[msgContent.obj].objectValues[objID].name, msgContent.value, msgContent.mode, msgContent.type);
                     }
 
                     // trigger the data flow engine
@@ -1363,16 +1364,16 @@ function socketServer() {
 
                     // internal.sender(objectExp, obj, pos, value);
                     //   serialSender(serialPort, objectExp, msgContent.obj, msgContent.pos, msgContent.value);
-                    objectEngine(msgContent.obj, msgContent.pos, objectExp, pluginModules);
+                    objectEngine(msgContent.obj, msgContent.pos + msgContent.obj, objectExp, pluginModules);
 
                 } else {
                     for (var thisKey in objectExp[msgContent.obj].objectValues) {
                         if (msgContent.pos === objectExp[msgContent.obj].objectValues[thisKey].name) {
-                            objSend = objectExp[msgContent.obj].objectValues[msgContent.pos + msgContent.obj];
+                            objSend = objectExp[msgContent.obj].objectValues[objID];
                             objSend.value = msgContent.value;
 
                             if (internalModules.hasOwnProperty(objSend.type)) {
-                                internalModules[objSend.type].send(objectExp[msgContent.obj], objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type);
+                                internalModules[objSend.type].send(objectExp[msgContent.obj].name, objectExp[msgContent.obj].objectValues[objID].name, msgContent.value, msgContent.mode, msgContent.type);
                             }
 
                             //serialSender(serialPort, objectExp, msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value);

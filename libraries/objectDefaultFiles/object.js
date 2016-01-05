@@ -43,10 +43,19 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
+// Load socket.io.js synchronous so that it is available by the time the rest of the code is executed.
+var xhr = new XMLHttpRequest();
+xhr.open('GET', "/socket.io/socket.io.js", false);
+xhr.send();
+var objIOScript = document.createElement('script');
+objIOScript.type = "text/javascript";
+objIOScript.text = xhr.responseText;
+document.getElementsByTagName('head')[0].appendChild(objIOScript);
+
 // function for resizing the windows.
 var objectExp = {};
 
-window.addEventListener("message", function(msg){
+window.addEventListener("message", function (msg) {
     parent.postMessage(JSON.stringify(
         {
             "pos": JSON.parse(msg.data).pos,
@@ -56,7 +65,7 @@ window.addEventListener("message", function(msg){
         }
         )
         // this needs to contain the final interface source
-        ,"*");
+        , "*");
     objectExp.pos = JSON.parse(msg.data).pos;
     objectExp.obj = JSON.parse(msg.data).obj;
 

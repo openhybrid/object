@@ -1359,11 +1359,6 @@ function socketServer() {
                         internalModules[objSend.type].send(objectExp[msgContent.obj].name, objectExp[msgContent.obj].objectValues[objID].name, msgContent.value, msgContent.mode, msgContent.type);
                     }
 
-                    // trigger the data flow engine
-                    //  console.log(msgContent.value+" "+msgContent.obj+" "+msgContent.pos);
-
-                    // internal.sender(objectExp, obj, pos, value);
-                    //   serialSender(serialPort, objectExp, msgContent.obj, msgContent.pos, msgContent.value);
                     objectEngine(msgContent.obj, msgContent.pos + msgContent.obj, objectExp, pluginModules);
 
                 } else {

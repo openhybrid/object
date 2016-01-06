@@ -92,8 +92,11 @@ function HybridObject() {
         };
 
         this.read = function (IO, data) {
-            if (data.pos === IO)
+            if (data.pos === IO) {
                 return data.value;
+            } else {
+                return undefined;
+            }
         };
         console.log("socket.io is loaded");
     }
@@ -105,7 +108,7 @@ function HybridObject() {
         this.write = function (IO, value, mode) {
         };
         this.read = function (IO, data) {
-            return 0;
+             return undefined;
         };
         this.readRequest = function (IO) {
         };

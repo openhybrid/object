@@ -59,16 +59,10 @@ if (exports.enabled) {
 
         if (server.getDebug()) console.log("setup philipsHue");
         for (var key in lights) {
-            //server.addIO(key, "switch", "default", "philipsHue");
-            //server.addIO(key, "brightness", "default", "philipsHue");
-            //server.addIO(key, "hue", "default", "philipsHue");
-            //server.addIO(key, "saturation", "default", "philipsHue");
-
             lights[key].switch = undefined;
             lights[key].bri = undefined;
             lights[key].hue = undefined;
             lights[key].sat = undefined;
-            //server.clearIO("philipsHue");
         }
     }
 
@@ -229,7 +223,7 @@ if (exports.enabled) {
         req.on('error', function (e) {
             console.log('writeHue HTTP error: ' + e.message);
         });
-        req.write('{"sat":' + _.floor(hue * 65535) + '}');
+        req.write('{"hue":' + _.floor(hue * 65535) + '}');
         req.end();
     }
 
@@ -238,7 +232,6 @@ if (exports.enabled) {
      **/
     function philipsHueServer() {
         console.log("philipsHue starting philipsHue");
-
         setup();
 
 

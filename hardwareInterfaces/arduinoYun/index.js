@@ -62,6 +62,7 @@ if (exports.enabled) {
     }
 
     var ArduinoLookup = {};
+    var serialPortOpen = false;
 
 
     ledBlinker();
@@ -85,6 +86,7 @@ if (exports.enabled) {
         serialPort.on("open", function () {
 
             if (server.getDebug()) console.log('Serial port opened');
+            serialPortOpen = true;
             var dataSwitch = 0;
             var pos = null;
             var objID = null;
@@ -234,8 +236,10 @@ if (exports.enabled) {
     };
 
     exports.init = function () {
-        serialPort.write(" \n");
-        serialPort.write("okbird\n");
+        if (serialPortOpen) {
+            serialPort.write(" \n");
+            serialPort.write("okbird\n");
+        }
     };
 
 

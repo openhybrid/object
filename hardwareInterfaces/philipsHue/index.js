@@ -229,7 +229,7 @@ if (exports.enabled) {
         req.on('error', function (e) {
             console.log('writeHue HTTP error: ' + e.message);
         });
-        req.write('{"sat":' + _.floor(hue * 65535) + '}');
+        req.write('{"hue":' + _.floor(hue * 65535) + '}');
         req.end();
     }
 

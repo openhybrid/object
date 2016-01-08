@@ -48,8 +48,7 @@
 
 
 /**
- * @desc This function is called once by the server. Place calls to addIO(), clearIO(), developerOn(), developerOff(), writeIOToServer() here.
- *       Start the event loop of your hardware interface in here. Call clearIO() after you have added all the IO points with addIO() calls.
+ * @desc This function is called once by the server. Start the event loop of your hardware interface in here.
  **/
 exports.receive = function (){
 
@@ -69,7 +68,8 @@ exports.send = function (objName, ioName, value, mode, type) {
 };
 
 /**
- * @desc prototype for an interface init. The init reinitialize the communication with the external source.
+ * @desc prototype for an interface init. The init reinitialize the communication with the external source. 
+ *       Place calls to addIO(), clearIO(), developerOn(), developerOff(), writeIOToServer() here. Call clearIO() after you have added all the IO points with addIO() calls.
  * @note program the init so that it can be called anytime there is a change to the amount of objects.
  **/
 exports.init = function(){

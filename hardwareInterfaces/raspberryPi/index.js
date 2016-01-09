@@ -32,44 +32,14 @@ if (exports.enabled) {
 
     var items = {};
 
+    //load the config file
+    var rawItems = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
+
     /**
      * @desc setup() runs once, adds and clears the IO points
      **/
     function setup() {
-        server.developerOn();
-
-        //load the config file
-        var rawItems = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
-
-        rawItems.forEach(function (item) {
-            var key = item.id + item.ioName; // unique item identifier
-
-            if (items[key] !== undefined) {
-                throw ("config.json contains two or more items with the id = '" + item.id + "' and ioName = '" + item.ioName + "'");
-            }
-
-            // if edge is not specified, fallback to the default (none)
-            if (!("edge" in item)) {
-                item.edge = "none"
-            }
-
-            item.GPIO = new GPIO(item.pin, item.direction, item.edge);
-
-            // if this item produces input, wire it up to write results to the server
-            if (item.direction === "in") {
-                // watch the GPIO for state changes
-                item.GPIO.watch(function (err, value) {
-                    writeGpioToServer(err, value, item, server.writeIOToServer);
-                });
-            }
-
-            if (server.getDebug()) console.log("raspberryPi: adding item with the id = '" + item.id + "' and ioName = '" + item.ioName + "'");
-            server.addIO(item.id, item.ioName, "default", "raspberryPi");
-
-            items[key] = item;
-        });
-
-        server.clearIO("raspberryPi");
+        server.developerOn();  
     }
 
     /**
@@ -140,6 +110,38 @@ if (exports.enabled) {
      **/
     exports.init = function () {
         if (server.getDebug()) console.log("raspberryPi: init()");
+        //close all GPIO's if any are open
+        teardown();
+
+        rawItems.forEach(function (item) {
+            var key = item.id + item.ioName; // unique item identifier
+
+            if (items[key] !== undefined) {
+                throw ("config.json contains two or more items with the id = '" + item.id + "' and ioName = '" + item.ioName + "'");
+            }
+
+            // if edge is not specified, fallback to the default (none)
+            if (!("edge" in item)) {
+                item.edge = "none"
+            }
+
+            item.GPIO = new GPIO(item.pin, item.direction, item.edge);
+
+            // if this item produces input, wire it up to write results to the server
+            if (item.direction === "in") {
+                // watch the GPIO for state changes
+                item.GPIO.watch(function (err, value) {
+                    writeGpioToServer(err, value, item, server.writeIOToServer);
+                });
+            }
+
+            if (server.getDebug()) console.log("raspberryPi: adding item with the id = '" + item.id + "' and ioName = '" + item.ioName + "'");
+            server.addIO(item.id, item.ioName, "default", "raspberryPi");
+
+            items[key] = item;
+        });
+
+        server.clearIO("raspberryPi");
     };
 
     /**

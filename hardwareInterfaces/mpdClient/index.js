@@ -27,6 +27,7 @@
  *    song: 0
  *    songid: 1
  *
+ * TODO: Add some more error handling. Crashes the whole server if the mpd server cannot be reached.
  */
 //Enable this hardware interface
 exports.enabled = false;
@@ -142,7 +143,7 @@ if (exports.enabled) {
     exports.init = function () {
         for (var key in mpdServers) {
             server.addIO(key, "volume", "default", "mpdClient");
-            server.addio(key, "status", "default", "mpdclient");
+            server.addIO(key, "status", "default", "mpdclient");
         }
         server.clearIO("mpdClient");
     };

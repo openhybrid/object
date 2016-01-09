@@ -294,6 +294,7 @@ if (globalVariables.debug) console.log("ready to start internal servers");
 
 // starting the internal servers (receive)
 for (var i = 0; i < tempFilesInternal.length; i++) {
+    internalModules[tempFilesInternal[i]].init();
     internalModules[tempFilesInternal[i]].receive();
 }
 

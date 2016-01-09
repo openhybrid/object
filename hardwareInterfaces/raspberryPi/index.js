@@ -139,7 +139,7 @@ exports.send = function (objName, ioName, value, mode, type) {
  * @note program the init so that it can be called anytime there is a change to the amount of objects.
  **/
     exports.init = function () {
-        if (server.getDebug()) console.log("raspberryPi: shutdown()");
+        if (server.getDebug()) console.log("raspberryPi: init()");
 };
 
 /**

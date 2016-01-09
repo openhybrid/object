@@ -37,7 +37,7 @@ if (exports.enabled) {
     var _ = require('lodash');
     var server = require(__dirname + '/../../libraries/HybridObjectsHardwareInterfaces');
 
-    var mpdServers;
+    var mpdServers = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
     var cmd = mpd.cmd;
 
 
@@ -47,14 +47,14 @@ if (exports.enabled) {
     function setup() {
         server.developerOn();
 
-        mpdServers = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
+        //mpdServers = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
 
         for (var key in mpdServers) {
             var mpdServer = mpdServers[key];
             mpdServer.ready = false;
 
-            server.addIO(key, "volume", "default", "mpdClient");
-            server.addIO(key, "status", "default", "mpdClient");
+            //server.addIO(key, "volume", "default", "mpdClient");
+            //server.addIO(key, "status", "default", "mpdClient");
 
             mpdServer.client = mpd.connect({ port: mpdServer.port, host: mpdServer.host });
 
@@ -98,7 +98,7 @@ if (exports.enabled) {
             });
 
         }
-        server.clearIO("mpdClient");
+        //server.clearIO("mpdClient");
     }
 
 
@@ -140,6 +140,11 @@ if (exports.enabled) {
     };
 
     exports.init = function () {
+        for (var key in mpdServers) {
+            server.addIO(key, "volume", "default", "mpdClient");
+            server.addio(key, "status", "default", "mpdclient");
+        }
+        server.clearIO("mpdClient");
     };
 }
 

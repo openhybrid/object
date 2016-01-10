@@ -87,6 +87,7 @@ exports.clearIO = function (type) {
             if (!_.isUndefined(objectID) && !_.isNull(objectID) && objectID.length > 13) {
                 for (var key in objectExp[objectID].objectValues) {
                     if (!hardwareInterfaces[type].hybridObjects[objName].ioPoints.hasOwnProperty(objectExp[objectID].objectValues[key].name)) {
+                        if (globalVariables.debug) console.log("Deleting: " + objectID + "   " + key);
                         delete objectExp[objectID].objectValues[key];
                     }
                 }

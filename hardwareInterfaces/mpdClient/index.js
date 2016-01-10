@@ -109,6 +109,7 @@ if (exports.enabled) {
     };
 
     exports.send = function (objName, ioName, value, mode, type) {
+        if (server.getDebug()) console.log("Incoming: " + objName + "   " + ioName + "   " + value);
         if (mpdServers.hasOwnProperty(objName)) {
             if (ioName == "volume") {
                 mpdServers[objName].client.sendCommand("setvol " + _.floor(value * 100), function (err, msg) {
@@ -141,9 +142,11 @@ if (exports.enabled) {
     };
 
     exports.init = function () {
+        if (server.getDebug()) console.log("mpd init()");
         for (var key in mpdServers) {
+            if (server.getDebug()) console.log("mpd init() for loop");
             server.addIO(key, "volume", "default", "mpdClient");
-            server.addIO(key, "status", "default", "mpdclient");
+            server.addIO(key, "status", "default", "mpdClient");
         }
         server.clearIO("mpdClient");
     };

@@ -48,14 +48,9 @@ if (exports.enabled) {
     function setup() {
         server.developerOn();
 
-        //mpdServers = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
-
         for (var key in mpdServers) {
             var mpdServer = mpdServers[key];
             mpdServer.ready = false;
-
-            //server.addIO(key, "volume", "default", "mpdClient");
-            //server.addIO(key, "status", "default", "mpdClient");
 
             mpdServer.client = mpd.connect({ port: mpdServer.port, host: mpdServer.host });
 
@@ -99,13 +94,11 @@ if (exports.enabled) {
             });
 
         }
-        //server.clearIO("mpdClient");
     }
 
 
     exports.receive = function () {
         setup();
-
     };
 
     exports.send = function (objName, ioName, value, mode, type) {
@@ -144,7 +137,6 @@ if (exports.enabled) {
     exports.init = function () {
         if (server.getDebug()) console.log("mpd init()");
         for (var key in mpdServers) {
-            if (server.getDebug()) console.log("mpd init() for loop");
             server.addIO(key, "volume", "default", "mpdClient");
             server.addIO(key, "status", "default", "mpdClient");
         }

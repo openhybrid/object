@@ -28,7 +28,6 @@
  *    song: 0
  *    songid: 1
  *
- * TODO: Add some more error handling. Crashes the whole server if the mpd server cannot be reached.
  */
 //Enable this hardware interface
 exports.enabled = false;
@@ -54,6 +53,10 @@ if (exports.enabled) {
             mpdServer.ready = false;
 
             mpdServer.client = mpd.connect({ port: mpdServer.port, host: mpdServer.host });
+
+            mpdServer.client.on('error', function (err) {
+                console.log("MPD " + mpdServer.id + " " + err);
+            });
 
 
             //Create listeners for mpd events

@@ -9,9 +9,10 @@
  */
 
 /*
- *  MPD Client
+ * MPD Client
  *
- * This hardware interface can communicate with a mpd server
+ * This hardware interface can communicate with a mpd server. All commands specified in the
+ * Command Reference http://www.musicpd.org/doc/protocol/command_reference.html can be used.
  *
  *
  * Example mpd status output:

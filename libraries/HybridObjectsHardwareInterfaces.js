@@ -96,6 +96,7 @@ exports.clearIO = function (type) {
 
         }
     }
+    //TODO: clear links too
     if (globalVariables.debug) console.log("it's all cleared");
 };
 

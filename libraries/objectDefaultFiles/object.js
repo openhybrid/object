@@ -47,10 +47,16 @@
 var xhr = new XMLHttpRequest();
 xhr.open('GET', "/socket.io/socket.io.js", false);
 xhr.send();
-var objIOScript = document.createElement('script');
-objIOScript.type = "text/javascript";
-objIOScript.text = xhr.responseText;
-document.getElementsByTagName('head')[0].appendChild(objIOScript);
+
+//Only add script if fetch was successful
+if (xhr.status == 200) {
+    var objIOScript = document.createElement('script');
+    objIOScript.type = "text/javascript";
+    objIOScript.text = xhr.responseText;
+    document.getElementsByTagName('head')[0].appendChild(objIOScript);
+} else {
+    console.log("Error XMLHttpRequest HTTP status: " + xhr.status);
+}
 
 // function for resizing the windows.
 var objectExp = {};

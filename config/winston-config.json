@@ -1,0 +1,31 @@
+{
+	"logging": {
+	    "default": {
+	        "console": {
+	          "level": "debug",
+	          "colorize": true
+	        }
+	    },
+		"object": {
+			"console": {
+				"timestamp": true,
+				"level": "debug",
+				"colorize": true
+			}
+		},
+		"hardware": {
+			"console": {
+				"timestamp": true,
+				"level": "debug",
+				"colorize": true
+			}
+		},
+		"http": { 
+			"console": {
+				"timestamp": true,
+				"level": "debug",
+				"colorize": true
+			}
+		}
+	}
+}

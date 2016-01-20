@@ -1,0 +1,31 @@
+{
+	"logging": {
+	    "default": {
+	        "console": {
+	          "level": "warn",
+	          "colorize": true
+	        }
+	    },
+		"object": {
+			"console": {
+				"timestamp": true,
+				"level": "info",
+				"colorize": true
+			}
+		},
+		"hardware": {
+			"console": {
+				"timestamp": true,
+				"level": "info",
+				"colorize": true
+			}
+		},
+		"http": { 
+			"console": {
+				"timestamp": true,
+				"level": "info",
+				"colorize": true
+			}
+		}
+	}
+}

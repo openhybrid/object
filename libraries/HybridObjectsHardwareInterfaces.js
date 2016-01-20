@@ -21,6 +21,11 @@ var http = require('http');
 var HybridObjectsUtilities = require(__dirname + '/HybridObjectsUtilities');
 var _ = require('lodash');
 
+var winston = require('winston');
+var logger=winston.loggers.get("hardware");
+logger.debug("Loading hybridObjectHardwareInterface");
+
+
 //global variables, passed through from server.js
 var objectExp;
 var objectLookup;
@@ -63,7 +68,7 @@ exports.writeIOToServer = function (objName, ioName, value, mode) {
     var objKey2 = HybridObjectsUtilities.readObject(objectLookup, objName); //get globally unique object id
     var valueKey = ioName + objKey2;
 
-//    console.log("writeIOToServer obj: "+objName + "  name: "+ioName+ "  value: "+value+ "  mode: "+mode);
+//    logger.debug("writeIOToServer obj: "+objName + "  name: "+ioName+ "  value: "+value+ "  mode: "+mode);
 
     if (objectExp.hasOwnProperty(objKey2)) {
         if (objectExp[objKey2].objectValues.hasOwnProperty(valueKey)) {
@@ -95,7 +100,7 @@ exports.clearIO = function (type) {
 
         }
     }
-    if (globalVariables.debug) console.log("it's all cleared");
+    logger.debug("it's all cleared");
 };
 
 
@@ -110,7 +115,7 @@ exports.addIO = function (objName, ioName, plugin, type) {
     HybridObjectsUtilities.createFolder(objName, dirnameO, globalVariables.debug);
 
     var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
-    if (globalVariables.debug) console.log("AddIO objectID: " + objectID + "   " + type);
+    logger.debug("AddIO objectID: " + objectID + "   " + type);
 
     objID = ioName + objectID;
 
@@ -118,7 +123,7 @@ exports.addIO = function (objName, ioName, plugin, type) {
 
         if (objectID.length > 13) {
 
-            if (globalVariables.debug) console.log("I will save: " + objName + " and: " + ioName);
+            logger.debug("I will save: " + objName + " and: " + ioName);
 
             if (objectExp.hasOwnProperty(objectID)) {
                 objectExp[objectID].developer = globalVariables.developer;

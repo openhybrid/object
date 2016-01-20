@@ -1,7 +1,7 @@
 {
-  "MediaCentre": {
-    "host": "192.168.178.38",
-    "id": "MediaCentre",
+  "fmediacenter": {
+    "host": "10.194.7.192",
+    "id": "fmediacenteryti171v480rn",
     "port": "9090"
   }
 }

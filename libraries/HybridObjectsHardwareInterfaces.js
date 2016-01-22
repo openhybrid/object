@@ -75,7 +75,7 @@ exports.writeIOToServer = function (objName, ioName, value, mode) {
             objectExp[objKey2].objectValues[valueKey].value = value;
             objectExp[objKey2].objectValues[valueKey].mode = mode;
             //callback is objectEngine in server.js. Notify data has changed.
-            callback(objKey2, valueKey, objectExp, pluginModules);
+            callback(objKey2, ioName, objectExp, pluginModules);
         }
     }
 };

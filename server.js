@@ -104,7 +104,7 @@ var globalVariables = {
 };
 
 var winston = require('winston');
-require(__dirname + "/libraries/logger").setup(globalVariables); // Loading logger configuration
+require(__dirname + "/libraries/logger").setup(globalVariables);  // Loading logger configuration
 	
 
 var logger=winston.loggers.get("object");   // Core Logger
@@ -153,6 +153,10 @@ var HybridObjectsUtilities   = require(__dirname + '/libraries/HybridObjectsUtil
 var HybridObjectsWebFrontend = require(__dirname + '/libraries/HybridObjectsWebFrontend');
 var HybridObjectsHardwareInterfaces = require(__dirname + '/libraries/HybridObjectsHardwareInterfaces');
 var templateModule           = require(__dirname + '/libraries/templateModule');
+
+var util = require("util");
+var events = require("events");
+
 
 // Set web frontend debug to inherit from global debug
 HybridObjectsWebFrontend.debug = globalVariables.debug;
@@ -295,49 +299,6 @@ templateModule.loadAllModules(modulesList, function () {
 
 });
 
-logger.info("Starting System: ");
-HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, __dirname, pluginModules, function (objKey2, valueKey, objectExp, pluginModules) {
-    objectEngine(objKey2, valueKey, objectExp, pluginModules);
-}, ObjectValue);
-
-loghw.info("HW interfaces setup");
-loadHybridObjects();
-loghw.info("loadHybridObjects done");
-
-startSystem();
-logger.log("startSystem done");
-
-// add all modules for internal communication
-
-// get the directory names of all available plugins for the 3D-UI
-var tempFilesInternal = fs.readdirSync(internalPath).filter(function (file) {
-    return fs.statSync(internalPath + '/' + file).isDirectory();
-});
-// remove hidden directories
-while (tempFilesInternal[0][0] === ".") {
-    tempFilesInternal.splice(0, 1);
-}
-// add all plugins to the pluginModules object. Iterate backwards because splice works inplace
-for (var i = tempFilesInternal.length - 1; i >= 0; i--) {
-    //check if hardwareInterface is enabled, if it is, add it to the internalModules
-    if (require(internalPath + "/" + tempFilesInternal[i] + "/index.js").enabled) {
-        internalModules[tempFilesInternal[i]] = require(internalPath + "/" + tempFilesInternal[i] + "/index.js");
-    } else {
-        tempFilesInternal.splice(i, 1);
-    }
-}
-
-logger.info("ready to start internal servers");
-
-// starting the internal servers (receive)
-for (var i = 0; i < tempFilesInternal.length; i++) {
-    internalModules[tempFilesInternal[i]].receive();
-}
-
-logger.info("found " + tempFilesInternal.length + " internal server");
-logger.info("starting internal Server.");
-
-
 /**
  * Returns the file extension (portion after the last dot) of the given filename.
  * If a file name starts with a dot, returns an empty string.
@@ -423,64 +384,6 @@ function loadHybridObjects() {
     }
 }
 
-/**********************************************************************************************************************
- ******************************************** Starting the System ******************************************************
- **********************************************************************************************************************/
-
-/**
- * @desc starting the system
- **/
-
-function startSystem() {
-
-    // generating a udp heartbeat signal for every object that is hosted in this device
-    for (var key in objectExp) {
-        objectBeatSender(beatPort, key, objectExp[key].ip);
-    }
-
-    // receiving heartbeat messages and adding new objects to the knownObjects Array
-    objectBeatServer();
-
-    // serving the visual frontend with web content as well serving the REST API for add/remove links and changing
-    // object sizes and positions
-    objectWebServer();
-
-    // receives all socket connections and processes the data
-    socketServer();
-
-    // receives all serial calls and processes the data
-
-
-    // initializes the first sockets to be opened to other objects
-    socketUpdater();
-    // keeps sockets to other objects alive based on the links found in the local objects
-    // removes socket connections to objects that are no longer linked.
-    socketUpdaterInterval();
-
-    // blink the LED at the arduino board
-
-}
-
-
-/**********************************************************************************************************************
- ******************************************** Stopping the System *****************************************************
- **********************************************************************************************************************/
-
-function exit() {
-    var mod;
-    
-    // shut down the internal servers (teardown)
-    for (var i = 0; i < tempFilesInternal.length; i++) {
-        mod = internalModules[tempFilesInternal[i]];
-        if("shutdown" in mod) {
-            mod.shutdown();
-        }
-    }
-    
-    process.exit();
-}
-
-process.on('SIGINT', exit);
 
 
 /**********************************************************************************************************************
@@ -1376,12 +1279,17 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
  * @desc Check for incoming MSG from other objects or the User. Make changes to the objectValues if changes occur.
  **/
 
-function socketServer() {
+function OHSocketServer(params) {
+    events.EventEmitter.call(this)
+    osSocketServer=this;
     io.on('connection', function (socket) {
-
+    	loghttp.info("New ws connection");
+    	socket.objList=[]; // Initialize Object List intered by the socket
         socket.on('object', function (msg) {
             var msgContent = JSON.parse(msg);
             var objSend;
+            if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
+            	socket.objList.push(msgContent.obj);
             if ((msgContent.obj in objectExp) && typeof msgContent.value !== "undefined") {
                 var objID = msgContent.pos + msgContent.obj;
                 if (objID in objectExp[msgContent.obj].objectValues) {
@@ -1415,11 +1323,21 @@ function socketServer() {
         });
 
         socket.on('/object/value', function (msg) {
-            var msgContent = JSON.parse(msg);
-            if (msgContent.pos) {
+        	//loghttp.debug ("value object msg %s", msg);
+            var msgContent = JSON.parse(msg);            
+        	//loghttp.debug("  before socketlist=%s", socket.objList);
+            if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
+            	socket.objList.push(msgContent.obj);
+        	//loghttp.debug("  after socketlist=%s", socket.objList);
 
+            if (msgContent.pos) {
+                if (objectExp.hasOwnProperty(msgContent.obj)) {
+                	osSocketServer.notifySingleOHUpdate(socket, msgContent.obj, msgContent.pos);
+                }
+            	/*
                 var msgToSend = "";
                 if (objectExp.hasOwnProperty(msgContent.obj)) {
+                	loghttp.debug("Send something...")
                     if (objectExp[msgContent.obj].objectValues.hasOwnProperty(msgContent.pos + msgContent.obj)) {
 
                         msgToSend = JSON.stringify({
@@ -1429,7 +1347,9 @@ function socketServer() {
                         });
                         socket.emit('object', msgToSend);
                     }
-                }
+                } else
+                	{                 	loghttp.debug("Send NOthing...")}
+                */
 
             } else {
                 var valueArray = {};
@@ -1446,6 +1366,10 @@ function socketServer() {
 
         socket.on('/object/value/full', function (msg) {
             var msgContent = JSON.parse(msg);
+        	loghttp.debug ("full object msg %s", msgContent);
+            if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
+            	socket.objList.push(msgContent.obj);
+
             var msgToSend = JSON.stringify({
                 obj: msgContent.obj,
                 pos: msgContent.pos,
@@ -1453,9 +1377,163 @@ function socketServer() {
             });
             socket.emit('object', msgToSend);
         });
+        socket.on('disconnect', function () {
+        	loghttp.debug("WS disconnected %s", socket.objList);
+        	osSocketServer.emit("socketdisconnected", socket.objList);
+        });
+
     });
-    logger.info('socket.io started');
+    this.io = io
+    loghttp.info('socket.io started');
 }
+
+util.inherits(OHSocketServer, events.EventEmitter);
+var __method = OHSocketServer.prototype;
+
+/**
+ * notify change for one client
+ * @param socket 
+ * @param obj 
+ * @param pos 
+ * @returns
+ */
+__method.notifySingleOHUpdate = function(socket, obj, pos) {
+	loghttp.debug("==> notifyOHUpdate receive (%s,%s)", obj, pos)
+	if (objectExp[obj].objectValues.hasOwnProperty(pos+obj)) {
+		var msgToSend = JSON.stringify({
+			obj: obj,
+			pos: pos,
+			value: objectExp[obj].objectValues[pos+obj].value
+		});
+	    socket.emit('object', msgToSend);
+	}
+}
+
+/**
+ * notify change for all client interrested by obj
+ * @param socket 
+ * @param obj 
+ * @param pos 
+ * @returns
+ */
+__method.notifyAllOHUpdate = function(objKey, valueKey) {
+	for (var socnum of Object.keys(this.io.sockets.sockets)) {
+		var soc=this.io.sockets.sockets[socnum];
+		if (soc.objList!= undefined && soc.objList.indexOf(objKey)!==-1 ) {
+			this.notifySingleOHUpdate(soc, objKey, valueKey)
+		}
+	}
+}
+
+
+/**********************************************************************************************************************
+ ******************************************** Starting the System ******************************************************
+ **********************************************************************************************************************/
+
+/**
+ * @desc starting the system
+ **/
+var socketServer
+function startSystem() {
+
+    // generating a udp heartbeat signal for every object that is hosted in this device
+    for (var key in objectExp) {
+        objectBeatSender(beatPort, key, objectExp[key].ip);
+    }
+
+    // receiving heartbeat messages and adding new objects to the knownObjects Array
+    objectBeatServer();
+
+    // serving the visual frontend with web content as well serving the REST API for add/remove links and changing
+    // object sizes and positions
+    objectWebServer();
+
+    // receives all socket connections and processes the data
+    socketServer = new OHSocketServer();
+    
+    socketServer.on("socketdisconnected", function(objList) {
+    	loghttp.info("TODO Cleaning things for %s", objList);
+	});
+
+    // receives all serial calls and processes the data
+
+
+    // initializes the first sockets to be opened to other objects
+    socketUpdater();
+    // keeps sockets to other objects alive based on the links found in the local objects
+    // removes socket connections to objects that are no longer linked.
+    socketUpdaterInterval();
+
+    // blink the LED at the arduino board
+
+}
+
+logger.info("Starting System: ");
+HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, __dirname, pluginModules, function (objKey2, ioname, objectExp, pluginModules) {
+    objectEngine(objKey2, ioname+objKey2, objectExp, pluginModules);
+    socketServer.notifyAllOHUpdate(objKey2, ioname, objectExp);
+}, ObjectValue);
+
+loghw.info("HW interfaces setup");
+loadHybridObjects();
+loghw.info("loadHybridObjects done");
+
+startSystem();
+logger.log("startSystem done");
+
+// add all modules for internal communication
+
+// get the directory names of all available plugins for the 3D-UI
+var tempFilesInternal = fs.readdirSync(internalPath).filter(function (file) {
+    return fs.statSync(internalPath + '/' + file).isDirectory();
+});
+// remove hidden directories
+while (tempFilesInternal[0][0] === ".") {
+    tempFilesInternal.splice(0, 1);
+}
+// add all plugins to the pluginModules object. Iterate backwards because splice works inplace
+for (var i = tempFilesInternal.length - 1; i >= 0; i--) {
+    //check if hardwareInterface is enabled, if it is, add it to the internalModules
+    if (require(internalPath + "/" + tempFilesInternal[i] + "/index.js").enabled) {
+        internalModules[tempFilesInternal[i]] = require(internalPath + "/" + tempFilesInternal[i] + "/index.js");
+    } else {
+        tempFilesInternal.splice(i, 1);
+    }
+}
+
+logger.info("ready to start internal servers");
+
+// starting the internal servers (receive)
+for (var i = 0; i < tempFilesInternal.length; i++) {
+    internalModules[tempFilesInternal[i]].receive();
+}
+
+logger.info("found " + tempFilesInternal.length + " internal server");
+logger.info("starting internal Server.");
+
+
+
+
+/**********************************************************************************************************************
+ ******************************************** Stopping the System *****************************************************
+ **********************************************************************************************************************/
+
+function exit() {
+    var mod;
+    
+    // shut down the internal servers (teardown)
+    for (var i = 0; i < tempFilesInternal.length; i++) {
+        mod = internalModules[tempFilesInternal[i]];
+        if("shutdown" in mod) {
+            mod.shutdown();
+        }
+    }
+    
+    process.exit();
+}
+
+process.on('SIGINT', exit);
+
 
 /**********************************************************************************************************************
  ******************************************** Engine ******************************************************************
@@ -1469,7 +1547,7 @@ function socketServer() {
 // dependencies afterPluginProcessing
 
 function objectEngine(obj, pos, objectExp, pluginModules) {
-    // console.log("engine started");
+    logger.debug("object engine called for %s - %s", obj, pos);
     var key;
     for (key in objectExp[obj].objectLinks) {
         if (objectExp[obj].objectLinks[key].locationInA === pos) {
@@ -1571,7 +1649,7 @@ function socketSender(obj, linkPos, processedValue, mode) {
  **/
 
 function socketUpdater() {
-    // console.log(knownObjects);
+    //loghttp.debug(knownObjects);
     // delete unconnected connections
     var sockKey, objKey, posKey;
 

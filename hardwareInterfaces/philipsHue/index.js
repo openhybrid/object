@@ -29,7 +29,7 @@
  * TODO: Add some more functionality, i.e. change color or whatever the philips Hue API offers
  */
 //Enable this hardware interface
-exports.enabled = true;
+exports.enabled = false;
 
 if (exports.enabled) {
 

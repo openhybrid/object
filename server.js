@@ -1346,9 +1346,11 @@ function socketServer() {
 
         socket.on('object', function (msg) {
             var msgContent = JSON.parse(msg);
+            if (globalVariables.debug) console.log("socketServer incoming msg: " + msgContent);
             var objSend;
             if ((msgContent.obj in objectExp) && typeof msgContent.value !== "undefined") {
                 var objID = msgContent.pos + msgContent.obj;
+                if (globalVariables.debug) console.log("socketServer found object: " + objID);
                 if (objID in objectExp[msgContent.obj].objectValues) {
                     objectExp[msgContent.obj].objectValues[objID].value = msgContent.value;
 
@@ -1509,7 +1511,8 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 
 function socketSender(obj, linkPos, processedValue, mode) {
     var link = objectExp[obj].objectLinks[linkPos];
-    var msg = JSON.stringify({obj: link.ObjectB, pos: link.locationInB, value: processedValue, mode: mode});
+    var msg = JSON.stringify({ obj: link.ObjectB, pos: link.locationInB, value: processedValue, mode: mode });
+    if (globalVariables.debug) console.log("socketSender send msg: " + msg);
     if (!(link.ObjectB in objectExp)) {
         try {
             var objIp = knownObjects[link.ObjectB];

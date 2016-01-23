@@ -214,7 +214,7 @@ function serialServer(serialPort) {
 function serialSender(serialPort, objName, ioName, value, mode, type) {
 
     if (type === "arduinoYun") {
-        var index = ArduinoLookup[objName + ioName];
+        var index = ArduinoLookup[objName + ioName].index;
             var yunModes = ["f", "d", "p", "n"];
         if (_.includes(yunModes, mode)) {
             serialPort.write(mode + "\n");

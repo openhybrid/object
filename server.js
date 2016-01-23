@@ -1346,7 +1346,7 @@ function socketServer() {
 
         socket.on('object', function (msg) {
             var msgContent = JSON.parse(msg);
-            if (globalVariables.debug) console.log("socketServer incoming msg: " + msgContent);
+            if (globalVariables.debug) console.log("socketServer incoming msg: " + msg);
             var objSend;
             if ((msgContent.obj in objectExp) && typeof msgContent.value !== "undefined") {
                 var objID = msgContent.pos + msgContent.obj;
@@ -1511,7 +1511,8 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 
 function socketSender(obj, linkPos, processedValue, mode) {
     var link = objectExp[obj].objectLinks[linkPos];
-    var msg = JSON.stringify({ obj: link.ObjectB, pos: link.locationInB, value: processedValue, mode: mode });
+    var temp = link.locationInB.slice(0, link.ObjectB.length * -1);
+    var msg = JSON.stringify({ obj: link.ObjectB, pos: temp, value: processedValue, mode: mode });
     if (globalVariables.debug) console.log("socketSender send msg: " + msg);
     if (!(link.ObjectB in objectExp)) {
         try {

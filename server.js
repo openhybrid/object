@@ -1510,7 +1510,8 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 
 function socketSender(obj, linkPos, processedValue, mode) {
     var link = objectExp[obj].objectLinks[linkPos];
-    var msg = JSON.stringify({obj: link.ObjectB, pos: link.locationInB, value: processedValue, mode: mode});
+    var temp = link.locationInB.slice(0, link.ObjectB.length * -1);
+    var msg = JSON.stringify({ obj: link.ObjectB, pos: temp, value: processedValue, mode: mode });
     if (!(link.ObjectB in objectExp)) {
         try {
             var objIp = knownObjects[link.ObjectB];

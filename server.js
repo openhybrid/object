@@ -581,7 +581,6 @@ function objectBeatServer() {
                 id: msgContent.id,
                 ip: msgContent.ip
             }));
-            if (globalVariables.debug) console.log("knownObjectfound:" + knownObjects + "this message: ");
         }
         // check if action 'ping'
         if (msgContent.action === "ping") {

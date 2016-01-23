@@ -1349,10 +1349,12 @@ function socketServer() {
             if (globalVariables.debug) console.log("socketServer incoming: " + msg);
             var msgContent = JSON.parse(msg);
             var objSend;
+
             if ((msgContent.obj in objectExp) && typeof msgContent.value !== "undefined") {
                 var objID = msgContent.pos + msgContent.obj;
+
+                // if msgContent.pos is the name of the IO point
                 if (objID in objectExp[msgContent.obj].objectValues) {
-                    if (globalVariables.debug) console.log("First Branch");
                     objectExp[msgContent.obj].objectValues[objID].value = msgContent.value;
 
                     objSend = objectExp[msgContent.obj].objectValues[objID];
@@ -1364,22 +1366,19 @@ function socketServer() {
 
                     objectEngine(msgContent.obj, msgContent.pos + msgContent.obj, objectExp, pluginModules);
 
-                } else {
-                    if (globalVariables.debug) console.log("Second Branch");
-                    if (msgContent.pos in objectExp[msgContent.obj].objectValues) {
+                    // if msgContent.pos is the ID of the IO point
+                } else if (msgContent.pos in objectExp[msgContent.obj].objectValues) {
 
-                        objectExp[msgContent.obj].objectValues[msgContent.pos].value = msgContent.value;
-                        objSend = objectExp[msgContent.obj].objectValues[msgContent.pos];
-                        objSend.value = msgContent.value;
+                    objectExp[msgContent.obj].objectValues[msgContent.pos].value = msgContent.value;
+                    objSend = objectExp[msgContent.obj].objectValues[msgContent.pos];
+                    objSend.value = msgContent.value;
 
-                        if (internalModules.hasOwnProperty(objSend.type)) {
-                            internalModules[objSend.type].send(objectExp[msgContent.obj].name, objectExp[msgContent.obj].objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type);
-                        }
-
-                        //serialSender(serialPort, objectExp, msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value);
-                        objectEngine(msgContent.obj, msgContent.pos, objectExp, pluginModules);
-
+                    if (internalModules.hasOwnProperty(objSend.type)) {
+                        internalModules[objSend.type].send(objectExp[msgContent.obj].name, objectExp[msgContent.obj].objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type);
                     }
+
+                    objectEngine(msgContent.obj, msgContent.pos, objectExp, pluginModules);
+
                 }
             }
         });
@@ -1515,7 +1514,7 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 function socketSender(obj, linkPos, processedValue, mode) {
     var link = objectExp[obj].objectLinks[linkPos];
     var temp = link.locationInB.slice(0, link.ObjectB.length * -1);
-    var msg = JSON.stringify({ obj: link.ObjectB, pos: link.locationInB, value: processedValue, mode: mode });
+    var msg = JSON.stringify({ obj: link.ObjectB, pos: temp, value: processedValue, mode: mode });
     if (globalVariables.debug) console.log("socketSender sending: " + msg);
     if (!(link.ObjectB in objectExp)) {
         try {

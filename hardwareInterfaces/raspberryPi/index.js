@@ -55,6 +55,7 @@ if (exports.enabled) {
                 }
             }
         }
+        items = {};
     }
 
     function writeGpioToServer(err, value, item, callback) {
@@ -112,7 +113,7 @@ if (exports.enabled) {
         if (server.getDebug()) console.log("raspberryPi: init()");
         //close all GPIO's if any are open
         teardown();
-
+        
         rawItems.forEach(function (item) {
             var key = item.id + item.ioName; // unique item identifier
 

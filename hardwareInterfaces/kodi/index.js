@@ -25,7 +25,7 @@ if (exports.enabled) {
     var _ = require('lodash');
     var server = require(__dirname + '/../../libraries/HybridObjectsHardwareInterfaces');
 
-    var kodiServers;
+    var kodiServers = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
 
 
     /**
@@ -34,7 +34,7 @@ if (exports.enabled) {
     function setup() {
         server.developerOn();
 
-        kodiServers = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
+        //kodiServers = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
 
         if (server.getDebug()) console.log("KODI setup");
 
@@ -70,11 +70,11 @@ if (exports.enabled) {
             });
 
 
-            server.addIO(key, "volume", "default", "kodi");
-            server.addIO(key, "status", "default", "kodi");
+            //server.addIO(key, "volume", "default", "kodi");
+            //server.addIO(key, "status", "default", "kodi");
         }
 
-        server.clearIO("kodi");
+        //server.clearIO("kodi");
     }
 
 
@@ -107,6 +107,12 @@ if (exports.enabled) {
     };
 
     exports.init = function () {
+        for (var key in kodiServers) {
+            server.addIO(key, "volume", "default", "kodi");
+            server.addIO(key, "status", "default", "kodi");
+        }
+
+        server.clearIO("kodi");
     };
 }
 

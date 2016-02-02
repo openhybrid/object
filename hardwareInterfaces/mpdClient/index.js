@@ -9,9 +9,10 @@
  */
 
 /*
- *  MPD Client
+ * MPD Client
  *
- * This hardware interface can communicate with a mpd server
+ * This hardware interface can communicate with a mpd server. All commands specified in the
+ * Command Reference http://www.musicpd.org/doc/protocol/command_reference.html can be used.
  *
  *
  * Example mpd status output:
@@ -37,7 +38,7 @@ if (exports.enabled) {
     var _ = require('lodash');
     var server = require(__dirname + '/../../libraries/HybridObjectsHardwareInterfaces');
 
-    var mpdServers;
+    var mpdServers = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
     var cmd = mpd.cmd;
 
 
@@ -47,16 +48,15 @@ if (exports.enabled) {
     function setup() {
         server.developerOn();
 
-        mpdServers = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
-
         for (var key in mpdServers) {
             var mpdServer = mpdServers[key];
             mpdServer.ready = false;
 
-            server.addIO(key, "volume", "default", "mpdClient");
-            server.addIO(key, "status", "default", "mpdClient");
-
             mpdServer.client = mpd.connect({ port: mpdServer.port, host: mpdServer.host });
+
+            mpdServer.client.on('error', function (err) {
+                console.log("MPD " + mpdServer.id + " " + err);
+            });
 
 
             //Create listeners for mpd events
@@ -98,16 +98,15 @@ if (exports.enabled) {
             });
 
         }
-        server.clearIO("mpdClient");
     }
 
 
     exports.receive = function () {
         setup();
-
     };
 
     exports.send = function (objName, ioName, value, mode, type) {
+        if (server.getDebug()) console.log("Incoming: " + objName + "   " + ioName + "   " + value);
         if (mpdServers.hasOwnProperty(objName)) {
             if (ioName == "volume") {
                 mpdServers[objName].client.sendCommand("setvol " + _.floor(value * 100), function (err, msg) {
@@ -140,6 +139,12 @@ if (exports.enabled) {
     };
 
     exports.init = function () {
+        if (server.getDebug()) console.log("mpd init()");
+        for (var key in mpdServers) {
+            server.addIO(key, "volume", "default", "mpdClient");
+            server.addIO(key, "status", "default", "mpdClient");
+        }
+        server.clearIO("mpdClient");
     };
 }
 

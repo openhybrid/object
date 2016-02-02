@@ -85,8 +85,8 @@ const beatInterval = 3000;         // how often is the heartbeat sent
 const socketUpdateInterval = 2000; // how often the system checks if the socket connections are still up and running.
 
 //origins
-const objectPath   = __dirname + "/objects";             // where all the objects are stored.
-const modulePath   = __dirname + "/dataPointInterfaces"; // all the visual UI interfaces are stored here.
+const objectPath = __dirname + "/objects";             // where all the objects are stored.
+const modulePath = __dirname + "/dataPointInterfaces"; // all the visual UI interfaces are stored here.
 const internalPath = __dirname + "/hardwareInterfaces";  // all the visual UI interfaces are stored here.
 const objectInterfaceFolder = "/";                       // the level on which the webservice is accessible
 
@@ -112,10 +112,10 @@ var formidable = require('formidable'); // Multiple file upload library
 //var xml2js = require('xml2js');
 
 // additional required code
-var HybridObjectsUtilities   = require(__dirname + '/libraries/HybridObjectsUtilities');
+var HybridObjectsUtilities = require(__dirname + '/libraries/HybridObjectsUtilities');
 var HybridObjectsWebFrontend = require(__dirname + '/libraries/HybridObjectsWebFrontend');
 var HybridObjectsHardwareInterfaces = require(__dirname + '/libraries/HybridObjectsHardwareInterfaces');
-var templateModule           = require(__dirname + '/libraries/templateModule');
+var templateModule = require(__dirname + '/libraries/templateModule');
 
 // Set web frontend debug to inherit from global debug
 HybridObjectsWebFrontend.debug = globalVariables.debug;
@@ -294,6 +294,7 @@ if (globalVariables.debug) console.log("ready to start internal servers");
 
 // starting the internal servers (receive)
 for (var i = 0; i < tempFilesInternal.length; i++) {
+    internalModules[tempFilesInternal[i]].init();
     internalModules[tempFilesInternal[i]].receive();
 }
 
@@ -310,7 +311,7 @@ if (globalVariables.debug) console.log("starting internal Server.");
  * @return {string} The lowercase extension of the file, such has "zip"
  */
 function getFileExtension(fileName) {
-  return fileName.substr((~-fileName.lastIndexOf(".") >>> 0) + 2).toLowerCase();
+    return fileName.substr((~-fileName.lastIndexOf(".") >>> 0) + 2).toLowerCase();
 }
 
 /**
@@ -350,12 +351,12 @@ function loadHybridObjects() {
                 objectExp[tempFolderName] = JSON.parse(fs.readFileSync(__dirname + "/objects/" + tempFiles[i] + "/object.json", "utf8"));
                 objectExp[tempFolderName].ip = ip.address();
 
-// adding the values to the arduino lookup table so that the serial connection can take place.
+                // adding the values to the arduino lookup table so that the serial connection can take place.
                 // todo this is maybe obsolete.
                 for (var tempkey in objectExp[tempFolderName].objectValues) {
-                    ArduinoLookupTable.push({obj: tempFiles[i], pos: tempkey});
+                    ArduinoLookupTable.push({ obj: tempFiles[i], pos: tempkey });
                 }
-// todo the sizes do not really save...
+                // todo the sizes do not really save...
 
 
                 // todo new Data points are never writen in to the file. So this full code produces no value
@@ -433,15 +434,15 @@ function startSystem() {
 
 function exit() {
     var mod;
-    
+
     // shut down the internal servers (teardown)
     for (var i = 0; i < tempFilesInternal.length; i++) {
         mod = internalModules[tempFilesInternal[i]];
-        if("shutdown" in mod) {
+        if ("shutdown" in mod) {
             mod.shutdown();
         }
     }
-    
+
     process.exit();
 }
 
@@ -468,10 +469,10 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
     var HOST = '255.255.255.255';
 
     // json string to be send
-    var message = new Buffer(JSON.stringify({id: thisId, ip: thisIp}));
+    var message = new Buffer(JSON.stringify({ id: thisId, ip: thisIp }));
 
     if (globalVariables.debug) console.log("UDP broadcasting on port: " + PORT);
-    if (globalVariables.debug) console.log("Sending beats... Content: " + JSON.stringify({id: thisId, ip: thisIp}));
+    if (globalVariables.debug) console.log("Sending beats... Content: " + JSON.stringify({ id: thisId, ip: thisIp }));
 
     // creating the datagram
     var client = dgram.createSocket('udp4');
@@ -530,7 +531,7 @@ function actionSender(action) {
     var HOST = '255.255.255.255';
     var message;
 
-    message = new Buffer(JSON.stringify({action: action}));
+    message = new Buffer(JSON.stringify({ action: action }));
 
     // creating the datagram
     var client = dgram.createSocket('udp4');
@@ -576,15 +577,14 @@ function objectBeatServer() {
         msgContent = JSON.parse(msg);
         if (msgContent.hasOwnProperty("id") && msgContent.hasOwnProperty("ip") && !(msgContent.id in objectExp) && !(msgContent.id in knownObjects)) {
             knownObjects[msgContent.id] = msgContent.ip;
-            if (globalVariables.debug)  console.log("I found new Objects: " + JSON.stringify({
-                    id: msgContent.id,
-                    ip: msgContent.ip
-                }));
-            if (globalVariables.debug) console.log("knownObjectfound:" + knownObjects + "this message: ");
+            if (globalVariables.debug) console.log("I found new Objects: " + JSON.stringify({
+                id: msgContent.id,
+                ip: msgContent.ip
+            }));
         }
         // check if action 'ping'
         if (msgContent.action === "ping") {
-            if (globalVariables.debug)  console.log(msgContent.action);
+            if (globalVariables.debug) console.log(msgContent.action);
             for (var key in objectExp) {
                 objectBeatSender(beatPort, key, objectExp[key].ip, true);
             }
@@ -593,7 +593,7 @@ function objectBeatServer() {
 
     udpServer.on("listening", function () {
         var address = udpServer.address();
-        if (globalVariables.debug)  console.log("UDP listening on port: " + address.port);
+        if (globalVariables.debug) console.log("UDP listening on port: " + address.port);
     });
 
     // bind the udp server to the udp beatPort
@@ -638,7 +638,7 @@ function objectWebServer() {
             objectExp[req.params[0]].objectLinks[req.params[1]] = req.body;
 
             // call an action that asks all devices to reload their links, once the links are changed.
-            actionSender(JSON.stringify({reloadLink: {id: req.params[0], ip: objectExp[req.params[0]].ip}}));
+            actionSender(JSON.stringify({ reloadLink: { id: req.params[0], ip: objectExp[req.params[0]].ip } }));
             updateStatus = "added";
 
             // check if there are new connections associated with the new link.
@@ -674,7 +674,7 @@ function objectWebServer() {
             }
             // console.log(req.body);
             // ask the devices to reload the objects
-            actionSender(JSON.stringify({reloadObject: {id: thisObject, ip: objectExp[thisObject].ip}}));
+            actionSender(JSON.stringify({ reloadObject: { id: thisObject, ip: objectExp[thisObject].ip } }));
             updateStatus = "added";
 
             // write the object state to the permanent storage.
@@ -696,7 +696,7 @@ function objectWebServer() {
         delete objectExp[req.params[0]].objectLinks[thisLinkId];
 
         if (globalVariables.debug) console.log(objectExp[req.params[0]].objectLinks);
-        actionSender(JSON.stringify({reloadLink: {id: req.params[0], ip: objectExp[req.params[0]].ip}}));
+        actionSender(JSON.stringify({ reloadLink: { id: req.params[0], ip: objectExp[req.params[0]].ip } }));
         HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
         res.send("deleted: " + thisLinkId + " in object: " + req.params[0]);
 
@@ -775,7 +775,7 @@ function objectWebServer() {
         msg.push("</table>\n</td>\n<td align='left' valign='top'>\n\n");
 
         msg.push("Links:<br>\n\n<table border='1'>\n<tr><td>ID</td><td>ObjectA</td><td>locationInA</td><td>ObjectB</td><td>locationInB</td></tr>\n");
-        
+
         if (!_.isUndefined(hybridObject)) {
             hoLinks = hybridObject.objectLinks;
             for (subKey in hoLinks) {
@@ -788,7 +788,7 @@ function objectWebServer() {
 
         msg.push("<table border='0' cellpadding='10'>\n<tr><td align='left' valign='top'>\n");
         msg.push("Interface:<br>\n\n<table border='1'>\n");
-        
+
         for (subKey in hybridObject) {
             msg.push("  <tr><td>", subKey, "</td><td>", hybridObject[subKey], "</td></tr>\n");
         }
@@ -840,7 +840,7 @@ function objectWebServer() {
     // ****************************************************************************************************************
     webServer.get('/object/*/value/:id', function (req, res) {
         //  if(globalVariables.debug) console.log("get 10");
-        res.send({value: objectExp[req.params[0]].objectValues[req.params.id].value});
+        res.send({ value: objectExp[req.params[0]].objectValues[req.params.id].value });
     });
 
     // sends a specific json object value for a specific hybrid object. * is the object name :id is the value name
@@ -927,7 +927,7 @@ function objectWebServer() {
 
         });
 
-//*****************************************************************************************
+        //*****************************************************************************************
         webServer.post(objectInterfaceFolder, function (req, res) {
             // if(globalVariables.debug) console.log("post 22");
             if (req.body.action === "new") {
@@ -962,9 +962,9 @@ function objectWebServer() {
 
                 if (tempFolderName2 !== null) {
                     if (tempFolderName2 in objectExp) {
-                        if (globalVariables.debug)  console.log("ist noch da");
+                        if (globalVariables.debug) console.log("ist noch da");
                     } else {
-                        if (globalVariables.debug)  console.log("ist weg");
+                        if (globalVariables.debug) console.log("ist weg");
                     }
                     if (tempFolderName2 in knownObjects) {
                         if (globalVariables.debug) console.log("ist noch da");
@@ -978,12 +978,12 @@ function objectWebServer() {
                     delete objectLookup[req.body.folder];
 
                     if (tempFolderName2 in objectExp) {
-                        if (globalVariables.debug)  console.log("ist noch da");
+                        if (globalVariables.debug) console.log("ist noch da");
                     } else {
-                        if (globalVariables.debug)  console.log("ist weg");
+                        if (globalVariables.debug) console.log("ist weg");
                     }
                     if (tempFolderName2 in knownObjects) {
-                        if (globalVariables.debug)  console.log("ist noch da");
+                        if (globalVariables.debug) console.log("ist noch da");
                     } else {
                         if (globalVariables.debug) console.log("ist weg");
                     }
@@ -1005,7 +1005,7 @@ function objectWebServer() {
             function (req, res) {
                 // if(globalVariables.debug) console.log("post 23");
 
-                if (globalVariables.debug)console.log("komm ich hier hin?");
+                if (globalVariables.debug) console.log("komm ich hier hin?");
 
                 var form = new formidable.IncomingForm({
                     uploadDir: __dirname + '/objects',  // don't forget the __dirname here
@@ -1042,7 +1042,7 @@ function objectWebServer() {
                             var unzipper = new DecompressZip(folderD + "/" + filename);
 
                             unzipper.on('error', function (err) {
-                                if (globalVariables.debug)  console.log('Caught an error');
+                                if (globalVariables.debug) console.log('Caught an error');
                             });
 
                             unzipper.on('extract', function (log) {
@@ -1051,7 +1051,7 @@ function objectWebServer() {
                                 //createObjectFromTarget(filename.substr(0, filename.lastIndexOf('.')));
                                 createObjectFromTarget(ObjectExp, objectExp, filename.substr(0, filename.lastIndexOf('.')), __dirname, objectLookup, internalModules, objectBeatSender, beatPort, globalVariables.debug);
 
-//todo add object to the beatsender.
+                                //todo add object to the beatsender.
 
                                 console.log("have created a new object");
                                 fs.unlinkSync(folderD + "/" + filename);
@@ -1075,7 +1075,7 @@ function objectWebServer() {
                             if (globalVariables.debug) console.log("extracting: " + filename + "  " + folderD);
 
                         } catch (err) {
-                            if (globalVariables.debug)  console.log("could not unzip file");
+                            if (globalVariables.debug) console.log("could not unzip file");
                         }
                     }
                 });
@@ -1163,7 +1163,7 @@ function objectWebServer() {
 
                 form.on('end', function () {
                     var folderD = form.uploadDir;
-                    if (globalVariables.debug)  console.log("------------" + form.uploadDir + "/" + filename);
+                    if (globalVariables.debug) console.log("------------" + form.uploadDir + "/" + filename);
 
                     if (req.headers.type === "targetUpload") {
                         var fileExtension = getFileExtension(filename);
@@ -1293,7 +1293,7 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
     if (globalVariables.debug) console.log(folder);
 
     if (fs.existsSync(folder)) {
-        if (globalVariables.debug)  console.log("folder exists");
+        if (globalVariables.debug) console.log("folder exists");
         var objectIDXML = HybridObjectsUtilities.getObjectIdFromTarget(folderVar, __dirname);
         if (globalVariables.debug) console.log("got ID: objectIDXML");
         if (!_.isUndefined(objectIDXML) && !_.isNull(objectIDXML)) {
@@ -1308,7 +1308,7 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
                 try {
                     objectExp[objectIDXML] = JSON.parse(fs.readFileSync(__dirname + "/objects/" + folderVar + "/object.json", "utf8"));
                     objectExp[objectIDXML].ip = ip.address();
-                    if (globalVariables.debug)  console.log("testing: " + objectExp[objectIDXML].ip);
+                    if (globalVariables.debug) console.log("testing: " + objectExp[objectIDXML].ip);
                 } catch (e) {
                     objectExp[objectIDXML].ip = ip.address();
                     if (globalVariables.debug) console.log("testing: " + objectExp[objectIDXML].ip);
@@ -1345,10 +1345,14 @@ function socketServer() {
     io.on('connection', function (socket) {
 
         socket.on('object', function (msg) {
+            if (globalVariables.debug) console.log("socketServer incoming: " + msg);
             var msgContent = JSON.parse(msg);
             var objSend;
+
             if ((msgContent.obj in objectExp) && typeof msgContent.value !== "undefined") {
                 var objID = msgContent.pos + msgContent.obj;
+
+                // if msgContent.pos is the name of the IO point
                 if (objID in objectExp[msgContent.obj].objectValues) {
                     objectExp[msgContent.obj].objectValues[objID].value = msgContent.value;
 
@@ -1361,20 +1365,19 @@ function socketServer() {
 
                     objectEngine(msgContent.obj, msgContent.pos + msgContent.obj, objectExp, pluginModules);
 
-                } else {
-                    for (var thisKey in objectExp[msgContent.obj].objectValues) {
-                        if (msgContent.pos === objectExp[msgContent.obj].objectValues[thisKey].name) {
-                            objSend = objectExp[msgContent.obj].objectValues[objID];
-                            objSend.value = msgContent.value;
+                    // if msgContent.pos is the ID of the IO point
+                } else if (msgContent.pos in objectExp[msgContent.obj].objectValues) {
 
-                            if (internalModules.hasOwnProperty(objSend.type)) {
-                                internalModules[objSend.type].send(objectExp[msgContent.obj].name, objectExp[msgContent.obj].objectValues[objID].name, msgContent.value, msgContent.mode, msgContent.type);
-                            }
+                    objectExp[msgContent.obj].objectValues[msgContent.pos].value = msgContent.value;
+                    objSend = objectExp[msgContent.obj].objectValues[msgContent.pos];
+                    objSend.value = msgContent.value;
 
-                            //serialSender(serialPort, objectExp, msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value);
-                            objectEngine(msgContent.obj, msgContent.pos + msgContent.obj, objectExp, pluginModules);
-                        }
+                    if (internalModules.hasOwnProperty(objSend.type)) {
+                        internalModules[objSend.type].send(objectExp[msgContent.obj].name, objectExp[msgContent.obj].objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type);
                     }
+
+                    objectEngine(msgContent.obj, msgContent.pos, objectExp, pluginModules);
+
                 }
             }
         });
@@ -1403,7 +1406,7 @@ function socketServer() {
                     valueArray[objectExp[msgContent.obj].objectValues[thiskkey].name] = objectExp[msgContent.obj].objectValues[thiskkey];
                 }
 
-                var msgToSend2 = JSON.stringify({obj: msgContent.obj, value: valueArray});
+                var msgToSend2 = JSON.stringify({ obj: msgContent.obj, value: valueArray });
                 socket.emit('object', msgToSend2);
             }
             // if (globalVariables.debug) console.log("got it");
@@ -1511,6 +1514,7 @@ function socketSender(obj, linkPos, processedValue, mode) {
     var link = objectExp[obj].objectLinks[linkPos];
     var temp = link.locationInB.slice(0, link.ObjectB.length * -1);
     var msg = JSON.stringify({ obj: link.ObjectB, pos: temp, value: processedValue, mode: mode });
+    if (globalVariables.debug) console.log("socketSender sending: " + msg);
     if (!(link.ObjectB in objectExp)) {
         try {
             var objIp = knownObjects[link.ObjectB];
@@ -1520,7 +1524,7 @@ function socketSender(obj, linkPos, processedValue, mode) {
             }
         }
         catch (e) {
-            if (globalVariables.debug)  console.log("can not emit from link ID:" + linkPos + "and object: " + obj);
+            if (globalVariables.debug) console.log("can not emit from link ID:" + linkPos + "and object: " + obj);
         }
     }
 }
@@ -1541,7 +1545,7 @@ function socketUpdater() {
     // delete unconnected connections
     var sockKey, objKey, posKey;
 
-    for (sockKey in  socketArray) {
+    for (sockKey in socketArray) {
         var socketIsUsed = false;
 
         // check if the link is used somewhere. if it is not used delete it.
@@ -1566,7 +1570,7 @@ function socketUpdater() {
 
 
                 var ip = knownObjects[link.ObjectB];
-//console.log("this ip: "+ip);
+                //console.log("this ip: "+ip);
                 if (!(ip in socketArray)) {
                     // console.log("shoudl not show up -----------");
                     socketArray[ip] = new ObjectSockets(socketPort, ip);
@@ -1583,13 +1587,13 @@ function socketUpdater() {
             if (!socketArray[sockKey3].io.connected) {
                 for (objKey2 in knownObjects) {
                     if (knownObjects[objKey2] === sockKey3) {
-                        if (globalVariables.debug)  console.log("Looking for: " + objKey2 + " with the ip: " + sockKey3);
+                        if (globalVariables.debug) console.log("Looking for: " + objKey2 + " with the ip: " + sockKey3);
                     }
                 }
             }
         }
 
-        if (globalVariables.debug)  console.log(sockets.sockets + " connections; " + sockets.connected + " connected and " + sockets.notConnected + " not connected");
+        if (globalVariables.debug) console.log(sockets.sockets + " connections; " + sockets.connected + " connected and " + sockets.notConnected + " not connected");
 
     }
     sockets.socketsOld = sockets.sockets;

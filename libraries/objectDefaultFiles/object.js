@@ -58,23 +58,72 @@ if (xhr.status == 200) {
     console.log("Error XMLHttpRequest HTTP status: " + xhr.status);
 }
 
-// function for resizing the windows.
-var objectExp = {};
 
-window.addEventListener("message", function (msg) {
+var sendMatrix3d = false;
+var objectExp = {};
+objectExp.matrix3d = {};
+
+function update() {
+    // overwrite this function with your code to update synchronized with the 3D transforms
+}
+
+// subscriptions
+function subscribeToMatrix3D() {
+    sendMatrix3d = true;
+
     parent.postMessage(JSON.stringify(
         {
-            "pos": JSON.parse(msg.data).pos,
-            "obj": JSON.parse(msg.data).obj,
+            "pos": objectExp.pos,
+            "obj": objectExp.obj,
             "height": document.body.scrollHeight,
-            "width": document.body.scrollWidth
-        }
-        )
-        // this needs to contain the final interface source
-        , "*");
-    objectExp.pos = JSON.parse(msg.data).pos;
-    objectExp.obj = JSON.parse(msg.data).obj;
+            "width": document.body.scrollWidth,
+            "sendMatrix3d": sendMatrix3d
+        }), "*");
+}
 
+function getPossitionX () {
+    if (typeof objectExp.matrix3d[3][0] !== "undefined") {
+        return objectExp.matrix3d[3][0];
+    } else return undefined;
+}
+
+function getPossitionY () {
+    if (typeof objectExp.matrix3d[3][1] !== "undefined") {
+        return objectExp.matrix3d[3][1];
+    } else return undefined;
+}
+
+function getPossitionZ () {
+    if (typeof objectExp.matrix3d[3][2] !== "undefined") {
+        return objectExp.matrix3d[3][2];
+    } else return undefined;
+}
+
+// function for resizing the windows.
+window.addEventListener("message", function (MSG) {
+    var msg = JSON.parse(MSG.data);
+
+    if (typeof msg.matrix3d !== "undefined") {
+        objectExp.matrix3d = msg.matrix3d;
+        update();
+    }
+    else {
+        parent.postMessage(JSON.stringify(
+            {
+                "pos": msg.pos,
+                "obj": msg.obj,
+                "height": document.body.scrollHeight,
+                "width": document.body.scrollWidth,
+                "sendMatrix3d": sendMatrix3d
+            }
+            )
+            // this needs to contain the final interface source
+            , "*");
+
+        objectExp.pos = msg.pos;
+        objectExp.obj = msg.obj;
+
+    }
 }, false);
 
 // adding css styles nessasary for acurate 3D transformations.

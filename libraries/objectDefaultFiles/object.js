@@ -57,46 +57,15 @@ if (xhr.status == 200) {
 } else {
     console.log("Error XMLHttpRequest HTTP status: " + xhr.status);
 }
-
-
-var sendMatrix3d = false;
+var objectVersion = "1.0";
 var objectExp = {};
-objectExp.matrix3d = {};
+objectExp.matrix3d = [];
+objectExp.acl = [];
+var objectExpSendMatrix3d= false;
+var objectExpSendAcl = false;
 
 function update() {
     // overwrite this function with your code to update synchronized with the 3D transforms
-}
-
-// subscriptions
-function subscribeToMatrix3D() {
-    sendMatrix3d = true;
-
-    parent.postMessage(JSON.stringify(
-        {
-            "pos": objectExp.pos,
-            "obj": objectExp.obj,
-            "height": document.body.scrollHeight,
-            "width": document.body.scrollWidth,
-            "sendMatrix3d": sendMatrix3d
-        }), "*");
-}
-
-function getPossitionX () {
-    if (typeof objectExp.matrix3d[3][0] !== "undefined") {
-        return objectExp.matrix3d[3][0];
-    } else return undefined;
-}
-
-function getPossitionY () {
-    if (typeof objectExp.matrix3d[3][1] !== "undefined") {
-        return objectExp.matrix3d[3][1];
-    } else return undefined;
-}
-
-function getPossitionZ () {
-    if (typeof objectExp.matrix3d[3][2] !== "undefined") {
-        return objectExp.matrix3d[3][2];
-    } else return undefined;
 }
 
 // function for resizing the windows.
@@ -105,16 +74,21 @@ window.addEventListener("message", function (MSG) {
 
     if (typeof msg.matrix3d !== "undefined") {
         objectExp.matrix3d = msg.matrix3d;
-        update();
     }
-    else {
+
+    if (typeof msg.acl !== "undefined") {
+        objectExp.acl = msg.acl;
+    }
+
+    if (typeof msg.pos !== "undefined") {
         parent.postMessage(JSON.stringify(
             {
                 "pos": msg.pos,
                 "obj": msg.obj,
                 "height": document.body.scrollHeight,
                 "width": document.body.scrollWidth,
-                "sendMatrix3d": sendMatrix3d
+                "sendMatrix3d" : objectExpSendMatrix3d,
+                "sendAcl" : objectExpSendAcl
             }
             )
             // this needs to contain the final interface source
@@ -122,7 +96,8 @@ window.addEventListener("message", function (MSG) {
 
         objectExp.pos = msg.pos;
         objectExp.obj = msg.obj;
-
+    }else {
+        update();
     }
 }, false);
 
@@ -134,6 +109,85 @@ document.getElementsByTagName('head')[0].appendChild(style);
 
 
 function HybridObject() {
+
+    // subscriptions
+    this.subscribeToMatrix3D = function() {
+        objectExpSendMatrix3d= true;
+        if (typeof objectExp.pos !== "undefined") {
+            parent.postMessage(JSON.stringify(
+                {
+                    "pos": objectExp.pos,
+                    "obj": objectExp.obj,
+                    "height": document.body.scrollHeight,
+                    "width": document.body.scrollWidth,
+                    "sendMatrix3d": objectExpSendMatrix3d
+                }), "*");
+        }
+    };
+
+    this.subscribeToAcceleration = function() {
+        objectExpSendAcl = true;
+        if (typeof objectExp.pos !== "undefined") {
+            parent.postMessage(JSON.stringify(
+                {
+                    "pos": objectExp.pos,
+                    "obj": objectExp.obj,
+                    "height": document.body.scrollHeight,
+                    "width": document.body.scrollWidth,
+                    "sendAcl": objectExpSendAcl
+                }), "*");
+        }
+    };
+
+
+    this.getPossitionX = function() {
+        if (typeof objectExp.matrix3d[3][0] !== "undefined") {
+            return objectExp.matrix3d[3][0];
+        } else return undefined;
+    };
+
+    this.getPossitionY = function() {
+        if (typeof objectExp.matrix3d[3][1] !== "undefined") {
+            return objectExp.matrix3d[3][1];
+        } else return undefined;
+    };
+
+    this.getPossitionZ = function() {
+        if (typeof objectExp.matrix3d[3][2] !== "undefined") {
+            return objectExp.matrix3d[3][2];
+        } else return undefined;
+    };
+
+    this.getAccelerationX = function() {
+        if (typeof objectExp.acl[0] !== "undefined") {
+            return objectExp.acl[0] ;
+        } else return undefined;
+    };
+
+    this.getAccelerationY = function() {
+        if (typeof objectExp.acl[1] !== "undefined") {
+            return objectExp.acl[1] ;
+        } else return undefined;
+    };
+
+    this.getAccelerationZ = function() {
+        if (typeof objectExp.acl[2] !== "undefined") {
+            return objectExp.acl[2] ;
+        } else return undefined;
+    };
+
+    this.getOrientationX = function() {
+        if (typeof objectExp.acl[3] !== "undefined") {
+            return objectExp.acl[3] ;
+        } else return undefined;
+    };
+
+    this.getOrientationY = function() {
+        if (typeof objectExp.acl[4] !== "undefined") {
+            return objectExp.acl[4] ;
+        } else return undefined;
+    };
+
     if (typeof io !== "undefined") {
         this.object = io.connect();
 
@@ -163,7 +217,7 @@ function HybridObject() {
         this.write = function (IO, value, mode) {
         };
         this.read = function (IO, data) {
-             return undefined;
+            return undefined;
         };
         this.readRequest = function (IO) {
         };

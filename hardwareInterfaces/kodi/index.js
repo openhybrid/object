@@ -20,8 +20,13 @@
 exports.enabled = false;
 
 if (exports.enabled) {
+	var winston = require('winston');
+	var logger=winston.loggers.get("hardware");
+	logger.info("Loading kodi");
+	
     var fs = require('fs');
     var kodi = require('kodi-ws');
+    var request = require('request');
     var _ = require('lodash');
     var server = require(__dirname + '/../../libraries/HybridObjectsHardwareInterfaces');
 
@@ -36,7 +41,7 @@ if (exports.enabled) {
 
         kodiServers = JSON.parse(fs.readFileSync(__dirname + "/config.json", "utf8"));
 
-        if (server.getDebug()) console.log("KODI setup");
+        logger.info("KODI setup");
 
         for (var key in kodiServers) {
             var kodiServer = kodiServers[key];
@@ -44,7 +49,7 @@ if (exports.enabled) {
 
             kodi(kodiServer.host, kodiServer.port).then(function (connection) {
                 kodiServer.connection = connection;
-                kodiServer.connection.on('error', function (error) { console.log("KODI error: " + error) });
+                kodiServer.connection.on('error', function (error) { logger.error("KODI error: " + error) });
 
                 //Add Event Handlers
                 kodiServer.connection.Application.OnVolumeChanged(function () {
@@ -59,12 +64,37 @@ if (exports.enabled) {
                     server.writeIOToServer(key, "status", 0.5, "f");
                 });
 
-                kodiServer.connection.Player.OnPlay(function () {
+                //currentKodi = "http://" + kodiServer.host+":8080" +"/jsonrpc"
+                var currkodiServer=kodiServer;
+                kodiServer.connection.Player.OnPlay(function (msg) {
+                	logger.debug("kodi msg : %s", JSON.stringify(msg));
+                	logger.debug("kodi msg : %s", msg.data.player.playerid);
                     server.writeIOToServer(key, "status", 1, "f");
+                    requestData = { "playerid" : msg.data.player.playerid,
+                                "properties": [ "title", "artist", "albumartist",  "genre",
+                                               "year", "rating", "album", "track",
+                                               "duration", "comment", "lyrics",
+                                               "playcount", "fanart", "director", "trailer",
+                                               "tagline", "plot", "plotoutline",
+                                               "originaltitle", "lastplayed", "writer",
+                                               "studio", "mpaa", "cast", "country",
+                                               "imdbnumber", "premiered", "productioncode",
+                                               "runtime", "set", "showlink", "streamdetails", "top250",
+                                               "votes", "firstaired", "season", "episode",
+                                               "showtitle", "thumbnail", "file", "resume",
+                                               "artistid", "albumid", "tvshowid", "setid" ]
+                                }
+                    currkodiServer.connection.Player.GetItem(requestData).then (function (playing) {
+                    	logger.debug("playing : %s", JSON.stringify(playing));
+                        if (playing.item) {
+                        	server.writeIOToServer(key, "playing", playing.item, "m");
+                        }
+                    });
                 });
 
                 kodiServer.connection.Player.OnStop(function () {
                     server.writeIOToServer(key, "status", 0, "f");
+                	server.writeIOToServer(key, "playing",{ 'title': ''}, "m");
                 });
 
             });
@@ -72,6 +102,7 @@ if (exports.enabled) {
 
             server.addIO(key, "volume", "default", "kodi");
             server.addIO(key, "status", "default", "kodi");
+            server.addIO(key, "playing", "default", "kodi");
         }
 
         server.clearIO("kodi");
@@ -101,7 +132,7 @@ if (exports.enabled) {
                     }
 
                 });
-                
+
             }
         }
     };

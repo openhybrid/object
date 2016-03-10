@@ -22,6 +22,7 @@ exports.enabled = false;
 if (exports.enabled) {
     var fs = require('fs');
     var kodi = require('kodi-ws');
+    var request = require('request');
     var _ = require('lodash');
     var server = require(__dirname + '/../../libraries/HybridObjectsHardwareInterfaces');
 

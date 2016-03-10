@@ -85,8 +85,8 @@ const beatInterval = 3000;         // how often is the heartbeat sent
 const socketUpdateInterval = 2000; // how often the system checks if the socket connections are still up and running.
 
 //origins
-const objectPath = __dirname + "/objects";             // where all the objects are stored.
-const modulePath = __dirname + "/dataPointInterfaces"; // all the visual UI interfaces are stored here.
+const objectPath   = __dirname + "/objects";             // where all the objects are stored.
+const modulePath   = __dirname + "/dataPointInterfaces"; // all the visual UI interfaces are stored here.
 const internalPath = __dirname + "/hardwareInterfaces";  // all the visual UI interfaces are stored here.
 const objectInterfaceFolder = "/";                       // the level on which the webservice is accessible
 
@@ -112,10 +112,14 @@ var formidable = require('formidable'); // Multiple file upload library
 //var xml2js = require('xml2js');
 
 // additional required code
-var HybridObjectsUtilities = require(__dirname + '/libraries/HybridObjectsUtilities');
+var HybridObjectsUtilities   = require(__dirname + '/libraries/HybridObjectsUtilities');
 var HybridObjectsWebFrontend = require(__dirname + '/libraries/HybridObjectsWebFrontend');
 var HybridObjectsHardwareInterfaces = require(__dirname + '/libraries/HybridObjectsHardwareInterfaces');
-var templateModule = require(__dirname + '/libraries/templateModule');
+var templateModule           = require(__dirname + '/libraries/templateModule');
+
+var util = require("util");
+var events = require("events");
+
 
 // Set web frontend debug to inherit from global debug
 HybridObjectsWebFrontend.debug = globalVariables.debug;
@@ -1358,14 +1362,18 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
  * @desc Check for incoming MSG from other objects or the User. Make changes to the objectValues if changes occur.
  **/
 
-function socketServer() {
+function OHSocketServer(params) {
+    events.EventEmitter.call(this)
+    osSocketServer=this;
     io.on('connection', function (socket) {
-
+        if (globalVariables.debug) console.log("New ws connection");
+    	socket.objList=[]; // Initialize Object List intered by the socket
         socket.on('object', function (msg) {
             if (globalVariables.debug) console.log("socketServer incoming: " + msg);
             var msgContent = JSON.parse(msg);
             var objSend;
-
+            if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
+            	socket.objList.push(msgContent.obj);
             if ((msgContent.obj in objectExp) && typeof msgContent.value !== "undefined") {
                 var objID = msgContent.pos + msgContent.obj;
 
@@ -1400,9 +1408,18 @@ function socketServer() {
         });
 
         socket.on('/object/value', function (msg) {
+        	//loghttp.debug ("value object msg %s", msg);
             var msgContent = JSON.parse(msg);
-            if (msgContent.pos) {
+        	//loghttp.debug("  before socketlist=%s", socket.objList);
+            if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
+            	socket.objList.push(msgContent.obj);
+        	//loghttp.debug("  after socketlist=%s", socket.objList);
 
+            if (msgContent.pos) {
+                if (objectExp.hasOwnProperty(msgContent.obj)) {
+                	osSocketServer.notifySingleOHUpdate(socket, msgContent.obj, msgContent.pos);
+                }
+            	/*
                 var msgToSend = "";
                 if (objectExp.hasOwnProperty(msgContent.obj)) {
                     if (objectExp[msgContent.obj].objectValues.hasOwnProperty(msgContent.pos + msgContent.obj)) {
@@ -1415,7 +1432,7 @@ function socketServer() {
                         socket.emit('object', msgToSend);
                     }
                 }
-
+              */
             } else {
                 var valueArray = {};
 
@@ -1431,6 +1448,10 @@ function socketServer() {
 
         socket.on('/object/value/full', function (msg) {
             var msgContent = JSON.parse(msg);
+            if (globalVariables.debug) console.log("full object msg %s", msgContent);
+            if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
+            	socket.objList.push(msgContent.obj);
+
             var msgToSend = JSON.stringify({
                 obj: msgContent.obj,
                 pos: msgContent.pos,
@@ -1438,8 +1459,52 @@ function socketServer() {
             });
             socket.emit('object', msgToSend);
         });
+        socket.on('disconnect', function () {
+            if (globalVariables.debug) console.log("WS disconnected %s", socket.objList);
+        	osSocketServer.emit("socketdisconnected", socket.objList);
+        });
+
     });
+    this.io = io
     if (globalVariables.debug) console.log('socket.io started');
+}
+
+util.inherits(OHSocketServer, events.EventEmitter);
+var __method = OHSocketServer.prototype;
+
+/**
+ * notify change for one client
+ * @param socket
+ * @param obj
+ * @param pos
+ * @returns
+ */
+__method.notifySingleOHUpdate = function(socket, obj, pos) {
+	loghttp.debug("==> notifyOHUpdate receive (%s,%s)", obj, pos)
+	if (objectExp[obj].objectValues.hasOwnProperty(pos+obj)) {
+		var msgToSend = JSON.stringify({
+			obj: obj,
+			pos: pos,
+			value: objectExp[obj].objectValues[pos+obj].value
+		});
+	    socket.emit('object', msgToSend);
+	}
+}
+
+/**
+ * notify change for all client interrested by obj
+ * @param socket
+ * @param obj
+ * @param pos
+ * @returns
+ */
+__method.notifyAllOHUpdate = function(objKey, valueKey) {
+	for (var socnum of Object.keys(this.io.sockets.sockets)) {
+		var soc=this.io.sockets.sockets[socnum];
+		if (soc.objList!= undefined && soc.objList.indexOf(objKey)!==-1 ) {
+			this.notifySingleOHUpdate(soc, objKey, valueKey)
+		}
+	}
 }
 
 /**********************************************************************************************************************
@@ -1529,9 +1594,7 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 
 function socketSender(obj, linkPos, processedValue, mode) {
     var link = objectExp[obj].objectLinks[linkPos];
-    var temp = link.locationInB.slice(0, link.ObjectB.length * -1);
-    var msg = JSON.stringify({ obj: link.ObjectB, pos: temp, value: processedValue, mode: mode });
-    if (globalVariables.debug) console.log("socketSender sending: " + msg);
+    var msg = JSON.stringify({obj: link.ObjectB, pos: link.locationInB, value: processedValue, mode: mode});
     if (!(link.ObjectB in objectExp)) {
         try {
             var objIp = knownObjects[link.ObjectB];

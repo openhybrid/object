@@ -146,10 +146,10 @@ function ObjectExp() {
     this.visibleEditing = false;
     this.developer = true;
     this.matrix3dMemory = [
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1]
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
     ]; // TODO use this to store UI interface for image later.
     this.objectLinks = {}; // Array of ObjectLink()
     this.objectValues = {}; // Array of ObjectValue()

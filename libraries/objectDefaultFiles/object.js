@@ -59,9 +59,9 @@ if (xhr.status == 200) {
 }
 var objectVersion = "1.0";
 var objectExp = {};
-objectExp.matrix3d = [];
+objectExp.matrixCSS = [];
 objectExp.acl = [];
-var objectExpSendMatrix3d= false;
+var objectExpSendMatrixCSS= false;
 var objectExpSendAcl = false;
 
 function update() {
@@ -72,8 +72,8 @@ function update() {
 window.addEventListener("message", function (MSG) {
     var msg = JSON.parse(MSG.data);
 
-    if (typeof msg.matrix3d !== "undefined") {
-        objectExp.matrix3d = msg.matrix3d;
+    if (typeof msg.matrixCSS !== "undefined") {
+        objectExp.matrixCSS = msg.matrixCSS;
     }
 
     if (typeof msg.acl !== "undefined") {
@@ -87,7 +87,7 @@ window.addEventListener("message", function (MSG) {
                 "obj": msg.obj,
                 "height": document.body.scrollHeight,
                 "width": document.body.scrollWidth,
-                "sendMatrix3d" : objectExpSendMatrix3d,
+                "sendMatrixCSS" : objectExpSendMatrixCSS,
                 "sendAcl" : objectExpSendAcl
             }
             )
@@ -111,8 +111,8 @@ document.getElementsByTagName('head')[0].appendChild(style);
 function HybridObject() {
 
     // subscriptions
-    this.subscribeToMatrix3D = function() {
-        objectExpSendMatrix3d= true;
+    this.subscribeToMatrixCSS = function() {
+        objectExpSendMatrixCSS= true;
         if (typeof objectExp.pos !== "undefined") {
             parent.postMessage(JSON.stringify(
                 {
@@ -120,7 +120,7 @@ function HybridObject() {
                     "obj": objectExp.obj,
                     "height": document.body.scrollHeight,
                     "width": document.body.scrollWidth,
-                    "sendMatrix3d": objectExpSendMatrix3d
+                    "sendMatrixCSS": objectExpSendMatrixCSS
                 }), "*");
         }
     };
@@ -141,20 +141,20 @@ function HybridObject() {
 
 
     this.getPossitionX = function() {
-        if (typeof objectExp.matrix3d[3][0] !== "undefined") {
-            return objectExp.matrix3d[3][0];
+        if (typeof objectExp.matrixCSS[3][0] !== "undefined") {
+            return objectExp.matrixCSS[3][0];
         } else return undefined;
     };
 
     this.getPossitionY = function() {
-        if (typeof objectExp.matrix3d[3][1] !== "undefined") {
-            return objectExp.matrix3d[3][1];
+        if (typeof objectExp.matrixCSS[3][1] !== "undefined") {
+            return objectExp.matrixCSS[3][1];
         } else return undefined;
     };
 
     this.getPossitionZ = function() {
-        if (typeof objectExp.matrix3d[3][2] !== "undefined") {
-            return objectExp.matrix3d[3][2];
+        if (typeof objectExp.matrixCSS[3][2] !== "undefined") {
+            return objectExp.matrixCSS[3][2];
         } else return undefined;
     };
 

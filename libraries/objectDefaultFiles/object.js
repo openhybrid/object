@@ -141,20 +141,20 @@ function HybridObject() {
 
 
     this.getPossitionX = function() {
-        if (typeof objectExp.matrixCSS[12] !== "undefined") {
-            return objectExp.matrixCSS[12];
+        if (typeof objectExp.matrixCSS[3][0] !== "undefined") {
+            return objectExp.matrixCSS[3][0];
         } else return undefined;
     };
 
     this.getPossitionY = function() {
-        if (typeof objectExp.matrixCSS[13] !== "undefined") {
-            return objectExp.matrixCSS[13];
+        if (typeof objectExp.matrixCSS[3][1] !== "undefined") {
+            return objectExp.matrixCSS[3][1];
         } else return undefined;
     };
 
     this.getPossitionZ = function() {
-        if (typeof objectExp.matrixCSS[14] !== "undefined") {
-            return objectExp.matrixCSS[14];
+        if (typeof objectExp.matrixCSS[3][2] !== "undefined") {
+            return objectExp.matrixCSS[3][2];
         } else return undefined;
     };
 

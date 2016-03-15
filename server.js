@@ -53,24 +53,22 @@
 
  * TODO - Only allow upload backups and not any other data....
  *
- *  something to remember: hexString = yourNumber.toString(16); and reverse the process with: yourNumber = parseInt(hexString, 16);
- *
  * TODO - check any collision with knownObjects -> Show collision with other object....
  * TODO - Check if Targets are double somehwere. And iff Target has more than one target in the file...
  *
  * TODO - Check the socket connections
- * TODO - stream of values for the user device
- * TODO - Plugin Structure  - check how good it works
  * TODO - check if objectlinks are pointing to values that actually exist. - (happens in browser at the moment)
  * TODO - Test self linking from internal to internal value (endless loop) - (happens in browser at the moment)
  *
  *
- * TODO - mark object functional only if:   if(thisId in objectExp && thisId.length>12)
  **
 
  **********************************************************************************************************************
  ******************************************** constant settings *******************************************************
  **********************************************************************************************************************/
+
+// These variables are used for global status, such as if the server sends debugging messages and if the developer
+// user interfaces should be accesable
 
 var globalVariables = {
     developer: true, // show developer web GUI
@@ -78,47 +76,66 @@ var globalVariables = {
 };
 
 // ports used to define the server behaviour
+/*
+The server uses port 8080 to communicate with other servers and with the Reality Editor.
+As such the Server reacts to http and web sockets on this port.
+
+The beat port is used to send UDP broadcasting messages in  a local network. The Reality Editor and other Objects
+pick up these messages to identify the object.
+
+ */
+
 const serverPort = 8080;
 const socketPort = serverPort;     // server and socket port are always identical
 const beatPort = 52316;            // this is the port for UDP broadcasting so that the objects find each other.
 const beatInterval = 3000;         // how often is the heartbeat sent
 const socketUpdateInterval = 2000; // how often the system checks if the socket connections are still up and running.
 
-//origins
-const objectPath   = __dirname + "/objects";             // where all the objects are stored.
-const modulePath   = __dirname + "/dataPointInterfaces"; // all the visual UI interfaces are stored here.
-const internalPath = __dirname + "/hardwareInterfaces";  // all the visual UI interfaces are stored here.
-const objectInterfaceFolder = "/";                       // the level on which the webservice is accessible
+
+// All objects are stored in this folder:
+const objectPath   = __dirname + "/objects";
+// All visual UI representations for IO Points are stored in this folder:
+const modulePath   = __dirname + "/dataPointInterfaces";
+// All interfaces for different hardware such as Arduino Yun, PI, Philips Hue are stored in this folder.
+const internalPath = __dirname + "/hardwareInterfaces";
+// The web service level on wich objects are accessable. http://<IP>:8080 <objectInterfaceFolder> <object>
+const objectInterfaceFolder = "/";
 
 /**********************************************************************************************************************
  ******************************************** Requirements ************************************************************
  **********************************************************************************************************************/
 
-var _ = require('lodash');
-//var lj = require('longjohn');
+var _ = require('lodash');    // JavaScript utility library
 var fs = require('fs');       // Filesystem library
 var dgram = require('dgram'); // UDP Broadcasting library
 var ip = require("ip");       // get the device IP address library
-var bodyParser = require('body-parser');
-var express = require('express');
+var bodyParser = require('body-parser');  // body parsing middleware
+var express = require('express'); // Web Sever library
+
+// constrution for the werbserver using express combined with socket.io
 var webServer = express();
 var http = require('http').createServer(webServer).listen(serverPort, function () {
     if (globalVariables.debug) console.log('webserver + socket.io is listening on port: ' + serverPort);
 });
-var io = require('socket.io')(http);
-var socket = require('socket.io-client');
+var io = require('socket.io')(http); // Websocket library
+var socket = require('socket.io-client'); // websocket client source
 var cors = require('cors');             // Library for HTTP Cross-Origin-Resource-Sharing
 var formidable = require('formidable'); // Multiple file upload library
-//var xml2js = require('xml2js');
 
-// additional required code
+// additional files containing project code
+
+// This file hosts all kinds of utilities programmed for the server
 var HybridObjectsUtilities   = require(__dirname + '/libraries/HybridObjectsUtilities');
+// The web frontend a developer is able to see when creating new user interfaces.
 var HybridObjectsWebFrontend = require(__dirname + '/libraries/HybridObjectsWebFrontend');
+// Definition for a simple API for hardware interfaces talking to the server.
+// This is used for the interfaces defined in the hardwareInterfaces folder.
 var HybridObjectsHardwareInterfaces = require(__dirname + '/libraries/HybridObjectsHardwareInterfaces');
+// these templates are used to render the Web Frontend.
 var templateModule           = require(__dirname + '/libraries/templateModule');
 
-var util = require("util");
 var events = require("events");
+var util = require("util"); // node.js utility functionality
 
 
 // Set web frontend debug to inherit from global debug
@@ -421,7 +438,6 @@ function startSystem() {
     objectWebServer();
 
     // receives all socket connections and processes the data
-    socketServer();
 
     // receives all serial calls and processes the data
 

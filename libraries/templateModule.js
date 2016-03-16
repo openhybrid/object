@@ -79,19 +79,19 @@ exports.loadAllModules = function(allModules, callback) {
     }
   });
 
-  }
+  };
     console.log("last one");
     loadOneTemplate(0);
 
-}
+};
 
 exports.injectTemplate = function() {
   return null;
-}
+};
 
 exports.getTemplates = function(){
   return templates;
-}
+};
 
 exports.loadTemplate =  function(templateName, data)
 {
@@ -118,7 +118,7 @@ exports.loadTemplate =  function(templateName, data)
     }
 
    return htmlTemplate;
-}
+};
 
 exports.updateTemplate = function(objectId, parentNode, data, realTimeUpdate)
 {

@@ -109,6 +109,7 @@ var io = require('socket.io')(http);
 var socket = require('socket.io-client');
 var cors = require('cors');             // Library for HTTP Cross-Origin-Resource-Sharing
 var formidable = require('formidable'); // Multiple file upload library
+var cheerio = require('cheerio');
 //var xml2js = require('xml2js');
 
 // additional required code
@@ -611,6 +612,16 @@ function objectBeatServer() {
  * additional provides active modification for objectDefinition.
  **/
 
+function existsSync(filename) {
+    try {
+        fs.accessSync(filename);
+        return true;
+    } catch(ex) {
+        return false;
+    }
+}
+
+
 function objectWebServer() {
 
     // define the body parser
@@ -619,7 +630,37 @@ function objectWebServer() {
     }));
     webServer.use(bodyParser.json());
     // devine a couple of static directory routs
-    webServer.use("/obj", express.static(__dirname + '/objects/'));
+
+
+    webServer.use('/objectDefaultFiles', express.static(__dirname + '/libraries/objectDefaultFiles/'));
+
+    webServer.use("/obj",function(req,res,next){
+
+        var urlArray = req.originalUrl.split("/");
+
+      if(req.method === "GET" && req.url.slice(-1) === "/" && urlArray[2] !=="dataPointInterfaces") {
+
+          var fileName = __dirname + "/objects" + req.url;
+          if (existsSync(fileName+ "index.html")) {
+              fileName = fileName + "index.html";
+          }else{
+              fileName = fileName + "index.htm";
+          }
+                      var html = fs.readFileSync(fileName, 'utf8');
+                      var loadedHtml = cheerio.load(html);
+                      var scriptNode = '<script src="../../objectDefaultFiles/object.js"></script>';
+                      loadedHtml('head').append(scriptNode);
+                      res.send(loadedHtml.html());
+              }
+       else
+        next();
+    }, express.static(__dirname + '/objects/'));
+
+    //webServer.get("/obj/objectDefaultFiles/*", express.static(__dirname + '/libraries/objectDefaultFiles/' + req.params[0]));
+
+    //   webServer.use("/obj", express.static(__dirname + '/objects/'));
+
+  //  webServer.use("/objectDefaultFiles", express.static(__dirname + '/libraries/objectDefaultFiles/'));
 
     if (globalVariables.developer === true) {
         webServer.use("/public", express.static(__dirname + '/libraries/webInterface/'));
@@ -767,6 +808,10 @@ function objectWebServer() {
     // Send the programming interface static web content
     // ****************************************************************************************************************
     webServer.get('/obj/dataPointInterfaces/*/*/', function (req, res) {   // watch out that you need to make a "/" behind request.
+        res.sendFile(__dirname + "/dataPointInterfaces/" + req.params[0] + '/www/' + req.params[1]);
+    });
+
+    webServer.get('/dataPointInterfaces/*/*/', function (req, res) {   // watch out that you need to make a "/" behind request.
         res.sendFile(__dirname + "/dataPointInterfaces/" + req.params[0] + '/www/' + req.params[1]);
     });
 

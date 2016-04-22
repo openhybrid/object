@@ -61,6 +61,7 @@ var objectVersion = "1.0";
 var objectExp = {};
 objectExp.modelViewMatrix = [];
 objectExp.projectionMatrix = [];
+objectExp.visibility = "visible";
 var objectExpSendMatrix = false;
 var objectExpSendFullScreen = false;
 var objectExpHeight ="100%";
@@ -100,6 +101,10 @@ window.addEventListener("message", function (MSG) {
 
     if (typeof msg.projectionMatrix !== "undefined") {
         objectExp.projectionMatrix = msg.projectionMatrix;
+    }
+
+    if (typeof msg.visibility !== "undefined") {
+        objectExp.visibility = msg.visibility;
     }
 
 }, false);
@@ -198,7 +203,19 @@ function HybridObject() {
         }
     };
 
+    this.getVisibility = function() {
+        return objectExp.visibility;
+    };
 
+    this.addVisibilityListener = function (callback) {
+        window.addEventListener("message", function (MSG) {
+            var msg = JSON.parse(MSG.data);
+            if (typeof msg.visibility !== "undefined") {
+                callback(msg.visibility);
+            }
+        }, false);
+    };
+    
     this.getPossitionX = function() {
         if (typeof objectExp.modelViewMatrix[3][0] !== "undefined") {
             return objectExp.modelViewMatrix[3][0];

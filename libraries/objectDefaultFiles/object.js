@@ -66,22 +66,9 @@ var objectExpSendFullScreen = false;
 var objectExpHeight ="100%";
 var objectExpWidth = "100%";
 
-function update() {
-    // overwrite this function with your code to update synchronized with the 3D transforms
-}
-
 // function for resizing the windows.
 window.addEventListener("message", function (MSG) {
     var msg = JSON.parse(MSG.data);
-  //  console.log(msg);
-
-    if (typeof msg.modelViewMatrix !== "undefined") {
-        objectExp.modelViewMatrix = msg.modelViewMatrix;
-    }
-
-    if (typeof msg.projectionMatrix !== "undefined") {
-        objectExp.projectionMatrix = msg.projectionMatrix;
-    }
 
     if (typeof msg.pos !== "undefined") {
 
@@ -105,9 +92,16 @@ window.addEventListener("message", function (MSG) {
 
         objectExp.pos = msg.pos;
         objectExp.obj = msg.obj;
-    }else {
-        update();
     }
+
+    if (typeof msg.modelViewMatrix !== "undefined") {
+        objectExp.modelViewMatrix = msg.modelViewMatrix;
+    }
+
+    if (typeof msg.projectionMatrix !== "undefined") {
+        objectExp.projectionMatrix = msg.projectionMatrix;
+    }
+
 }, false);
 
 // adding css styles nessasary for acurate 3D transformations.
@@ -118,6 +112,30 @@ document.getElementsByTagName('head')[0].appendChild(style);
 
 
 function HybridObject() {
+
+
+    this.globalMessage = function(ohMSG) {
+        if (typeof objectExp.pos !== "undefined") {
+            var msgg = JSON.stringify(
+                {
+                    "pos": objectExp.pos,
+                    "ohGlobalMessage" : ohMSG
+                });
+            window.parent.postMessage(msgg
+                , "*");
+         }
+    };
+
+    this.addGlobalMessageListener = function (callback) {
+
+        window.addEventListener("message", function (MSG) {
+            var msg = JSON.parse(MSG.data);
+            if (typeof msg.ohGlobalMessage !== "undefined") {
+                callback(msg.ohGlobalMessage);
+            }
+        }, false);
+
+    };
 
     // subscriptions
     this.subscribeToMatrix = function() {

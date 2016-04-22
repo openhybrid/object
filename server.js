@@ -730,20 +730,28 @@ function objectWebServer() {
 
         var urlArray = req.originalUrl.split("/");
 
-      if(req.method === "GET" && req.url.slice(-1) === "/" && urlArray[2] !=="dataPointInterfaces") {
+        console.log(urlArray);
+      if((req.method === "GET" && urlArray[2] !=="dataPointInterfaces")  &&  (req.url.slice(-1) === "/" || urlArray[3] ==="index.html"  || urlArray[3] ==="index.htm")) {
+
+
 
           var fileName = __dirname + "/objects" + req.url;
-          if (existsSync(fileName+ "index.html")) {
-              fileName = fileName + "index.html";
-          }else{
-              fileName = fileName + "index.htm";
+
+          if(urlArray[3] !=="index.html"  && urlArray[3] !=="index.htm") {
+
+              if (existsSync(fileName + "index.html")) {
+                  fileName = fileName + "index.html";
+              } else {
+                  fileName = fileName + "index.htm";
+              }
           }
                       var html = fs.readFileSync(fileName, 'utf8');
                       var loadedHtml = cheerio.load(html);
                       var scriptNode = '<script src="../../objectDefaultFiles/object.js"></script>';
-                      loadedHtml('head').append(scriptNode);
+                      loadedHtml('head').prepend(scriptNode);
                       res.send(loadedHtml.html());
-              }
+
+      }
        else
         next();
     }, express.static(__dirname + '/objects/'));
@@ -1594,7 +1602,7 @@ function OHSocketServer(params) {
         });
         socket.on('disconnect', function () {
            debugConsole("WS disconnected %s", socket.objList);
-        	osSocketServer.emit("socketdisconnected", socket.objList);
+          //  OHSocketServer.emit("socketdisconnected", socket.objList);
         });
 
     });

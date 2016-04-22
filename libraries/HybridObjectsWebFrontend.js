@@ -68,6 +68,8 @@ var loadBaseTemplate = function() {
         if (typeof tempFiles[0] !== "undefined") {
             while (tempFiles[0][0] === ".") {
                 tempFiles.splice(0, 1);
+                if(!tempFiles[0])
+                break;
             }
 
         for (var i = 0; i < tempFiles.length; i++) {
@@ -126,6 +128,8 @@ exports.printFolder = function (objectExp, dirnameO, debug, objectInterfaceFolde
     if (typeof tempFiles[0] !== "undefined") {
         while (tempFiles[0][0] === ".") {
             tempFiles.splice(0, 1);
+            if(!tempFiles[0])
+                break;
         }
 
         for (var i = 0; i < tempFiles.length; i++) {
@@ -326,7 +330,7 @@ exports.uploadTargetText = function (parm, objectLookup, objectExp) {
     } else {
         objectName = parm + HybridObjectsUtilities.uuidTime();
     }
-    console.log(__dirname);
+    if(debug) console.log(__dirname);
 
     dataTarget.push({"name" : parm });
     dataTarget.push({"objectName" : objectName});

@@ -47,10 +47,11 @@
 /**
  * Set to true to enable the hardware interface
  **/
-exports.enabled = false;
+exports.enabled = true;
 
 
 if (exports.enabled) {
+    var server = require(__dirname + '/../../libraries/HybridObjectsHardwareInterfaces');
     /**
      * @desc This function is called once by the server. Start the event loop of your hardware interface in here.
      **/
@@ -78,6 +79,11 @@ if (exports.enabled) {
      **/
     exports.init = function () {
 
+            server.addIO("bluestone", "one", "default", "emptyExample");
+            server.addIO("bluestone", "two", "default", "emptyExample");
+
+
+        server.clearIO("bluestone");
     };
 
     /**

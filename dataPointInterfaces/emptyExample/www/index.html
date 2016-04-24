@@ -3,27 +3,46 @@
 <head>
   <meta charset="UTF-8">
   <title>IO</title>
-	<script>		
-		// function for resizing the windows.
-    var objectExp = {};
-
-    function messageHandler(e) {
-      parent.postMessage(JSON.stringify({
-              "pos": JSON.parse(e.data).pos,
-              "obj": JSON.parse(e.data).obj,
-              "height": document.body.scrollHeight,
-              "width": document.body.scrollWidth
-            })
-        // this needs to contain the final interface source
-        ,"*"
-      );
-
-      objectExp.pos = JSON.parse(e.data).pos;
-      objectExp.obj = JSON.parse(e.data).obj;
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      padding: 0;
     }
 
-    window.addEventListener("message", messageHandler, false);	
-	</script>
+    img {
+      display: block;
+    }
+  </style>
+  <script>
+    // function for resizing the windows.
+    var objectExp = {};
+
+    window.addEventListener("message", function (e) {
+
+      var msg = JSON.parse(e.data);
+
+      if (typeof msg.pos !== "undefined" && typeof msg.obj !== "undefined") {
+
+        parent.postMessage(JSON.stringify(
+                {
+                  "pos": msg.pos,
+                  "obj": msg.obj,
+                  "height": document.body.scrollHeight,
+                  "width": document.body.scrollWidth,
+                  "sendMatrix": false,
+                  "fullScreen": false
+                }
+                )
+                // this needs to contain the final interface source
+                , "*");
+
+        objectExp.pos = msg.pos;
+        objectExp.obj = msg.obj;
+      }
+
+    }, false);
+  </script>
 </head>
 <body>
 </body>

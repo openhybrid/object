@@ -808,7 +808,7 @@ function objectWebServer() {
         if (thisObject === thisValue) {
             tempObject = objectExp[thisObject];
         } else {
-            tempObject.objectValues[thisValue]
+            tempObject= objectExp[thisObject].objectValues[thisValue];
         }
 
 

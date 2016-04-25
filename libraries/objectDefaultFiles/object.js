@@ -124,6 +124,7 @@ function HybridObject() {
             var msgg = JSON.stringify(
                 {
                     "pos": objectExp.pos,
+                    "obj": objectExp.obj,
                     "ohGlobalMessage" : ohMSG
                 });
             window.parent.postMessage(msgg

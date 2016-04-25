@@ -81,6 +81,13 @@ if (exports.enabled) {
 
             server.addIO("bluestone", "one", "default", "emptyExample");
             server.addIO("bluestone", "two", "default", "emptyExample");
+            server.addIO("bluestone", "three", "default", "emptyExample");
+            server.addIO("bluestone", "four", "default", "emptyExample");
+
+        server.addIO("brownstone", "one1", "default", "emptyExample");
+        server.addIO("brownstone", "two2", "default", "emptyExample");
+
+
 
 
         server.clearIO("bluestone");

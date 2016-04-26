@@ -89,6 +89,7 @@ const socketPort = serverPort;     // server and socket port are always identica
 const beatPort = 52316;            // this is the port for UDP broadcasting so that the objects find each other.
 const beatInterval = 3000;         // how often is the heartbeat sent
 const socketUpdateInterval = 2000; // how often the system checks if the socket connections are still up and running.
+const version = "0.4.0";           // the version of this server
 
 
 // All objects are stored in this folder:
@@ -159,7 +160,9 @@ function ObjectExp() {
     // It will be used for the UDP broadcasts.
     this.ip = ip.address();
     // The version number of the Object.
-    this.version = "0.3.2";
+    this.version = version;
+    // The (t)arget (C)eck(S)um is a sum of the checksum values for the target files.
+    this.tcs = null;
     // Reality Editor: This is used to possition the UI element within its x axis in 3D Space. Relative to Marker origin.
     this.x = 0;
     // Reality Editor: This is used to possition the UI element within its y axis in 3D Space. Relative to Marker origin.
@@ -187,6 +190,8 @@ function ObjectExp() {
     this.objectLinks = {};
     // Stores all IOPoints. These points are used to keep the state of an object and process its data.
     this.objectValues = {};
+    // Stores all Checksums
+    this.checksums = { dat:null, xml:null, jpg: null};
 }
 
 /**
@@ -556,6 +561,8 @@ process.on('SIGINT', exit);
  * @param {Number} PORT The port where to start the Beat
  * @param {string} thisId The name of the Object
  * @param {string} thisIp The IP of the Object
+ * @param {string} thisVersion The version of the Object
+ * @param {string} thisTcs The target checksum of the Object.
  * @param {boolean} oneTimeOnly if true the beat will only be sent once.
  **/
 
@@ -566,11 +573,17 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
 
     var HOST = '255.255.255.255';
 
+    debugConsole("creating beat for object: " + thisId);
+    objectExp[thisId].version = version;
+    var thisVersionNumber  = parseInt(objectExp[thisId].version.replace(/\./g, ""));
+
+   // ObjectExp
+    debugConsole("with version number: " + thisVersionNumber);
+
     // json string to be send
-    var message = new Buffer(JSON.stringify({ id: thisId, ip: thisIp }));
 
    debugConsole("UDP broadcasting on port: " + PORT);
-   debugConsole("Sending beats... Content: " + JSON.stringify({ id: thisId, ip: thisIp }));
+   debugConsole("Sending beats... Content: " + JSON.stringify({ id: thisId, ip: thisIp,  vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
 
     // creating the datagram
     var client = dgram.createSocket('udp4');
@@ -588,10 +601,12 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
             //debugConsole(JSON.stringify(thisId));
             // debugConsole(JSON.stringify( objectExp));
             if (thisId in objectExp && thisId.length > 12) {
-                // debugConsole("Sending beats... Content: " + JSON.stringify({id: thisId, ip: thisIp}));
+               // debugConsole("Sending beats... Content: " + JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
 
                 // this is an ugly hack to sync each object with being a developer object
                 //objectExp[thisId].developer = globalVariables.developer;
+
+                var message = new Buffer(JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
 
                 client.send(message, 0, message.length, PORT, HOST, function (err) {
                     if (err) {
@@ -609,6 +624,9 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
         setTimeout(function () {
             // send the beat
             if (thisId in objectExp) {
+
+                var message = new Buffer(JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
+
                 client.send(message, 0, message.length, PORT, HOST, function (err) {
                     if (err) throw err;
                     // close the socket as the function is only called once.
@@ -1250,12 +1268,10 @@ function objectWebServer() {
         webServer.post(objectInterfaceFolder + 'content/:id',
             function (req, res) {
 
-                debugConsole(req.params.id);
+                debugConsole("object is: " + req.params.id);
 
-                // debugConsole("post 24");
-               debugConsole(req.body);
                 tmpFolderFile = req.params.id;
-               debugConsole("parameter is: " + req.params.id);
+
                 if (req.body.action === "delete") {
                     var folderDel = __dirname + '/objects/' + req.body.folder;
 
@@ -1329,6 +1345,14 @@ function objectWebServer() {
 
                     if (req.headers.type === "targetUpload") {
                         var fileExtension = getFileExtension(filename);
+                        var thisObjectId = HybridObjectsUtilities.readObject(objectLookup, req.params.id);
+                        var thisObject =  objectExp[thisObjectId];
+
+                        if(typeof thisObject.checksums === "undefined"){
+                            thisObject.checksums = {};
+                        }
+
+
                         if (fileExtension === "jpg") {
                             if (!fs.existsSync(folderD + "/target/")) {
                                 fs.mkdirSync(folderD + "/target/", 0766, function (err) {
@@ -1361,6 +1385,20 @@ function objectWebServer() {
                                     }
                                 });
                             }
+
+                            thisObject.checksums.jpg = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.jpg"));
+                            thisObject.checksums.xml = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.xml"));
+
+                            if (thisObject.checksums.jpg !== null && thisObject.checksums.xml !== null ) {
+                                if (fs.existsSync(folderD + "/target/target.dat" && thisObject.checksums.dat !== null)) {
+                                    thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.jpg + thisObject.checksums.xml + thisObject.checksums.dat);
+                                } else {
+                                    thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.jpg + thisObject.checksums.xml);
+                                }
+                            }
+
+                            HybridObjectsUtilities.writeObjectToFile(objectExp, thisObjectId, __dirname);
+                            debugConsole("created Checksum: "+ thisObject.tcs);
 
                             res.status(200);
                             res.send("done");
@@ -1395,17 +1433,40 @@ function objectWebServer() {
 
                                     // evnetually create the object.
 
-                                   debugConsole("creating object from target file " + tmpFolderFile);
-                                    // createObjectFromTarget(tmpFolderFile);
-                                    createObjectFromTarget(ObjectExp, objectExp, tmpFolderFile, __dirname, objectLookup, hardwareInterfaceModules, objectBeatSender, beatPort, globalVariables.debug);
 
-                                    //todo send init to internal modules
-                                    debugConsole("have created a new object");
+                                    if (fs.existsSync(folderD + "/target/target.dat") && fs.existsSync(folderD + "/target/target.xml")) {
 
-                                    for (var keyint in hardwareInterfaceModules) {
-                                        hardwareInterfaceModules[keyint].init();
+                                        debugConsole("creating object from target file " + tmpFolderFile);
+                                        // createObjectFromTarget(tmpFolderFile);
+                                        createObjectFromTarget(ObjectExp, objectExp, tmpFolderFile, __dirname, objectLookup, hardwareInterfaceModules, objectBeatSender, beatPort, globalVariables.debug);
+
+                                        //todo send init to internal modules
+                                        debugConsole("have created a new object");
+
+                                        for (var keyint in hardwareInterfaceModules) {
+                                            hardwareInterfaceModules[keyint].init();
+                                        }
+                                        debugConsole("have initialized the modules");
+
+
+                                        var thisObject =  objectExp[HybridObjectsUtilities.readObject(objectLookup, req.params.id)];
+
+                                        thisObject.checksums.dat = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.dat"));
+                                        thisObject.checksums.xml = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.xml"));
+
+                                        if (thisObject.checksums.dat !== null && thisObject.checksums.xml !== null ) {
+                                            if (fs.existsSync(folderD + "/target/target.jp" && thisObject.checksums.jpg !== null)) {
+                                                thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.jpg + thisObject.checksums.xml + thisObject.checksums.dat);
+                                            } else {
+                                                thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.xml+thisObject.checksums.jpg);
+                                            }
+                                        }
+
+                                        HybridObjectsUtilities.writeObjectToFile(objectExp, thisObjectId, __dirname);
+                                        debugConsole("created Checksum: "+ thisObject.tcs);
+
                                     }
-                                    debugConsole("have initialized the modules");
+
                                     res.status(200);
                                     res.send("done");
                                 });

@@ -77,7 +77,7 @@ exports.createFolder = function (folderVar, dirnameO, debug) {
     if (debug) console.log("Creating folder: " + folder);
 
     if (!fs.existsSync(folder)) {
-        fs.mkdirSync(folder, 0766, function (err) {
+        fs.mkdirSync(folder, "0766", function (err) {
             if (err) {
                 console.log(err);
                 res.send("ERROR! Can't make the directory! \n"); // echo the result back
@@ -158,10 +158,6 @@ exports.writeObjectToFile = function (objectExp, object, dirnameO) {
     });
 };
 
-
-
-
-
 var crcTable = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5,
     0x60c6, 0x70e7, 0x8108, 0x9129, 0xa14a, 0xb16b,
     0xc18c, 0xd1ad, 0xe1ce, 0xf1ef, 0x1231, 0x0210,
@@ -205,7 +201,6 @@ var crcTable = [0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5,
     0xef1f, 0xff3e, 0xcf5d, 0xdf7c, 0xaf9b, 0xbfba,
     0x8fd9, 0x9ff8, 0x6e17, 0x7e36, 0x4e55, 0x5e74,
     0x2e93, 0x3eb2, 0x0ed1, 0x1ef0];
-
 
 exports.crc16 = function (s){
     var crc = 0xFFFF;

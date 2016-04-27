@@ -1345,17 +1345,11 @@ function objectWebServer() {
 
                     if (req.headers.type === "targetUpload") {
                         var fileExtension = getFileExtension(filename);
-                        var thisObjectId = HybridObjectsUtilities.readObject(objectLookup, req.params.id);
-                        var thisObject =  objectExp[thisObjectId];
-
-                        if(typeof thisObject.checksums === "undefined"){
-                            thisObject.checksums = {};
-                        }
 
 
                         if (fileExtension === "jpg") {
                             if (!fs.existsSync(folderD + "/target/")) {
-                                fs.mkdirSync(folderD + "/target/", 0766, function (err) {
+                                fs.mkdirSync(folderD + "/target/", "0766", function (err) {
                                     if (err) {
                                         debugConsole(err);
                                         res.send("ERROR! Can't make the directory! \n");    // echo the result back
@@ -1386,19 +1380,30 @@ function objectWebServer() {
                                 });
                             }
 
-                            thisObject.checksums.jpg = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.jpg"));
-                            thisObject.checksums.xml = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.xml"));
 
-                            if (thisObject.checksums.jpg !== null && thisObject.checksums.xml !== null ) {
-                                if (fs.existsSync(folderD + "/target/target.dat" && thisObject.checksums.dat !== null)) {
-                                    thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.jpg + thisObject.checksums.xml + thisObject.checksums.dat);
-                                } else {
-                                    thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.jpg + thisObject.checksums.xml);
+                            var thisObjectId = HybridObjectsUtilities.readObject(objectLookup, req.params.id);
+
+                            if (typeof  objectExp[thisObjectId] !== "undefined") {
+                                var thisObject = objectExp[thisObjectId];
+
+                                if (typeof thisObject.checksums === "undefined") {
+                                    thisObject.checksums = {};
                                 }
-                            }
 
-                            HybridObjectsUtilities.writeObjectToFile(objectExp, thisObjectId, __dirname);
-                            debugConsole("created Checksum: "+ thisObject.tcs);
+                                thisObject.checksums.jpg = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.jpg"));
+                                thisObject.checksums.xml = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.xml"));
+
+                                if (thisObject.checksums.jpg !== null && thisObject.checksums.xml !== null) {
+                                    if (fs.existsSync(folderD + "/target/target.dat" && thisObject.checksums.dat !== null)) {
+                                        thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.jpg + thisObject.checksums.xml + thisObject.checksums.dat);
+                                    } else {
+                                        thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.jpg + thisObject.checksums.xml);
+                                    }
+                                }
+
+                                HybridObjectsUtilities.writeObjectToFile(objectExp, thisObjectId, __dirname);
+                                debugConsole("created Checksum: " + thisObject.tcs);
+                            }
 
                             res.status(200);
                             res.send("done");
@@ -1415,7 +1420,7 @@ function objectWebServer() {
                                 var unzipper = new DecompressZip(folderD + "/" + filename);
 
                                 unzipper.on('error', function (err) {
-                                   debugConsole('Caught an error');
+                                   debugConsole('Caught an error in unzipper');
                                 });
 
                                 unzipper.on('extract', function (log) {
@@ -1447,24 +1452,31 @@ function objectWebServer() {
                                             hardwareInterfaceModules[keyint].init();
                                         }
                                         debugConsole("have initialized the modules");
+                                        var thisObjectId = HybridObjectsUtilities.readObject(objectLookup, req.params.id);
 
+                                        if (typeof  objectExp[thisObjectId] !== "undefined") {
+                                            var thisObject = objectExp[thisObjectId];
 
-                                        var thisObject =  objectExp[HybridObjectsUtilities.readObject(objectLookup, req.params.id)];
-
-                                        thisObject.checksums.dat = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.dat"));
-                                        thisObject.checksums.xml = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.xml"));
-
-                                        if (thisObject.checksums.dat !== null && thisObject.checksums.xml !== null ) {
-                                            if (fs.existsSync(folderD + "/target/target.jp" && thisObject.checksums.jpg !== null)) {
-                                                thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.jpg + thisObject.checksums.xml + thisObject.checksums.dat);
-                                            } else {
-                                                thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.xml+thisObject.checksums.jpg);
+                                            if (typeof thisObject.checksums === "undefined") {
+                                                thisObject.checksums = {};
                                             }
+
+
+                                            thisObject.checksums.dat = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.dat"));
+                                            thisObject.checksums.xml = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.xml"));
+
+                                            if (thisObject.checksums.dat !== null && thisObject.checksums.xml !== null) {
+                                                if (fs.existsSync(folderD + "/target/target.jp" && thisObject.checksums.jpg !== null)) {
+                                                    thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.jpg + thisObject.checksums.xml + thisObject.checksums.dat);
+                                                } else {
+                                                    thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.xml + thisObject.checksums.jpg);
+                                                }
+                                            }
+
+                                            HybridObjectsUtilities.writeObjectToFile(objectExp, thisObjectId, __dirname);
+                                            debugConsole("created Checksum: " + thisObject.tcs);
+
                                         }
-
-                                        HybridObjectsUtilities.writeObjectToFile(objectExp, thisObjectId, __dirname);
-                                        debugConsole("created Checksum: "+ thisObject.tcs);
-
                                     }
 
                                     res.status(200);

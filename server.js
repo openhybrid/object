@@ -190,8 +190,6 @@ function ObjectExp() {
     this.objectLinks = {};
     // Stores all IOPoints. These points are used to keep the state of an object and process its data.
     this.objectValues = {};
-    // Stores all Checksums
-    this.checksums = { dat:null, xml:null, jpg: null};
 }
 
 /**
@@ -1211,7 +1209,7 @@ function objectWebServer() {
 
                 form.on('end', function () {
                     var folderD = form.uploadDir;
-                   debugConsole("------------" + form.uploadDir + " " + filename);
+                  // debugConsole("------------" + form.uploadDir + " " + filename);
 
                     if (getFileExtension(filename) === "zip") {
 
@@ -1381,28 +1379,18 @@ function objectWebServer() {
                             }
 
 
+                           var fileList = [folderD + "/target/target.jpg", folderD + "/target/target.xml", folderD + "/target/target.dat"];
+
                             var thisObjectId = HybridObjectsUtilities.readObject(objectLookup, req.params.id);
 
                             if (typeof  objectExp[thisObjectId] !== "undefined") {
                                 var thisObject = objectExp[thisObjectId];
 
-                                if (typeof thisObject.checksums === "undefined") {
-                                    thisObject.checksums = {};
-                                }
 
-                                thisObject.checksums.jpg = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.jpg"));
-                                thisObject.checksums.xml = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.xml"));
-
-                                if (thisObject.checksums.jpg !== null && thisObject.checksums.xml !== null) {
-                                    if (fs.existsSync(folderD + "/target/target.dat" && thisObject.checksums.dat !== null)) {
-                                        thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.jpg + thisObject.checksums.xml + thisObject.checksums.dat);
-                                    } else {
-                                        thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.jpg + thisObject.checksums.xml);
-                                    }
-                                }
+                                thisObject.tcs = HybridObjectsUtilities.genereateChecksums(objectExp, fileList);
 
                                 HybridObjectsUtilities.writeObjectToFile(objectExp, thisObjectId, __dirname);
-                                debugConsole("created Checksum: " + thisObject.tcs);
+
                             }
 
                             res.status(200);
@@ -1452,31 +1440,22 @@ function objectWebServer() {
                                             hardwareInterfaceModules[keyint].init();
                                         }
                                         debugConsole("have initialized the modules");
+
+                                        var fileList = [folderD + "/target/target.jpg", folderD + "/target/target.xml", folderD + "/target/target.dat"];
+
                                         var thisObjectId = HybridObjectsUtilities.readObject(objectLookup, req.params.id);
 
                                         if (typeof  objectExp[thisObjectId] !== "undefined") {
                                             var thisObject = objectExp[thisObjectId];
 
-                                            if (typeof thisObject.checksums === "undefined") {
-                                                thisObject.checksums = {};
-                                            }
 
-
-                                            thisObject.checksums.dat = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.dat"));
-                                            thisObject.checksums.xml = HybridObjectsUtilities.crc16(fs.readFileSync(folderD + "/target/target.xml"));
-
-                                            if (thisObject.checksums.dat !== null && thisObject.checksums.xml !== null) {
-                                                if (fs.existsSync(folderD + "/target/target.jp" && thisObject.checksums.jpg !== null)) {
-                                                    thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.jpg + thisObject.checksums.xml + thisObject.checksums.dat);
-                                                } else {
-                                                    thisObject.tcs = HybridObjectsUtilities.itob62(thisObject.checksums.xml + thisObject.checksums.jpg);
-                                                }
-                                            }
+                                            thisObject.tcs = HybridObjectsUtilities.genereateChecksums(objectExp, fileList);
 
                                             HybridObjectsUtilities.writeObjectToFile(objectExp, thisObjectId, __dirname);
-                                            debugConsole("created Checksum: " + thisObject.tcs);
 
                                         }
+
+
                                     }
 
                                     res.status(200);
@@ -1518,6 +1497,7 @@ function objectWebServer() {
 }
 
 // relies on ip
+
 
 //createObjectFromTarget(ObjectExp, objectExp, tmpFolderFile, __dirname, objectLookup, hardwareInterfaceModules, objectBeatSender, beatPort, globalVariables.debug);
 

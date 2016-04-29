@@ -119,7 +119,7 @@ document.getElementsByTagName('head')[0].appendChild(style);
 function HybridObject() {
 
 
-    this.globalMessage = function(ohMSG) {
+    this.sendGlobalMessage = function(ohMSG) {
         if (typeof objectExp.pos !== "undefined") {
             var msgg = JSON.stringify(
                 {
@@ -165,7 +165,7 @@ function HybridObject() {
         }
     };
 
-    this.fullScreenOn = function() {
+    this.setFullScreenOn = function() {
         objectExpSendFullScreen = true;
         console.log("fullscreen is loaded");
         if (typeof objectExp.pos !== "undefined") {
@@ -185,7 +185,7 @@ function HybridObject() {
         }
     };
 
-    this.fullScreenOff = function() {
+    this.setFullScreenOff = function() {
         objectExpSendFullScreen = false;
         if (typeof objectExp.pos !== "undefined") {
 
@@ -235,13 +235,13 @@ function HybridObject() {
         } else return undefined;
     };
 
-    this.projectionMatrix = function() {
+    this.getProjectionMatrix = function() {
         if (typeof objectExp.projectionMatrix !== "undefined") {
             return objectExp.projectionMatrix;
         } else return undefined;
     };
 
-    this.modelViewMatrix = function() {
+    this.getModelViewMatrix = function() {
         if (typeof objectExp.modelViewMatrix !== "undefined") {
             return objectExp.modelViewMatrix;
         } else return undefined;

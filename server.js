@@ -87,7 +87,7 @@ pick up these messages to identify the object.
 const serverPort = 8080;
 const socketPort = serverPort;     // server and socket port are always identical
 const beatPort = 52316;            // this is the port for UDP broadcasting so that the objects find each other.
-const beatInterval = 3000;         // how often is the heartbeat sent
+const beatInterval = 5000;         // how often is the heartbeat sent
 const socketUpdateInterval = 2000; // how often the system checks if the socket connections are still up and running.
 const version = "0.4.0";           // the version of this server
 
@@ -179,12 +179,7 @@ function ObjectExp() {
     this.developer = true;
     // Intended future use is to keep a memory of the last matrix transformation when interacted.
     // This data can be used for interacting with objects for when they are not visible.
-    this.matrix3dMemory = [
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1]
-    ]; // TODO use this to store UI interface for image later.
+    this.matrix3dMemory = null; // TODO use this to store UI interface for image later.
     // Stores all the links that emerge from within the object. If a IOPoint has new data,
     // the server looks through the Links to find if the data has influence on other IOPoints or Objects.
     this.objectLinks = {};
@@ -1391,6 +1386,9 @@ function objectWebServer() {
 
                                 HybridObjectsUtilities.writeObjectToFile(objectExp, thisObjectId, __dirname);
 
+                                objectBeatSender(beatPort, thisObjectId, objectExp[thisObjectId].ip, true);
+
+
                             }
 
                             res.status(200);
@@ -1452,6 +1450,8 @@ function objectWebServer() {
                                             thisObject.tcs = HybridObjectsUtilities.genereateChecksums(objectExp, fileList);
 
                                             HybridObjectsUtilities.writeObjectToFile(objectExp, thisObjectId, __dirname);
+
+                                            objectBeatSender(beatPort, thisObjectId, objectExp[thisObjectId].ip, true);
 
                                         }
 

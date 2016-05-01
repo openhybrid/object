@@ -1,11 +1,13 @@
 <!doctype html>
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=0.2, maximum-scale=0.2, user-scalable=no"/>
     <meta charset="UTF-8">
     <title>IO</title>
     <style>
         body, html {
-            height: 100%;
+            width: 47px;
+            height: 47px;
             margin: 0;
             padding: 0;
         }
@@ -14,55 +16,65 @@
             display: block;
         }
     </style>
-    <script>
-        // function for resizing the windows.
-        var objectExp = {};
-
-        window.addEventListener("message", function (e) {
-
-            var msg = JSON.parse(e.data);
-
-            if (typeof msg.pos !== "undefined" && typeof msg.obj !== "undefined") {
-
-                parent.postMessage(JSON.stringify(
-                        {
-                            "pos": msg.pos,
-                            "obj": msg.obj,
-                            "height": document.body.scrollHeight,
-                            "width": document.body.scrollWidth,
-                            "sendMatrix": false,
-                            "fullScreen": false
-                        }
-                        )
-                        // this needs to contain the final interface source
-                        , "*");
-
-                objectExp.pos = msg.pos;
-                objectExp.obj = msg.obj;
-            }
-
-            if (typeof msg.uiActionFeedback !== "undefined") {
-              //  document.getElementById('button').src = buttonChange[msg.uiActionFeedback].src;
-                var images = document.getElementsByTagName('img');
-
-                for(var i = 1; i < 5; i++) {
-                    if(msg.uiActionFeedback+1 == i){
-                        images[i].style.visibility = "visible";
-                    } else{
-                        images[i].style.visibility = "hidden";
-                    }
-                }
-            }
-        }, false);
-
-    </script>
 </head>
 <body>
-<img src="buttonBG.png" id="buttonBG" style="position: absolute; left:0; top: 0;  visibility: visible; z-index: 0" width="47px" height="47px">
-<img src="buttonNegative.png" id="buttonNegative" style="position: absolute; left:0; top: 0; visibility: hidden; z-index: 1" width="47px" height="47px">
-<img src="buttonNormal.png" id="buttonNormal" style="position: absolute; left:0; top: 0;  visibility: visible; z-index: 1" width="47px" height="47px">
-<img src="buttonPositive.png" id="buttonPositive" style="position: absolute; left:0; top: 0;  visibility: hidden; z-index: 1" width="47px" height="47px">
-<img src="buttonAction.png" id="buttonAction" style="position: absolute; left:0; top: 0;  visibility: hidden; z-index: 1" width="47px" height="47px">
+<div style="width:47px; height:47px; overflow: hidden">
+    <canvas id="canvasX" width="200px" height="200px"
+            style="border:0px; z-index: -1; transform-origin: left top; transform: scale(0.235,0.235);"></canvas>
+</div>
+<script>
+    var ctx = document.getElementById("canvasX").getContext("2d");
+    var objectExp = {};
 
+    drawCircle(ctx, [100, 100], 92, '#00ffff');
+
+    function drawCircle(ctx, point, bSize, color) {
+        ctx.clearRect(0, 0, 47, 47);
+        ctx.beginPath();
+        ctx.arc(point[0], point[1], bSize, 0, 2 * Math.PI, false);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+        ctx.lineWidth = bSize / 6.5;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+    }
+
+    window.addEventListener("message", function (e) {
+
+        var msg = JSON.parse(e.data);
+
+        if (typeof msg.pos !== "undefined" && typeof msg.obj !== "undefined") {
+
+            parent.postMessage(JSON.stringify(
+                    {
+                        "pos": msg.pos,
+                        "obj": msg.obj,
+                        "height": document.body.scrollHeight,
+                        "width": document.body.scrollWidth,
+                        "sendMatrix": false,
+                        "fullScreen": false
+                    }
+                    )
+                    // this needs to contain the final interface source
+                    , "*");
+
+            objectExp.pos = msg.pos;
+            objectExp.obj = msg.obj;
+        }
+
+        if (typeof msg.uiActionFeedback !== "undefined") {
+
+            if (msg.uiActionFeedback === 0)
+                drawCircle(ctx, [100, 100], 92, '#ff019f');
+            if (msg.uiActionFeedback === 1)
+                drawCircle(ctx, [100, 100], 92, '#00ffff');
+            if (msg.uiActionFeedback === 2)
+                drawCircle(ctx, [100, 100], 92, '#3af431');
+            if (msg.uiActionFeedback === 3)
+                drawCircle(ctx, [100, 100], 92, '#f9f90a');
+
+        }
+    }, false);
+</script>
 </body>
 </html>

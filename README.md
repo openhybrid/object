@@ -262,3 +262,38 @@ uci commit
 That's it. Restart the Linux part of Yún (reset button near LEDs). After reboot, if you run 
 `free -m` you should see the swap file loaded. You have successfully expanded the RAM on your 
 Arduino Yún's Linux side.
+
+
+How to install on a Raspberry Pi
+================================
+
+1. Use [NOOBS](https://www.raspberrypi.org/downloads/noobs/) to install the base Raspian image.
+
+2. Update the system software.
+    ````
+    sudo apt-get update
+    sudo apt-get upgrade -y
+    ````
+
+3. Remove the default nodejs instance and replace it with v0.12 or higher.
+    ````
+    sudo apt-get remove nodejs
+    curl -sLS https://apt.adafruit.com/add | sudo bash
+    sudo apt-get install -y node
+    ````
+
+4. Get the latest OpenHybrid Object code and download dependencies.
+    ````
+    git clone https://github.com/openhybrid/object.git
+    cd object
+    npm install
+    ````
+
+5. Run the OpenHybrid Object code.
+    ````
+    node server.js
+    ````
+
+A this point, you should be able to navigate to port 8080 on your device and find the Object dashboard.
+
+

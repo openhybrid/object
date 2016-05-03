@@ -57,7 +57,8 @@
 exports.render = function (objectID, linkPositionID, inputData, inputMode, callback) {
     var outputData = inputData;
     var outputMode = inputMode;
-        callback(objectID, linkPositionID, outputData, outputMode);
+
+    callback(objectID, linkPositionID, outputData, outputMode);
 };
 
 /* // example for delay

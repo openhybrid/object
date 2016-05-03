@@ -33,6 +33,7 @@
  *             ╩ ╩ ┴ └─┘┴└─┴─┴┘  ╚═╝└─┘└┘└─┘└─┘ ┴ └─┘
  *
  * Created by Valentin on 10/22/14.
+ * Modified by Carsten on 12/06/15.
  *
  * Copyright (c) 2015 Valentin Heun
  *
@@ -43,55 +44,61 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
-
-var fs = require('fs');
-var HybridObjectsUtilities = require(__dirname+'/../../libraries/HybridObjectsUtilities');
-
 /**
- * @desc prototype for an interface input. The input is something like a server that waits for incoming data.
- * @param {object} objectExp is the object that holds all data about the object. - check structure in main program.
- * @param {object} objectLookup holds object names with their ids
- * @param {boolean} clear tells the system to hold until new data is written and then it continues again.
- * @param {boolean} developer is set to true means that the developer tools are accessible.
- * @param {string} directoryName is set to the root of the main program
- * @param {function} callback sends back the values that just has been changed and should be run with the engine.
- * @note you have to give the call back an object and possition like so: callback(objKey2, valueKey);
- * @note when adding a new object to objectExp. make sure that the object has the type of your folder name.
- * @note make sure that the name of the new object is added to objectLookup. The ID is the object name + uuidTime() from the HybridObjectsUtilities file.
+ * Set to true to enable the hardware interface
  **/
+exports.enabled = true;
 
-exports.receive= function (objectExp, objectLookup, clear, developer, directoryName, callback){
 
-    // todo simplify the API to "clear", "add", "write", "developer"
+if (exports.enabled) {
+    var server = require(__dirname + '/../../libraries/HybridObjectsHardwareInterfaces');
+    /**
+     * @desc This function is called once by the server. Start the event loop of your hardware interface in here.
+     **/
+    exports.receive = function () {
 
-};
+    };
 
-/**
- * @desc prototype for an interface output. The output is something like a sender that sends present data to an external source.
- * @param {object} objectExp is the object that holds all data about the object. - check structure in main program.
- * @param {string} object defines the object that the output should change.
- * @param {string} position defines the data point within the object
- * @param {number} value defines the actual value that is send to the object.
- **/
+    /**
+     * @desc This function is called by the server whenever data for one of your HybridObject's IO points arrives. Parse the input and write the
+     *       value to your hardware.
+     * @param {string} objName Name of the HybridObject
+     * @param {string} ioName Name of the IO point
+     * @param {value} value The value
+     * @param {string} mode Specifies the datatype of value
+     * @param {type} type The type
+     **/
+    exports.send = function (objName, ioName, value, mode, type) {
 
-exports.send= function(objectExp, object, position, value){
+    };
 
-};
+    /**
+     * @desc prototype for an interface init. The init reinitialize the communication with the external source.
+     *       Place calls to addIO() and clearIO() in here. Call clearIO() after you have added all the IO points with addIO() calls.
+     * @note program the init so that it can be called anytime there is a change to the amount of objects.
+     **/
+    exports.init = function () {
 
-/**
- * @desc prototype for an interface init. The init reinitialize the communication with the external source.
- * @note program the init so that it can be called anytime there is a change to the amount of objects.
- **/
+            server.addIO("bluestone", "one", "default", "emptyExample");
+            server.addIO("bluestone", "two", "default", "emptyExample");
+            server.addIO("bluestone", "three", "default", "emptyExample");
+            server.addIO("bluestone", "four", "default", "emptyExample");
 
-exports.init= function(){
+        server.addIO("brownstone", "one1", "default", "emptyExample");
+        server.addIO("brownstone", "two2", "default", "emptyExample");
 
-};
 
-/**
- * @desc debug switch.
- * @param {boolean} debugEx represents if debugging is switched on in the main programm.
- **/
 
-exports.debug = function  (debugE){
-    debug = debugE;
-};
+
+        server.clearIO("bluestone");
+    };
+
+    /**
+     * @desc This function is called once by the server when the process is being torn down. 
+     *       Clean up open file handles or resources and return quickly.
+     **/
+    exports.shutdown = function () {
+
+    };
+
+}

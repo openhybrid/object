@@ -33,6 +33,8 @@
  *             ╩ ╩ ┴ └─┘┴└─┴─┴┘  ╚═╝└─┘└┘└─┘└─┘ ┴ └─┘
  *
  * Created by Valentin on 10/22/14.
+ * Modified by Carsten on 12/06/15.
+ * Modified by Psomdecerff (PCS) on 12/21/15.
  *
  * Copyright (c) 2015 Valentin Heun
  *
@@ -43,7 +45,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
 
- /*********************************************************************************************************************
+/*********************************************************************************************************************
  ******************************************** TODOS *******************************************************************
  **********************************************************************************************************************
 
@@ -51,79 +53,91 @@
 
  * TODO - Only allow upload backups and not any other data....
  *
- *  something to remember: hexString = yourNumber.toString(16); and reverse the process with: yourNumber = parseInt(hexString, 16);
- *
  * TODO - check any collision with knownObjects -> Show collision with other object....
- * TODO - Check if Targets are double somehwere. And iff Target has more then one target in the file...
+ * TODO - Check if Targets are double somehwere. And iff Target has more than one target in the file...
  *
  * TODO - Check the socket connections
- * TODO - stream of values for the user device
- * TODO - Plugin Structure  - check how good it works
  * TODO - check if objectlinks are pointing to values that actually exist. - (happens in browser at the moment)
  * TODO - Test self linking from internal to internal value (endless loop) - (happens in browser at the moment)
  *
- *
- * TODO - mark object functional only if:   if(thisId in objectExp && thisId.length>12)
  **
 
  **********************************************************************************************************************
  ******************************************** constant settings *******************************************************
  **********************************************************************************************************************/
 
+// These variables are used for global status, such as if the server sends debugging messages and if the developer
+// user interfaces should be accesable
 
 var globalVariables = {
-    clear : false, // stops or starts the system
- developer : true, // show developer UI
- debug : true // debug messages to console
-
+    developer: true, // show developer web GUI
+    debug: true      // debug messages to console
 };
 
-
-
 // ports used to define the server behaviour
-const serverPort = 8080; // server and socket port are always identical
-const socketPort = 8080;
-const beatPort = 52316; // this is the port for UDP broadcasting so that the objects find each other.
-const beatInterval = 3000; // how often is the heard beat send
+/*
+The server uses port 8080 to communicate with other servers and with the Reality Editor.
+As such the Server reacts to http and web sockets on this port.
+
+The beat port is used to send UDP broadcasting messages in  a local network. The Reality Editor and other Objects
+pick up these messages to identify the object.
+
+ */
+
+const serverPort = 8080;
+const socketPort = serverPort;     // server and socket port are always identical
+const beatPort = 52316;            // this is the port for UDP broadcasting so that the objects find each other.
+const beatInterval = 5000;         // how often is the heartbeat sent
 const socketUpdateInterval = 2000; // how often the system checks if the socket connections are still up and running.
 const version = "0.3.2";           // the version of this server
 
-//origins
-const objectPath = __dirname + "/objects"; // definition where all the objects are stored.
-const modulePath = __dirname + "/dataPointInterfaces"; // all the visual UI interfaces are stored here.
-const internalPath = __dirname + "/hardwareInterfaces"; // all the visual UI interfaces are stored here.
-const objectInterfaceFolder = "/"; // the level on which the webservice is accessible
+
+// All objects are stored in this folder:
+const objectPath   = __dirname + "/objects";
+// All visual UI representations for IO Points are stored in this folder:
+const modulePath   = __dirname + "/dataPointInterfaces";
+// All interfaces for different hardware such as Arduino Yun, PI, Philips Hue are stored in this folder.
+const internalPath = __dirname + "/hardwareInterfaces";
+// The web service level on wich objects are accessable. http://<IP>:8080 <objectInterfaceFolder> <object>
+const objectInterfaceFolder = "/";
 
 /**********************************************************************************************************************
  ******************************************** Requirements ************************************************************
  **********************************************************************************************************************/
 
-// Filesystem library
-var fs = require('fs');
-// UDP Broadcasting library
-var dgram = require('dgram');
-// get the device IP address library
-var ip = require("ip");
-var bodyParser = require('body-parser');
-var express = require('express');
+var _ = require('lodash');    // JavaScript utility library
+var fs = require('fs');       // Filesystem library
+var dgram = require('dgram'); // UDP Broadcasting library
+var ip = require("ip");       // get the device IP address library
+var bodyParser = require('body-parser');  // body parsing middleware
+var express = require('express'); // Web Sever library
+
+// constrution for the werbserver using express combined with socket.io
 var webServer = express();
 var http = require('http').createServer(webServer).listen(serverPort, function () {
-    if (globalVariables.debug) console.log('webserver + socket.io is listening on port: ' + serverPort);
+   debugConsole('webserver + socket.io is listening on port: ' + serverPort);
 });
-var io = require('socket.io')(http);
-var socket = require('socket.io-client');
-// Library for HTTP CORS
-var cors = require('cors');
-// Multiple file upload library
-var formidable = require('formidable');
+var io = require('socket.io')(http); // Websocket library
+var socket = require('socket.io-client'); // websocket client source
+var cors = require('cors');             // Library for HTTP Cross-Origin-Resource-Sharing
+var formidable = require('formidable'); // Multiple file upload library
 var cheerio = require('cheerio');
-//var xml2js = require('xml2js');
 
-// additional required code
-var HybridObjectsUtilities = require(__dirname+'/libraries/HybridObjectsUtilities');
-var HybridObjectsWebFrontend = require(__dirname+'/libraries/HybridObjectsWebFrontend');
+// additional files containing project code
 
-// sync debugging with the additional code
+// This file hosts all kinds of utilities programmed for the server
+var HybridObjectsUtilities   = require(__dirname + '/libraries/HybridObjectsUtilities');
+// The web frontend a developer is able to see when creating new user interfaces.
+var HybridObjectsWebFrontend = require(__dirname + '/libraries/HybridObjectsWebFrontend');
+// Definition for a simple API for hardware interfaces talking to the server.
+// This is used for the interfaces defined in the hardwareInterfaces folder.
+var HybridObjectsHardwareInterfaces = require(__dirname + '/libraries/HybridObjectsHardwareInterfaces');
+
+var util = require("util"); // node.js utility functionality
+var events = require("events"); // node.js events used for the socket events.
+
+
+// Set web frontend debug to inherit from global debug
 HybridObjectsWebFrontend.debug = globalVariables.debug;
 
 /**********************************************************************************************************************
@@ -131,71 +145,127 @@ HybridObjectsWebFrontend.debug = globalVariables.debug;
  **********************************************************************************************************************/
 
 /**
- * @desc Constructor for the the object
+ * @desc This is the default constructor for the Hybrid Object.
+ * It contains information about how to render the UI and how to process the internal data.
  **/
 
 function ObjectExp() {
+    // The ID for the object will be broadcasted along with the IP. It consists of the name with a 12 letter UUID added.
     this.objectId = null;
+    // The name for the object used for interfaces.
+    this.name = "";
+    // The IP address for the object is relevant to point the Reality Editor to the right server.
+    // It will be used for the UDP broadcasts.
     this.ip = ip.address();
+    // The version number of the Object.
     this.version = version;
-    this.rotation = 0;
+    // The (t)arget (C)eck(S)um is a sum of the checksum values for the target files.
     this.tcs = null;
+    // Reality Editor: This is used to possition the UI element within its x axis in 3D Space. Relative to Marker origin.
     this.x = 0;
+    // Reality Editor: This is used to possition the UI element within its y axis in 3D Space. Relative to Marker origin.
     this.y = 0;
+    // Reality Editor: This is used to scale the UI element in 3D Space. Default scale is 1.
     this.scale = 1;
+    // Used internally from the reality editor to indicate if an object should be rendered or not.
     this.visible = false;
+    // Used internally from the reality editor to trigger the visibility of naming UI elements.
     this.visibleText = false;
+    // Used internally from the reality editor to indicate the editing status.
     this.visibleEditing = false;
-    this.developer = false;
-    this.matrix3dMemory = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // TODO use this to store UI interface for image later.
-    this.objectLinks = {}; // Array of ObjectLink()
-    this.objectValues = {}; // Array of ObjectValue()
+    // every object holds the developer mode variable. It indicates if an object is editable in the Reality Editor.
+    this.developer = true;
+    // Intended future use is to keep a memory of the last matrix transformation when interacted.
+    // This data can be used for interacting with objects for when they are not visible.
+    this.matrix3dMemory = null; // TODO use this to store UI interface for image later.
+    // Stores all the links that emerge from within the object. If a IOPoint has new data,
+    // the server looks through the Links to find if the data has influence on other IOPoints or Objects.
+    this.objectLinks = {};
+    // Stores all IOPoints. These points are used to keep the state of an object and process its data.
+    this.objectValues = {};
 }
 
 /**
- * @desc Constructor for each link
+ * @desc The Link constructor is used every time a new link is stored in the objectLinks object.
+ * The link does not need to keep its own ID since it is created with the link ID as Obejct name.
  **/
 
 function ObjectLink() {
+    // The origin object from where the link is sending data from
     this.ObjectA = null;
+    // The origin IOPoint from where the link is taking its data from
     this.locationInA = 0;
+    // Defines the type of the link origin. Currently this function is not in use.
     this.typeA = "";
+    // The destination object to where the origin object is sending data to.
+    // At this point the destination object accepts all incoming data and routs the data according to the link data sent.
     this.ObjectB = null;
+    // The destination IOPoint to where the link is sending data from the origin object.
+    // ObjectB and locationInB will be send with each data package.
     this.locationInB = 0;
+    // Defines the type of the link destination. Currently this function is not in use.
     this.typeB = "";
+    // Will be used to test if a link is still able to find its destination.
+    // It needs to be discussed what to do if a link is not able to find the destination and for what time span.
     this.countLinkExistance = 0; // todo use this to test if link is still valid. If not able to send for some while, kill link.
 }
 
 /**
- * @desc Constructor for each object value
+ * @desc Constructor used to define every IO Point generated in the Object. It does not need to contain its own ID
+ * since the object is created within the objectValues with the ID as object name.
  **/
 
 function ObjectValue() {
+    // the name of each link. It is used in the Reality Editor to show the IO name.
     this.name = "";
+    // this is storing the actual value representing the actual state of a IO Point
     this.value = null;
-    this.mode = "f"; // this is for (f) floating point, (d) digital or (s) step and finally (m) media
-    this.rotation = 0;
+    // Defines the kind of data send. At this point we have 3 active data modes and one future possibility.
+    // (f) defines floating point values between 0 and 1. This is the default value.
+    // (d) defines a digital value exactly 0 or 1.
+    // (+) defines a positive step with a floating point value for compatibility.
+    // (-) defines a negative step with a floating point value for compatibility.
+    // (m) defines a future possible data value for mime type media
+    this.mode = "f";
+    // Reality Editor: This is used to possition the UI element within its x axis in 3D Space. Relative to Marker origin.
     this.x = 0;
+    // Reality Editor: This is used to possition the UI element within its y axis in 3D Space. Relative to Marker origin.
     this.y = 0;
+    // Reality Editor: This is used to scale the UI element in 3D Space. Default scale is 1.
     this.scale = 1;
+    // defines the dataPointInterface that is used to process data of this type. It also defines the visual representation
+    // in the Reality Editor. Such data points interfaces can be found in the dataPointInterface folder.
     this.plugin = "default";
+    // this is an optional parameter object for the plugin. As this parameter is stored with the object on disk. It can be used
+    // as non fluctuating storage.
     this.pluginParameter = null;
-    this.index = null;
+    // defines the origin Hardware interface of the IO Point. For example if this is arduinoYun the Server associates
+    // this IO Point with the Arduino Yun hardware interface.
     this.type = "arduinoYun"; // todo "arduinoYun", "virtual", "edison", ... make sure to define yours in your internal_module file
 }
 
 /**
- * @desc Constructor for the socket.io web sockets
+ * @desc This Constructor is used when a new socket connection is generated.
  **/
 
 function ObjectSockets(socketPort, ip) {
+    // keeps the own IP of an object
     this.ip = ip;
+    // defines where to connect to
     this.io = socket.connect('http://' + ip + ':' + socketPort, {
+        // defines the timeout for a connection between objects and the reality editor.
         'connect timeout': 5000,
+        // try to reconnect
         'reconnect': true,
+        // time between re-connections
         'reconnection delay': 500,
+        // the amount of reconnection attempts. Once the connection failed, the server kicks in and tries to reconnect
+        // infinitely. This behaviour can be changed once discussed what the best model would be.
+        // At this point the invinit reconnection attempt keeps the system optimal running at all time.
         'max reconnection attempts': 20,
+        // automatically connect a new conneciton.
         'auto connect': true,
+        // fallbacks connection models for socket.io
         'transports': [
             'websocket'
             , 'flashsocket'
@@ -207,162 +277,192 @@ function ObjectSockets(socketPort, ip) {
 }
 
 /**********************************************************************************************************************
- ******************************************** Initialisations *********************************************************
+ ******************************************** Variables and Objects ***************************************************
  **********************************************************************************************************************/
 
-// Initializing the object tree
+
+// This variable will hold the entire tree of all objects and their sub objects.
 var objectExp = {};
-// the pluginModule, that will hold all available plugins
-var pluginModules = {};
-// the modules that will hold all internal connectors
-var internalModules = {};
 
 
-// list of ids linked with ips of all objects found via udp heartbeats
+var dataPointModules = {};   // Will hold all available data point interfaces
+var hardwareInterfaceModules = {}; // Will hold all available hardware interfaces.
+// A list of all objects known and their IPs in the network. The objects are found via the udp heart beat.
+// If a new link is linking to another objects, this knownObjects list is used to establish the connection.
+// This list is also used to keep track of the actual IP of an object. If the IP of an object in a network changes,
+// It has no influance on the connectivity, as it is referenced by the object UUID through the entire time.
 var knownObjects = {};
-
-// objectID lookup table
+// A lookup table used to process faster through the objects.
 var objectLookup = {};
+// This list holds all the socket connections that are kept alive. Socket connections are kept alive if a link is
+// associated with this object. Once there is no more link the socket connection is deleted.
+var socketArray = {};     // all socket connections that are kept alive
 
-// all socket connections that are kept alive
-var socketArray = {};
 // counter for the socket connections
+// this counter is used for the Web Developer Interface to reflect the state of the server socket connections.
 var sockets = {
-    sockets: 0,
-    connected: 0,
-    notConnected: 0,
-    socketsOld: 0,
-    connectedOld: 0,
-    notConnectedOld: 0
+    sockets: 0, // amount of created socket connections
+    connected: 0, // amount of connected socket connections
+    notConnected: 0, // not connected
+    socketsOld: 0,  // used internally to react only on updates
+    connectedOld: 0, // used internally to react only on updates
+    notConnectedOld: 0 // used internally to react only on updates
 };
 
 
+/**********************************************************************************************************************
+ ******************************************** Initialisations *********************************************************
+ **********************************************************************************************************************/
 
-if (globalVariables.debug)console.log("got it started");
 
-// get the directory names of all available plugins for the 3D-UI
-var tempFiles = fs.readdirSync(modulePath).filter(function (file) {
+debugConsole("Starting the Server");
+
+// get a list with the names for all IO-Points, based on the folder names in the dataPointInterfaces folder folder.
+// Each folder represents on IO-Point.
+var DataPointFolderList = fs.readdirSync(modulePath).filter(function (file) {
     return fs.statSync(modulePath + '/' + file).isDirectory();
 });
-// remove hidden directories
-while (tempFiles[0][0] === ".") {
-    tempFiles.splice(0, 1);
-}
-// add all plugins to the pluginModules object.
-for (var i = 0; i < tempFiles.length; i++) {
-    pluginModules[tempFiles[i]] = require(__dirname + "/dataPointInterfaces/" + tempFiles[i] + "/index.js").render;
+
+// Remove eventually hidden files from the Hybrid Object list.
+while (DataPointFolderList[0][0] === ".") {
+    DataPointFolderList.splice(0, 1);
 }
 
-// start system
-initSystem();
+// Create a objects list with all IO-Points code.
+for (var i = 0; i < DataPointFolderList.length; i++) {
+    dataPointModules[DataPointFolderList[i]] = require(modulePath + '/' + DataPointFolderList[i] + "/index.js").render;
+}
+
+debugConsole("Initialize System: ");
+debugConsole("Loading Hardware interfaces");
+// set all the initial states for the Hardware Interfaces in order to run with the Server.
+HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, __dirname, dataPointModules, function (objKey2, valueKey, objectExp, dataPointModules) {
+    objectEngine(objKey2, valueKey, objectExp, dataPointModules);
+}, ObjectValue);
+debugConsole("Done");
+
+debugConsole("Loading Hybrid Objects");
+// This function will load all the Hybrid Objects
+loadHybridObjects();
+debugConsole("Done");
+
 startSystem();
+debugConsole("started");
 
-
-
-// add all modules for internal communication
 
 // get the directory names of all available plugins for the 3D-UI
-var tempFilesInternal = fs.readdirSync(internalPath).filter(function (file) {
+var hardwareInterfacesFolderList = fs.readdirSync(internalPath).filter(function (file) {
     return fs.statSync(internalPath + '/' + file).isDirectory();
 });
 // remove hidden directories
-while (tempFilesInternal[0][0] === ".") {
-    tempFilesInternal.splice(0, 1);
+while (hardwareInterfacesFolderList[0][0] === ".") {
+    hardwareInterfacesFolderList.splice(0, 1);
 }
-// add all plugins to the pluginModules object.
-for (var i = 0; i < tempFilesInternal.length; i++) {
-    internalModules[tempFilesInternal[i]] = require(internalPath + "/" + tempFilesInternal[i] + "/index.js");
+
+// add all plugins to the dataPointModules object. Iterate backwards because splice works inplace
+for (var i = hardwareInterfacesFolderList.length - 1; i >= 0; i--) {
+    //check if hardwareInterface is enabled, if it is, add it to the hardwareInterfaceModules
+    if (require(internalPath + "/" + hardwareInterfacesFolderList[i] + "/index.js").enabled) {
+        hardwareInterfaceModules[hardwareInterfacesFolderList[i]] = require(internalPath + "/" + hardwareInterfacesFolderList[i] + "/index.js");
+    } else {
+        hardwareInterfacesFolderList.splice(i, 1);
+    }
 }
-/*
-for (var i = 0; i < tempFilesInternal.length; i++) {
-    internalModules[tempFilesInternal[i]].debug(globalVariables.debug);
-}*/
+
+debugConsole("ready to start internal servers");
 
 // starting the internal servers (receive)
-for (var i = 0; i < tempFilesInternal.length; i++) {
-    internalModules[tempFilesInternal[i]].receive(objectExp, objectLookup, globalVariables,__dirname, pluginModules, function(objKey2, valueKey, objectExp, pluginModules){
-        objectEngine(objKey2, valueKey, objectExp, pluginModules);
-    });
+for (var i = 0; i < hardwareInterfacesFolderList.length; i++) {
+    hardwareInterfaceModules[hardwareInterfacesFolderList[i]].init();
+    hardwareInterfaceModules[hardwareInterfacesFolderList[i]].receive();
 }
 
+debugConsole("found " + hardwareInterfacesFolderList.length + " internal server");
+debugConsole("starting internal Server.");
 
-if (globalVariables.debug)console.log("found "+tempFilesInternal.length+" internal server");
-if (globalVariables.debug)console.log("starting internal Server.");
 
+/**
+ * Returns the file extension (portion after the last dot) of the given filename.
+ * If a file name starts with a dot, returns an empty string.
+ *
+ * @author VisioN @ StackOverflow
+ * @param {string} fileName - The name of the file, such as foo.zip
+ * @return {string} The lowercase extension of the file, such has "zip"
+ */
+function getFileExtension(fileName) {
+    return fileName.substr((~-fileName.lastIndexOf(".") >>> 0) + 2).toLowerCase();
+}
 
 /**
  * @desc Add objects from the objects folder to the system
  **/
-
-function initSystem() {
-
+function loadHybridObjects() {
+   debugConsole("Enter loadHybridObjects");
     // check for objects in the objects folder by reading the objects directory content.
     // get all directory names within the objects directory
-    var tempFiles = fs.readdirSync(objectPath).filter(function (file) {
+    var HybridObjectFolderList = fs.readdirSync(objectPath).filter(function (file) {
         return fs.statSync(objectPath + '/' + file).isDirectory();
     });
 
     // remove hidden directories
     try {
-        while (tempFiles[0][0] === ".") {
-            tempFiles.splice(0, 1);
+        while (HybridObjectFolderList[0][0] === ".") {
+            HybridObjectFolderList.splice(0, 1);
         }
     } catch (e) {
-
-        if (globalVariables.debug) console.log("no hidden files");
+       debugConsole("no hidden files");
     }
 
-    for (var i = 0; i < tempFiles.length; i++) {
-        var tempFolderName = HybridObjectsUtilities.getObjectIdFromTarget(tempFiles[i],  __dirname);
+    for (var i = 0; i < HybridObjectFolderList.length; i++) {
+        var tempFolderName = HybridObjectsUtilities.getObjectIdFromTarget(HybridObjectFolderList[i], __dirname);
+       debugConsole("TempFolderName: " + tempFolderName);
 
         if (tempFolderName !== null) {
             // fill objectExp with objects named by the folders in objects
             objectExp[tempFolderName] = new ObjectExp();
-            objectExp[tempFolderName].folder = tempFiles[i];
+            objectExp[tempFolderName].folder = HybridObjectFolderList[i];
 
             // add object to object lookup table
-            HybridObjectsUtilities.writeObject(objectLookup, tempFiles[i], tempFolderName);
+            HybridObjectsUtilities.writeObject(objectLookup, HybridObjectFolderList[i], tempFolderName);
 
             // try to read a saved previous state of the object
             try {
-                objectExp[tempFolderName] = JSON.parse(fs.readFileSync(__dirname + "/objects/" + tempFiles[i] + "/object.json", "utf8"));
+                objectExp[tempFolderName] = JSON.parse(fs.readFileSync(__dirname + "/objects/" + HybridObjectFolderList[i] + "/object.json", "utf8"));
                 objectExp[tempFolderName].ip = ip.address();
 
-// adding the values to the arduino lookup table so that the serial connection can take place.
-                // todo this is maybe obsolet.
+                // adding the values to the arduino lookup table so that the serial connection can take place.
+                // todo this is maybe obsolete.
                 for (var tempkey in objectExp[tempFolderName].objectValues) {
-                    ArduinoLookupTable.push({obj: tempFiles[i], pos: tempkey});
+                    ArduinoLookupTable.push({ obj: HybridObjectFolderList[i], pos: tempkey });
                 }
-// todo the sizes do not really save...
+                // todo the sizes do not really save...
 
 
                 // todo new Data points are never writen in to the file. So this full code produces no value
                 // todo Instead keep the board clear=false forces to read the data points from the arduino every time.
                 // todo this is not true the datapoints are writen in to the object. the sizes are wrong
                 // if not uncommented the code does not connect to the arduino side.
-                // data comes allways from the arduino....
-               // clear = true;
+                // data comes always from the arduino....
+                // clear = true;
 
-                if (globalVariables.debug) {
-                    console.log("I found objects that I want to add");
-                    console.log("---");
-                    console.log(ArduinoLookupTable);
-                    console.log("---");
-                }
+                    debugConsole("I found objects that I want to add");
+                    debugConsole("---");
+                    debugConsole(ArduinoLookupTable);
+                    debugConsole("---");
 
             } catch (e) {
                 objectExp[tempFolderName].ip = ip.address();
                 objectExp[tempFolderName].objectId = tempFolderName;
-                if (globalVariables.debug) console.log("No saved data for: " + tempFolderName);
+               debugConsole("No saved data for: " + tempFolderName);
             }
 
         } else {
-            if (globalVariables.debug) console.log(" object " + tempFolderName + " has no marker jet");
+           debugConsole(" object " + HybridObjectFolderList[i] + " has no marker yet");
         }
     }
 
-    for (var keyint in internalModules) {
-        internalModules[keyint].init();
+    for (var keyint in hardwareInterfaceModules) {
+        hardwareInterfaceModules[keyint].init();
     }
 }
 
@@ -376,16 +476,18 @@ function initSystem() {
 
 function startSystem() {
 
-    // generating a udp heard beat signal for ever object that is hosted in this device
+    // generating a udp heartbeat signal for every object that is hosted in this device
     for (var key in objectExp) {
         objectBeatSender(beatPort, key, objectExp[key].ip);
     }
-    // receiving heard beat messages and adding new objects to the knownObjects Array
-    objectBeatServer();
-    // serving the visual frontend with web content as well serving the REST API for add/remove links and changing
-    // objects sizes and positions
 
+    // receiving heartbeat messages and adding new objects to the knownObjects Array
+    objectBeatServer();
+
+    // serving the visual frontend with web content as well serving the REST API for add/remove links and changing
+    // object sizes and positions
     objectWebServer();
+
     // receives all socket connections and processes the data
 
     socketServer();
@@ -400,8 +502,29 @@ function startSystem() {
 
     // blink the LED at the arduino board
 
-
 }
+
+
+/**********************************************************************************************************************
+ ******************************************** Stopping the System *****************************************************
+ **********************************************************************************************************************/
+
+function exit() {
+    var mod;
+
+    // shut down the internal servers (teardown)
+    for (var i = 0; i < hardwareInterfacesFolderList.length; i++) {
+        mod = hardwareInterfaceModules[hardwareInterfacesFolderList[i]];
+        if ("shutdown" in mod) {
+            mod.shutdown();
+        }
+    }
+
+    process.exit();
+}
+
+process.on('SIGINT', exit);
+
 
 /**********************************************************************************************************************
  ******************************************** Emitter/Client/Sender Objects *******************************************
@@ -410,14 +533,16 @@ function startSystem() {
 /**
  * @desc Sends out a Heartbeat broadcast via UDP in the local network.
  * @param {Number} PORT The port where to start the Beat
- * @param {String} thisId The name of the Object
- * @param {String} thisIp The IP of the Object
- * @param {String} oneTimeOnly if true the beat will only be send once.
+ * @param {string} thisId The name of the Object
+ * @param {string} thisIp The IP of the Object
+ * @param {string} thisVersion The version of the Object
+ * @param {string} thisTcs The target checksum of the Object.
+ * @param {boolean} oneTimeOnly if true the beat will only be sent once.
  **/
 
 function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
-    if (typeof oneTimeOnly === 'undefined') {
-        oneTimeOnly = 'false';
+    if (_.isUndefined(oneTimeOnly)) {
+        oneTimeOnly = false;
     }
 
     var HOST = '255.255.255.255';
@@ -438,6 +563,8 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
 
     if (globalVariables.debug) console.log("UDP broadcasting on port: " + PORT);
     if (globalVariables.debug) console.log("Sending beats... Content: " + JSON.stringify({id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
+   debugConsole("UDP broadcasting on port: " + PORT);
+   debugConsole("Sending beats... Content: " + JSON.stringify({ id: thisId, ip: thisIp,  vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
 
     // creating the datagram
     var client = dgram.createSocket('udp4');
@@ -447,15 +574,15 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
         client.setMulticastTTL(2);
     });
 
-    if (oneTimeOnly === 'false') { // this is used for actions to send only one time if nessesary
+    if (!oneTimeOnly) { // this is used for actions to send only one time if nessesary
         setInterval(function () {
             // send the beat#
-           // if(thisId in objectLookup)
+            // if(thisId in objectLookup)
 
-         //console.log(JSON.stringify(thisId));
-           // console.log(JSON.stringify( objectExp));
-            if(thisId in objectExp && thisId.length>12){
-              //  if (globalVariables.debug) console.log("Sending beats... Content: " + JSON.stringify({id: thisId, ip: thisIp}));
+            //debugConsole(JSON.stringify(thisId));
+            // debugConsole(JSON.stringify( objectExp));
+            if (thisId in objectExp && thisId.length > 12) {
+               // debugConsole("Sending beats... Content: " + JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
 
                 var message = new Buffer(JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
 
@@ -467,29 +594,32 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
                 }
                 //console.log(globalVariables.developer);
 
-            client.send(message, 0, message.length, PORT, HOST, function (err) {
-                if (err) {
-                    console.log("error ");
-                    throw err;
-
-                }
-
-                // client is not being closed, as the beat is send ongoing
-            });
+                client.send(message, 0, message.length, PORT, HOST, function (err) {
+                    if (err) {
+                        debugConsole("error ");
+                        throw err;
+                    }
+                    // client is not being closed, as the beat is send ongoing
+                });
             }
-        }, (beatInterval + (Math.floor(Math.random() * 500) + 1) * (Math.floor(Math.random() * 2) == 1 ? 1 : -1)));
+        }, beatInterval + _.random(-250, 250));
     }
     else {
+        // Single-shot, one-time heartbeat
         // delay the signal with timeout so that not all objects send the beat in the same time.
         setTimeout(function () {
             // send the beat
-            if(thisId in objectExp)
-            client.send(message, 0, message.length, PORT, HOST, function (err) {
-                if (err) throw err;
-                // close the socket as the function is only called once.
-                client.close();
-            });
-        }, (Math.floor(Math.random() * 500) + 1) * (Math.floor(Math.random() * 2) == 1 ? 1 : -1));
+            if (thisId in objectExp) {
+
+                var message = new Buffer(JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
+
+                client.send(message, 0, message.length, PORT, HOST, function (err) {
+                    if (err) throw err;
+                    // close the socket as the function is only called once.
+                    client.close();
+                });
+            }
+        }, _.random(1, 250));
     }
 }
 
@@ -503,7 +633,7 @@ function actionSender(action) {
     var HOST = '255.255.255.255';
     var message;
 
-    message = new Buffer(JSON.stringify({action: action}));
+    message = new Buffer(JSON.stringify({ action: action }));
 
     // creating the datagram
     var client = dgram.createSocket('udp4');
@@ -514,7 +644,9 @@ function actionSender(action) {
     });
     // send the datagram
     client.send(message, 0, message.length, beatPort, HOST, function (err) {
-        if (err) throw err;
+        if (err) {
+            throw err;
+        }
         client.close();
     });
 }
@@ -536,32 +668,34 @@ function objectBeatServer() {
     // creating the udp server
     var udpServer = dgram.createSocket("udp4");
     udpServer.on("error", function (err) {
-        console.log("server error:\n" + err);
+        debugConsole("server error:\n" + err);
         udpServer.close();
     });
 
     udpServer.on("message", function (msg) {
         var msgContent;
         // check if object ping
-       // if (globalVariables.debug)  console.log("I found new Objects: " + msg);
+        // if (globalVariables.debug)  debugConsole("I found new Objects: " + msg);
         msgContent = JSON.parse(msg);
         if (msgContent.hasOwnProperty("id") && msgContent.hasOwnProperty("ip") && !(msgContent.id in objectExp) && !(msgContent.id in knownObjects)) {
             knownObjects[msgContent.id] = msgContent.ip;
-            if (globalVariables.debug)  console.log("I found new Objects: " + JSON.stringify({id: msgContent.id, ip: msgContent.ip}));
-            if (globalVariables.debug) console.log("knownObjectfound:" + knownObjects + "this message: ");
+           debugConsole("I found new Objects: " + JSON.stringify({
+                id: msgContent.id,
+                ip: msgContent.ip
+            }));
         }
         // check if action 'ping'
-        if (msgContent.action == "ping") {
-            if (globalVariables.debug)  console.log(msgContent.action);
+        if (msgContent.action === "ping") {
+           debugConsole(msgContent.action);
             for (var key in objectExp) {
-                objectBeatSender(beatPort, key, objectExp[key].ip, 'true');
+                objectBeatSender(beatPort, key, objectExp[key].ip, true);
             }
         }
     });
 
     udpServer.on("listening", function () {
         var address = udpServer.address();
-        if (globalVariables.debug)  console.log("UDP listening on port: " + address.port);
+       debugConsole("UDP listening on port: " + address.port);
     });
 
     // bind the udp server to the udp beatPort
@@ -633,13 +767,8 @@ function objectWebServer() {
   //  webServer.use("/objectDefaultFiles", express.static(__dirname + '/libraries/objectDefaultFiles/'));
 
     if (globalVariables.developer === true) {
-        webServer.use("/target/js", express.static(__dirname + '/libraries/js/'));
-        webServer.use("/target", express.static(__dirname + '/libraries/js/'));
-        webServer.use("/content/js", express.static(__dirname + '/libraries/js/'));
-        webServer.use("/content/fonts", express.static(__dirname + '/libraries/fonts/'));
-        webServer.use("/js", express.static(__dirname + '/libraries/js/'));
-        webServer.use("/info/js", express.static(__dirname + '/libraries/js/'));
-        webServer.use("/test", express.static(__dirname + '/WebInterface/'));
+        webServer.use("/public", express.static(__dirname + '/libraries/webInterface/'));
+        webServer.use(express.static(__dirname + '/libraries/webInterface/'));
     }
 
     // use the cors cross origin REST model
@@ -651,7 +780,7 @@ function objectWebServer() {
     // ****************************************************************************************************************
     webServer.post('/object/*/link/*/', function (req, res) {
 
-      //  if(globalVariables.debug) console.log("post 1");
+        //  debugConsole("post 1");
 
         var updateStatus = "nothing happened";
 
@@ -659,22 +788,22 @@ function objectWebServer() {
             objectExp[req.params[0]].objectLinks[req.params[1]] = req.body;
 
             // call an action that asks all devices to reload their links, once the links are changed.
-            actionSender(JSON.stringify({reloadLink: {id: req.params[0], ip: objectExp[req.params[0]].ip}}));
+            actionSender(JSON.stringify({ reloadLink: { id: req.params[0], ip: objectExp[req.params[0]].ip } }));
             updateStatus = "added";
 
             // check if there are new connections associated with the new link.
             socketUpdater();
 
             // write the object state to the permanent storage.
-           HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
+            HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
             res.send(updateStatus);
         }
     });
 
-    // changing the size and possition of an item. *1 is the object *2 is the link id
+    // changing the size and possition of an item. *1 is the object *2 is the datapoint id
     // ****************************************************************************************************************
     webServer.post('/object/*/size/*/', function (req, res) {
-       // if(globalVariables.debug) console.log("post 2");
+        // debugConsole("post 2");
         var updateStatus = "nothing happened";
         var thisObject = req.params[0];
         var thisValue = req.params[1];
@@ -713,27 +842,29 @@ function objectWebServer() {
             actionSender(JSON.stringify({ reloadObject: { id: thisObject, ip: objectExp[thisObject].ip } }));
             updateStatus = "added object";
         }
+
+        res.send(updateStatus);
     });
 
     // delete a link. *1 is the object *2 is the link id
     // ****************************************************************************************************************
     webServer.delete('/object/*/link/*/', function (req, res) {
-        if(globalVariables.debug) console.log("delete 1");
+       debugConsole("delete 1");
 
-        if (globalVariables.debug) console.log("i got a delete message");
+       debugConsole("i got a delete message");
         var thisLinkId = req.params[1];
         var fullEntry = objectExp[req.params[0]].objectLinks[thisLinkId];
         var destinationIp = knownObjects[fullEntry.ObjectB];
 
         delete objectExp[req.params[0]].objectLinks[thisLinkId];
 
-        if (globalVariables.debug) console.log(objectExp[req.params[0]].objectLinks);
-        actionSender(JSON.stringify({reloadLink: {id: req.params[0], ip: objectExp[req.params[0]].ip}}));
+       debugConsole(objectExp[req.params[0]].objectLinks);
+        actionSender(JSON.stringify({ reloadLink: { id: req.params[0], ip: objectExp[req.params[0]].ip } }));
         HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
         res.send("deleted: " + thisLinkId + " in object: " + req.params[0]);
 
         var checkIfIpIsUsed = false;
-
+        var checkerKey, subCheckerKey;
         for (checkerKey in objectExp) {
             for (subCheckerKey in objectExp[checkerKey].objectLinks) {
                 if (objectExp[checkerKey].objectLinks[subCheckerKey].ObjectB === fullEntry.ObjectB) {
@@ -751,21 +882,21 @@ function objectWebServer() {
     // request a link. *1 is the object *2 is the link id
     // ****************************************************************************************************************
     webServer.get('/object/*/link/:id', function (req, res) {
-       // if(globalVariables.debug) console.log("get 1");
+        // debugConsole("get 1");
         res.send(objectExp[req.params[0]].objectLinks[req.params.id]);
     });
 
     // request all link. *1 is the object
     // ****************************************************************************************************************
     webServer.get('/object/*/link', function (req, res) {
-      //  if(globalVariables.debug) console.log("get 2");
+        //  debugConsole("get 2");
         res.send(objectExp[req.params[0]].objectLinks);
     });
 
     // request a zip-file with the object stored inside. *1 is the object
     // ****************************************************************************************************************
     webServer.get('/object/*/zipBackup/', function (req, res) {
-      //  if(globalVariables.debug) console.log("get 3");
+        //  debugConsole("get 3");
         res.writeHead(200, {
             'Content-Type': 'application/zip',
             'Content-disposition': 'attachment; filename=HybridObjectBackup.zip'
@@ -782,12 +913,15 @@ function objectWebServer() {
     // Send the programming interface static web content
     // ****************************************************************************************************************
     webServer.get('/obj/dataPointInterfaces/*/*/', function (req, res) {   // watch out that you need to make a "/" behind request.
-      //  if(globalVariables.debug) console.log("get 4");
+        res.sendFile(__dirname + "/dataPointInterfaces/" + req.params[0] + '/www/' + req.params[1]);
+    });
+
+    webServer.get('/dataPointInterfaces/*/*/', function (req, res) {   // watch out that you need to make a "/" behind request.
         res.sendFile(__dirname + "/dataPointInterfaces/" + req.params[0] + '/www/' + req.params[1]);
     });
 
 
-    // general overview of all the hybrid objects - html respond
+    // general overview of all the hybrid objects - html response
     // ****************************************************************************************************************
     webServer.get('/object/*/html', function (req, res) {
       //  if(globalVariables.debug) console.log("get 5");
@@ -841,34 +975,34 @@ function objectWebServer() {
     // sends json object for a specific hybrid object. * is the object name
     // ****************************************************************************************************************
     webServer.get('/object/*/', function (req, res) {
-      //  if(globalVariables.debug) console.log("get 7");
+        //  debugConsole("get 7");
         res.json(objectExp[req.params[0]]);
     });
 
     webServer.get('/object/*/thisObject', function (req, res) {
-      //  if(globalVariables.debug) console.log("get 8");
+        //  debugConsole("get 8");
         res.json(objectExp[req.params[0]]);
     });
 
     // sends all json object values for a specific hybrid object. * is the object name
     // ****************************************************************************************************************
     webServer.get('/object/*/value', function (req, res) {
-     //   if(globalVariables.debug) console.log("get 9");
+        //   debugConsole("get 9");
         res.json(objectExp[req.params[0]].objectValues);
     });
 
     // sends a specific value for a specific hybrid object. * is the object name :id is the value name
     // ****************************************************************************************************************
     webServer.get('/object/*/value/:id', function (req, res) {
-      //  if(globalVariables.debug) console.log("get 10");
-        res.send({value: objectExp[req.params[0]].objectValues[req.params.id].value});
+        //  debugConsole("get 10");
+        res.send({ value: objectExp[req.params[0]].objectValues[req.params.id].value });
     });
 
     // sends a specific json object value for a specific hybrid object. * is the object name :id is the value name
     // ****************************************************************************************************************
 
     webServer.get('/object/*/value/full/:id', function (req, res) {
-      //  if(globalVariables.debug) console.log("get 11");
+        //  debugConsole("get 11");
         res.json(objectExp[req.params[0]].objectValues[req.params.id]);
     });
 
@@ -876,40 +1010,41 @@ function objectWebServer() {
     // frontend interface
     // ****************************************************************************************************************
 
+
     if (globalVariables.developer === true) {
 
         // sends the info page for the object :id
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder + 'info/:id', function (req, res) {
-           // if(globalVariables.debug) console.log("get 12");
-            res.send(HybridObjectsWebFrontend.uploadInfoText(req.params.id, objectLookup, objectExp, knownObjects, sockets));
+            // debugConsole("get 12");
+            res.send(HybridObjectsWebFrontend.uploadInfoText(req.params.id, objectLookup, objectExp, knownObjects, io, sockets));
         });
 
         // sends the content page for the object :id
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder + 'content/:id', function (req, res) {
-           // if(globalVariables.debug) console.log("get 13");
+            // debugConsole("get 13");
             res.send(HybridObjectsWebFrontend.uploadTargetContent(req.params.id, __dirname, objectInterfaceFolder));
         });
 
         // sends the target page for the object :id
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder + 'target/:id', function (req, res) {
-         //   if(globalVariables.debug) console.log("get 14");
+            //   debugConsole("get 14");
             res.send(HybridObjectsWebFrontend.uploadTargetText(req.params.id, objectLookup, objectExp, globalVariables.debug));
             // res.sendFile(__dirname + '/'+ "index2.html");
         });
 
         webServer.get(objectInterfaceFolder + 'target/*/*/', function (req, res) {
-          //  if(globalVariables.debug) console.log("get 15");
+            //  debugConsole("get 15");
             res.sendFile(__dirname + '/' + req.params[0] + '/' + req.params[1]);
         });
 
         // sends the object folder?? //todo what is this for?
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder, function (req, res) {
-           // if(globalVariables.debug) console.log("get 16");
-            res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup) );
+            // debugConsole("get 16");
+            res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup));
         });
 
         // ****************************************************************************************************************
@@ -917,7 +1052,7 @@ function objectWebServer() {
         // ****************************************************************************************************************
 
         webServer.post(objectInterfaceFolder + "contentDelete/:id", function (req, res) {
-           // if(globalVariables.debug) console.log("post 21");
+            // debugConsole("post 21");
             if (req.body.action === "delete") {
                 var folderDel = __dirname + '/objects/' + req.body.folder;
 
@@ -1411,18 +1546,25 @@ var thisPos = 0;
  * @desc Check for incoming MSG from other objects or the User. Make changes to the objectValues if changes occur.
  **/
 
-function socketServer() {
+function socketServer(params) {
+    events.EventEmitter.call(this)
+    osSocketServer=this;
     io.on('connection', function (socket) {
-
+       debugConsole("New ws connection");
+    	socket.objList=[]; // Initialize Object List intered by the socket
         socket.on('object', function (msg) {
+           debugConsole("socketServer incoming: " + msg);
             var msgContent = JSON.parse(msg);
+            var objSend;
+            if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
+            	socket.objList.push(msgContent.obj);
             if ((msgContent.obj in objectExp) && typeof msgContent.value !== "undefined") {
                 if (msgContent.pos in objectExp[msgContent.obj].objectValues) {
                     objectExp[msgContent.obj].objectValues[msgContent.pos].value = msgContent.value;
 
-                    var objSend  = objectExp[msgContent.obj].objectValues[msgContent.pos];
+                    objSend  = objectExp[msgContent.obj].objectValues[msgContent.pos];
                     objSend.value = msgContent.value;
-
+                    
                     if(internalModules.hasOwnProperty(objSend.type))
                     {
                         internalModules[objSend.type].send(objectExp,msgContent.obj, msgContent.pos, msgContent.value, msgContent.mode);
@@ -1433,7 +1575,7 @@ function socketServer() {
 
                     // internal.sender(objectExp, obj, pos, value);
                  //   serialSender(serialPort, objectExp, msgContent.obj, msgContent.pos, msgContent.value);
-                    objectEngine(msgContent.obj, msgContent.pos, objectExp, pluginModules);
+                    objectEngine(msgContent.obj, msgContent.pos, objectExp, dataPointModules);
 
                 } else {
                     for (var thisKey in objectExp[msgContent.obj].objectValues) {
@@ -1441,13 +1583,13 @@ function socketServer() {
                          var objSend  = objectExp[msgContent.obj].objectValues[msgContent.pos + msgContent.obj];
                             objSend.value = msgContent.value;
 
-                            if(internalModules.hasOwnProperty(objSend.type))
+                            if(hardwareInterfaceModules.hasOwnProperty(objSend.type))
                             {
-                                internalModules[objSend.type].send(objectExp,msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value, msgContent.mode);
+                                hardwareInterfaceModules[objSend.type].send(objectExp,msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value, msgContent.mode);
                             }
 
                             //serialSender(serialPort, objectExp, msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value);
-                            objectEngine(msgContent.obj, msgContent.pos + msgContent.obj, objectExp, pluginModules);
+                            objectEngine(msgContent.obj, msgContent.pos + msgContent.obj, objectExp, dataPointModules);
                         }
                     }
                 }
@@ -1455,9 +1597,18 @@ function socketServer() {
         });
 
         socket.on('/object/value', function (msg) {
+        	//loghttp.debug ("value object msg %s", msg);
             var msgContent = JSON.parse(msg);
-            if (msgContent.pos) {
+        	//loghttp.debug("  before socketlist=%s", socket.objList);
+            if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
+            	socket.objList.push(msgContent.obj);
+        	//loghttp.debug("  after socketlist=%s", socket.objList);
 
+            if (msgContent.pos) {
+                if (objectExp.hasOwnProperty(msgContent.obj)) {
+                	osSocketServer.notifySingleOHUpdate(socket, msgContent.obj, msgContent.pos);
+                }
+            	/*
                 var msgToSend = "";
                 if (objectExp.hasOwnProperty(msgContent.obj)) {
                     if (objectExp[msgContent.obj].objectValues.hasOwnProperty(msgContent.pos + msgContent.obj)) {
@@ -1470,7 +1621,7 @@ function socketServer() {
                         socket.emit('object', msgToSend);
                     }
                 }
-
+              */
             } else {
                 var valueArray = {};
 
@@ -1478,14 +1629,18 @@ function socketServer() {
                     valueArray[objectExp[msgContent.obj].objectValues[thiskkey].name] = objectExp[msgContent.obj].objectValues[thiskkey];
                 }
 
-                var msgToSend2 = JSON.stringify({obj: msgContent.obj, value: valueArray});
+                var msgToSend2 = JSON.stringify({ obj: msgContent.obj, value: valueArray });
                 socket.emit('object', msgToSend2);
             }
-           // if (globalVariables.debug) console.log("got it");
+            //debugConsole("got it");
         });
 
         socket.on('/object/value/full', function (msg) {
             var msgContent = JSON.parse(msg);
+           debugConsole("full object msg %s", msgContent);
+            if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
+            	socket.objList.push(msgContent.obj);
+
             var msgToSend = JSON.stringify({
                 obj: msgContent.obj,
                 pos: msgContent.pos,
@@ -1493,9 +1648,53 @@ function socketServer() {
             });
             socket.emit('object', msgToSend);
         });
+        socket.on('disconnect', function () {
+           debugConsole("WS disconnected %s", socket.objList);
+          //  OHSocketServer.emit("socketdisconnected", socket.objList);
+        });
+
     });
-    if (globalVariables.debug) console.log('socket.io started');
+    this.io = io;
+   debugConsole('socket.io started');
 }
+
+util.inherits(socketServer, events.EventEmitter);
+var __method = socketServer.prototype;
+
+/**
+ * notify change for one client
+ * @param socket
+ * @param obj
+ * @param pos
+ * @returns
+ */
+__method.notifySingleOHUpdate = function(socket, obj, pos) {
+	loghttp.debug("==> notifyOHUpdate receive (%s,%s)", obj, pos)
+	if (objectExp[obj].objectValues.hasOwnProperty(pos+obj)) {
+		var msgToSend = JSON.stringify({
+			obj: obj,
+			pos: pos,
+			value: objectExp[obj].objectValues[pos+obj].value
+		});
+	    socket.emit('object', msgToSend);
+	}
+};
+
+/**
+ * notify change for all client interrested by obj
+ * @param socket
+ * @param obj
+ * @param pos
+ * @returns
+ */
+__method.notifyAllOHUpdate = function(objKey, valueKey) {
+	for (var socnum of Object.keys(this.io.sockets.sockets)) {
+		var soc=this.io.sockets.sockets[socnum];
+		if (soc.objList!= undefined && soc.objList.indexOf(objKey)!==-1 ) {
+			this.notifySingleOHUpdate(soc, objKey, valueKey)
+		}
+	}
+};
 
 /**********************************************************************************************************************
  ******************************************** Engine ******************************************************************
@@ -1506,11 +1705,11 @@ function socketServer() {
  * All links that use the id will fire up the engine to process the link.
  **/
 
-// dependenses afterPluginProcessing
+// dependencies afterPluginProcessing
 
-function objectEngine(obj, pos, objectExp, pluginModules) {
-    // console.log("engine started");
-
+function objectEngine(obj, pos, objectExp, dataPointModules) {
+    // debugConsole("engine started");
+    var key;
     for (key in objectExp[obj].objectLinks) {
         if (objectExp[obj].objectLinks[key].locationInA === pos) {
             var endlessLoop = false;
@@ -1523,14 +1722,14 @@ function objectEngine(obj, pos, objectExp, pluginModules) {
                 // preparation for later when values can be from different types.
 
                 //var thisPlugin = objectExp[obj].objectValues[pos].plugin;
-               // var thisData = objectExp[obj].objectValues[pos].value;
+                // var thisData = objectExp[obj].objectValues[pos].value;
 
                 var thisData = objectExp[obj].objectValues[pos];
 
-                if ((thisData.plugin in pluginModules)) {
-                    pluginModules[thisData.plugin](obj, key, thisData.value, thisData.mode, function (obj, linkPos, processedValue,mode) {
-                        afterPluginProcessing(obj, linkPos, processedValue,mode);
-                       // console.log("from the enginehouse a bit later: " + mode);
+                if ((thisData.plugin in dataPointModules)) {
+                    dataPointModules[thisData.plugin](obj, key, thisData.value, thisData.mode, function (obj, linkPos, processedValue, mode) {
+                        afterPluginProcessing(obj, linkPos, processedValue, mode);
+                        // debugConsole("from the enginehouse a bit later: " + mode);
                     });
                 }
 
@@ -1551,30 +1750,30 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 
     if (!(link.ObjectB in objectExp)) {
         // check if object is in the same object
-        socketSender(obj, linkPos, processedValue, mode)
+        socketSender(obj, linkPos, processedValue, mode);
     }
     else {
 
-        var objSend  =  objectExp[link.ObjectB].objectValues[link.locationInB];
+        var objSend = objectExp[link.ObjectB].objectValues[link.locationInB];
         objSend.value = processedValue;
 
-       // console.log("from the afterrun: " + mode);
+        // debugConsole("from the afterrun: " + mode);
 
 
-        if(internalModules.hasOwnProperty(objSend.type))
-        {
-            internalModules[objSend.type].send(objectExp,link.ObjectB, link.locationInB,processedValue, mode);
+        if (hardwareInterfaceModules.hasOwnProperty(objSend.type)) {
+            hardwareInterfaceModules[objSend.type].send(objectExp,link.ObjectB, link.locationInB,processedValue, mode, objSend.type);
+            //hardwareInterfaceModules[objSend.type].send(objectExp, link.ObjectB, link.locationInB, processedValue, mode);
         }
 
 
+        objectEngine(link.ObjectB, link.locationInB, objectExp, dataPointModules);
 
         objectEngine(link.ObjectB, link.locationInB, objectExp, pluginModules);
 
+        // debugConsole("from the second engine run: " + mode);
 
-       // console.log("from the second engine run: " + mode);
 
-
-       // serialSender(serialPort, objectExp, link.ObjectB, link.locationInB, processedValue);
+        // serialSender(serialPort, objectExp, link.ObjectB, link.locationInB, processedValue);
     }
 
 }
@@ -1595,7 +1794,7 @@ function socketSender(obj, linkPos, processedValue, mode) {
             }
         }
         catch (e) {
-            if (globalVariables.debug)  console.log("can not emit from link ID:" + linkPos + "and object: " + obj);
+           debugConsole("can not emit from link ID:" + linkPos + "and object: " + obj);
         }
     }
 }
@@ -1608,13 +1807,15 @@ function socketSender(obj, linkPos, processedValue, mode) {
 
 /**
  * @desc  Watches the connections to all objects that have stored links within the object.
- * If an object is disconnected, the object tries to reconnect on a regular bases.
+ * If an object is disconnected, the object tries to reconnect on a regular basis.
  **/
 
 function socketUpdater() {
-    // console.log(knownObjects);
+    // debugConsole(knownObjects);
     // delete unconnected connections
-    for (sockKey in  socketArray) {
+    var sockKey, objKey, posKey;
+
+    for (sockKey in socketArray) {
         var socketIsUsed = false;
 
         // check if the link is used somewhere. if it is not used delete it.
@@ -1639,9 +1840,9 @@ function socketUpdater() {
 
 
                 var ip = knownObjects[link.ObjectB];
-//console.log("this ip: "+ip);
+                //debugConsole("this ip: "+ip);
                 if (!(ip in socketArray)) {
-                    // console.log("shoudl not show up -----------");
+                    // debugConsole("shoudl not show up -----------");
                     socketArray[ip] = new ObjectSockets(socketPort, ip);
                 }
             }
@@ -1650,37 +1851,36 @@ function socketUpdater() {
 
     socketIndicator();
 
+    var sockKey3, objKey2;
     if (sockets.socketsOld !== sockets.sockets || sockets.notConnectedOld !== sockets.notConnected || sockets.connectedOld !== sockets.connected) {
-        for (sockKey3 in  socketArray) {
+        for (sockKey3 in socketArray) {
             if (!socketArray[sockKey3].io.connected) {
                 for (objKey2 in knownObjects) {
                     if (knownObjects[objKey2] === sockKey3) {
-                        if (globalVariables.debug)  console.log("Looking for: " + objKey2 + " with the ip: " + sockKey3);
+                       debugConsole("Looking for: " + objKey2 + " with the ip: " + sockKey3);
                     }
                 }
             }
         }
 
-        if (globalVariables.debug)  console.log(sockets.sockets + " connections; " + sockets.connected + " connected and " + sockets.notConnected + " not connected");
+       debugConsole(sockets.sockets + " connections; " + sockets.connected + " connected and " + sockets.notConnected + " not connected");
 
     }
     sockets.socketsOld = sockets.sockets;
     sockets.connectedOld = sockets.connected;
     sockets.notConnectedOld = sockets.notConnected;
-
-
 }
 
 
-// updates the global saved sockets data
-
+/**
+ * Updates the global saved sockets data
+ */
 function socketIndicator() {
     sockets.sockets = 0;
     sockets.connected = 0;
     sockets.notConnected = 0;
 
-
-    for (sockKey2 in  socketArray) {
+    for (var sockKey2 in socketArray) {
         if (socketArray[sockKey2].io.connected) {
             sockets.connected++;
         } else {
@@ -1688,8 +1888,6 @@ function socketIndicator() {
         }
         sockets.sockets++;
     }
-
-
 }
 
 /**
@@ -1700,10 +1898,12 @@ function socketIndicator() {
  **/
 
 function socketUpdaterInterval() {
-
-
     setInterval(function () {
-
         socketUpdater();
     }, socketUpdateInterval);
+}
+
+
+function debugConsole(msg){
+    if(globalVariables.debug) console.log(msg);
 }

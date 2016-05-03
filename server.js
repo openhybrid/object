@@ -86,6 +86,7 @@ const socketPort = 8080;
 const beatPort = 52316; // this is the port for UDP broadcasting so that the objects find each other.
 const beatInterval = 3000; // how often is the heard beat send
 const socketUpdateInterval = 2000; // how often the system checks if the socket connections are still up and running.
+const version = "0.3.2";           // the version of this server
 
 //origins
 const objectPath = __dirname + "/objects"; // definition where all the objects are stored.
@@ -115,6 +116,7 @@ var socket = require('socket.io-client');
 var cors = require('cors');
 // Multiple file upload library
 var formidable = require('formidable');
+var cheerio = require('cheerio');
 //var xml2js = require('xml2js');
 
 // additional required code
@@ -135,8 +137,9 @@ HybridObjectsWebFrontend.debug = globalVariables.debug;
 function ObjectExp() {
     this.objectId = null;
     this.ip = ip.address();
-    this.version = "0.3.1";
+    this.version = version;
     this.rotation = 0;
+    this.tcs = null;
     this.x = 0;
     this.y = 0;
     this.scale = 1;
@@ -419,11 +422,22 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
 
     var HOST = '255.255.255.255';
 
+    if (globalVariables.debug) console.log("creating beat for object: " + thisId);
+    objectExp[thisId].version = version;
+    var thisVersionNumber  = parseInt(objectExp[thisId].version.replace(/\./g, ""));
+
+    if(typeof objectExp[thisId].tcs === "undefined"){
+        objectExp[thisId].tcs = 0;
+    }
+
+   // ObjectExp
+    if (globalVariables.debug) console.log("with version number: " + thisVersionNumber);
+
     // json string to be send
-    var message = new Buffer(JSON.stringify({id: thisId, ip: thisIp}));
+    var message = new Buffer(JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
 
     if (globalVariables.debug) console.log("UDP broadcasting on port: " + PORT);
-    if (globalVariables.debug) console.log("Sending beats... Content: " + JSON.stringify({id: thisId, ip: thisIp}));
+    if (globalVariables.debug) console.log("Sending beats... Content: " + JSON.stringify({id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
 
     // creating the datagram
     var client = dgram.createSocket('udp4');
@@ -443,7 +457,7 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
             if(thisId in objectExp && thisId.length>12){
               //  if (globalVariables.debug) console.log("Sending beats... Content: " + JSON.stringify({id: thisId, ip: thisIp}));
 
-
+                var message = new Buffer(JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
 
 // this is an uglly trick to sync each object with being a developer object
                 if(globalVariables.developer){
@@ -560,6 +574,16 @@ function objectBeatServer() {
  * additional provides active modification for objectDefinition.
  **/
 
+function existsSync(filename) {
+    try {
+        fs.accessSync(filename);
+        return true;
+    } catch(ex) {
+        return false;
+    }
+}
+
+
 function objectWebServer() {
 
     // define the body parser
@@ -568,7 +592,46 @@ function objectWebServer() {
     }));
     webServer.use(bodyParser.json());
     // devine a couple of static directory routs
-    webServer.use("/obj", express.static(__dirname + '/objects/'));
+
+
+    webServer.use('/objectDefaultFiles', express.static(__dirname + '/libraries/objectDefaultFiles/'));
+
+    webServer.use("/obj",function(req,res,next){
+
+        var urlArray = req.originalUrl.split("/");
+
+        console.log(urlArray);
+      if((req.method === "GET" && urlArray[2] !=="dataPointInterfaces")  &&  (req.url.slice(-1) === "/" || urlArray[3] ==="index.html"  || urlArray[3] ==="index.htm")) {
+
+
+
+          var fileName = __dirname + "/objects" + req.url;
+
+          if(urlArray[3] !=="index.html"  && urlArray[3] !=="index.htm") {
+
+              if (existsSync(fileName + "index.html")) {
+                  fileName = fileName + "index.html";
+              } else {
+                  fileName = fileName + "index.htm";
+              }
+          }
+                      var html = fs.readFileSync(fileName, 'utf8');
+                      var loadedHtml = cheerio.load(html);
+                      var scriptNode = '<script src="../../objectDefaultFiles/object.js"></script>';
+                      loadedHtml('head').prepend(scriptNode);
+                      res.send(loadedHtml.html());
+
+      }
+       else
+        next();
+    }, express.static(__dirname + '/objects/'));
+
+    //webServer.get("/obj/objectDefaultFiles/*", express.static(__dirname + '/libraries/objectDefaultFiles/' + req.params[0]));
+
+    //   webServer.use("/obj", express.static(__dirname + '/objects/'));
+
+  //  webServer.use("/objectDefaultFiles", express.static(__dirname + '/libraries/objectDefaultFiles/'));
+
     if (globalVariables.developer === true) {
         webServer.use("/target/js", express.static(__dirname + '/libraries/js/'));
         webServer.use("/target", express.static(__dirname + '/libraries/js/'));
@@ -616,29 +679,40 @@ function objectWebServer() {
         var thisObject = req.params[0];
         var thisValue = req.params[1];
 
+        var tempObject = {};
+        if (thisObject === thisValue) {
+            tempObject = objectExp[thisObject];
+        } else {
+            tempObject= objectExp[thisObject].objectValues[thisValue];
+        }
+
+
+
+
         // check that the numbers are valid numbers..
         if (typeof req.body.x === "number" && typeof req.body.y === "number" && typeof req.body.scale === "number") {
 
-            // if the object is equal the link id, the item is actually the object it self.
-            if (thisObject === thisValue) {
-                objectExp[thisObject].x = req.body.x;
-                objectExp[thisObject].y = req.body.y;
-                objectExp[thisObject].scale = req.body.scale;
-            }
-            else {
-                objectExp[thisObject].objectValues[thisValue].x = req.body.x;
-                objectExp[thisObject].objectValues[thisValue].y = req.body.y;
-                objectExp[thisObject].objectValues[thisValue].scale = req.body.scale;
-            }
+            // if the object is equal the datapoint id, the item is actually the object it self.
+
+            tempObject.x = req.body.x;
+            tempObject.y = req.body.y;
+            tempObject.scale = req.body.scale;
             // console.log(req.body);
             // ask the devices to reload the objects
-            actionSender(JSON.stringify({reloadObject: {id: thisObject, ip: objectExp[thisObject].ip}}));
-            updateStatus = "added";
-
-            // write the object state to the permanent storage.
-            HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
         }
-        res.send(updateStatus);
+
+
+        if(typeof req.body.matrix === "object" ){
+
+            tempObject.matrix = req.body.matrix;
+        }
+
+        if ((typeof req.body.x === "number" && typeof req.body.y === "number" && typeof req.body.scale === "number") || (typeof req.body.matrix === "object" )) {
+            HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
+
+            actionSender(JSON.stringify({ reloadObject: { id: thisObject, ip: objectExp[thisObject].ip } }));
+            updateStatus = "added object";
+        }
     });
 
     // delete a link. *1 is the object *2 is the link id
@@ -1118,7 +1192,7 @@ function objectWebServer() {
                     if (req.headers.type === "targetUpload") {
                         if (filename.substr(filename.lastIndexOf('.') + 1).toLowerCase() === "jpg") {
                             if (!fs.existsSync(folderD + "/target/")) {
-                                fs.mkdirSync(folderD + "/target/", 0766, function (err) {
+                                fs.mkdirSync(folderD + "/target/", "0766", function (err) {
                                     if (err) {
                                         console.log(err);
                                         response.send("ERROR! Can't make the directory! \n");    // echo the result back
@@ -1150,6 +1224,23 @@ function objectWebServer() {
                             }
 
 
+                           var fileList = [folderD + "/target/target.jpg", folderD + "/target/target.xml", folderD + "/target/target.dat"];
+
+                            var thisObjectId = HybridObjectsUtilities.readObject(objectLookup, req.params.id);
+
+                            if (typeof  objectExp[thisObjectId] !== "undefined") {
+                                var thisObject = objectExp[thisObjectId];
+
+
+                                thisObject.tcs = HybridObjectsUtilities.genereateChecksums(objectExp, fileList);
+
+                                HybridObjectsUtilities.writeObjectToFile(objectExp, thisObjectId, __dirname);
+
+                                objectBeatSender(beatPort, thisObjectId, objectExp[thisObjectId].ip, true);
+
+
+                            }
+
                             res.status(200);
                             res.send("done");
                             //   fs.unlinkSync(folderD + "/" + filename);
@@ -1165,7 +1256,7 @@ function objectWebServer() {
                                 var unzipper = new DecompressZip(folderD + "/" + filename);
 
                                 unzipper.on('error', function (err) {
-                                    if (globalVariables.debug)   console.log('Caught an error');
+                                    if (globalVariables.debug)   console.log('Caught an error: '+err);
                                 });
 
                                 unzipper.on('extract', function (log) {
@@ -1195,6 +1286,26 @@ function objectWebServer() {
                                         internalModules[keyint].init();
                                     }
                                     console.log("have initialized the moduels");
+
+
+                                    if (globalVariables.debug) console.log("have initialized the modules");
+
+                                        var fileList = [folderD + "/target/target.jpg", folderD + "/target/target.xml", folderD + "/target/target.dat"];
+
+                                        var thisObjectId = HybridObjectsUtilities.readObject(objectLookup, req.params.id);
+
+                                        if (typeof  objectExp[thisObjectId] !== "undefined") {
+                                            var thisObject = objectExp[thisObjectId];
+
+
+                                            thisObject.tcs = HybridObjectsUtilities.genereateChecksums(objectExp, fileList);
+
+                                            HybridObjectsUtilities.writeObjectToFile(objectExp, thisObjectId, __dirname);
+
+                                            objectBeatSender(beatPort, thisObjectId, objectExp[thisObjectId].ip, true);
+
+                                        }
+                                    
                                     res.status(200);
                                     res.send("done");
                                 });

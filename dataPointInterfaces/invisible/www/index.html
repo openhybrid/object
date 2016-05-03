@@ -1,32 +1,80 @@
 <!doctype html>
 <html>
 <head>
-<meta charset="UTF-8">
-<title>IO</title>
-<style>
-body, html{
-height: 100%; margin:0; padding:0;
-	display: none;
-}
-img{
-	display: block;
-}
-</style>
-	<script>		
-		// function for resizing the windows.
-var objectExp = {};
+    <meta name="viewport" content="width=device-width, initial-scale=0.2, maximum-scale=0.2, user-scalable=no"/>
+    <meta charset="UTF-8">
+    <title>IO</title>
+    <style>
+        body, html {
+            width: 47px;
+            height: 47px;
+            margin: 0;
+            padding: 0;
+        }
 
-window.addEventListener("message", function(e){
-    parent.postMessage(JSON.stringify(
-            {"pos":JSON.parse(e.data).pos,"obj":JSON.parse(e.data).obj,"height":document.body.scrollHeight,"width":document.body.scrollWidth}
-        )
-        // this needs to contain the final interface source
-        ,"*");
-    objectExp.pos = JSON.parse(e.data).pos;
-    objectExp.obj = JSON.parse(e.data).obj;
-
-}, false);	
-	</script>
+        img {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-</body></html>
+<div style="width:47px; height:47px; overflow: hidden">
+    <canvas id="canvasX" width="200px" height="200px"
+            style="border:0px; z-index: -1; transform-origin: left top; transform: scale(0.235,0.235);"></canvas>
+</div>
+<script>
+    var ctx = document.getElementById("canvasX").getContext("2d");
+    var objectExp = {};
+
+    drawCircle(ctx, [100, 100], 92, '#00ffff');
+
+    function drawCircle(ctx, point, bSize, color) {
+        ctx.clearRect(0, 0, 47, 47);
+        ctx.beginPath();
+        ctx.arc(point[0], point[1], bSize, 0, 2 * Math.PI, false);
+        ctx.fillStyle = '#000000';
+        ctx.fill();
+        ctx.lineWidth = bSize / 6.5;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+    }
+
+    window.addEventListener("message", function (e) {
+
+        var msg = JSON.parse(e.data);
+
+        if (typeof msg.pos !== "undefined" && typeof msg.obj !== "undefined") {
+
+            parent.postMessage(JSON.stringify(
+                    {
+                        "pos": msg.pos,
+                        "obj": msg.obj,
+                        "height": document.body.scrollHeight,
+                        "width": document.body.scrollWidth,
+                        "sendMatrix": false,
+                        "fullScreen": false
+                    }
+                    )
+                    // this needs to contain the final interface source
+                    , "*");
+
+            objectExp.pos = msg.pos;
+            objectExp.obj = msg.obj;
+        }
+
+        if (typeof msg.uiActionFeedback !== "undefined") {
+
+            if (msg.uiActionFeedback === 0)
+                drawCircle(ctx, [100, 100], 92, '#ff019f');
+            if (msg.uiActionFeedback === 1)
+                drawCircle(ctx, [100, 100], 92, '#00ffff');
+            if (msg.uiActionFeedback === 2)
+                drawCircle(ctx, [100, 100], 92, '#3af431');
+            if (msg.uiActionFeedback === 3)
+                drawCircle(ctx, [100, 100], 92, '#f9f90a');
+
+        }
+    }, false);
+</script>
+</body>
+</html>

@@ -157,7 +157,7 @@ exports.printFolder = function (objectExp, dirnameO, debug, objectInterfaceFolde
                     // " <div>" +
                 ' <button  class="btn btn-default" onclick="window.location.href=\'/object/' + tempFiles[i] + '/zipBackup/\'"' + tempFiles[i] + '\'" > ' +
 
-                'Backup' +
+                'Download' +
                 '</button> ' +
                 " <form  style='display: inline; background-color: #bde9ba;' id='delete" + i + "' action='" + objectInterfaceFolder + "' method='post' style='margin: 0px; padding: 0px'>" +
                 "<input type='hidden' name='folder' value='" + tempFiles[i] + "'>" +
@@ -188,7 +188,7 @@ exports.printFolder = function (objectExp, dirnameO, debug, objectInterfaceFolde
         '        <span class="btn btn-default fileinput-button" id="targetButton">' +
         '            <span>' +
 
-        'Upload Backup' +
+        'Upload Object' +
 
         '</span>' +
         '        </span>' +

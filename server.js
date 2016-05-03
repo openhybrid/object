@@ -767,8 +767,16 @@ function objectWebServer() {
   //  webServer.use("/objectDefaultFiles", express.static(__dirname + '/libraries/objectDefaultFiles/'));
 
     if (globalVariables.developer === true) {
-        webServer.use("/public", express.static(__dirname + '/libraries/webInterface/'));
+        webServer.use("/libraries", express.static(__dirname + '/libraries/webInterface/'));
         webServer.use(express.static(__dirname + '/libraries/webInterface/'));
+
+        webServer.use("/target/js", express.static(__dirname + '/libraries/webInterface/js/'));
+        webServer.use("/target", express.static(__dirname + '/libraries/webInterface/js/'));
+        webServer.use("/content/js", express.static(__dirname + '/libraries/webInterface/js/'));
+        webServer.use("/content/fonts", express.static(__dirname + '/libraries/webInterface/fonts/'));
+        webServer.use("/js", express.static(__dirname + '/libraries/webInterface/js/'));
+        webServer.use("/info/js", express.static(__dirname + '/libraries/webInterface/js/'));
+        
     }
 
     // use the cors cross origin REST model
@@ -1015,6 +1023,11 @@ function objectWebServer() {
         webServer.get(objectInterfaceFolder + 'info/:id', function (req, res) {
             // debugConsole("get 12");
             res.send(HybridObjectsWebFrontend.uploadInfoText(req.params.id, objectLookup, objectExp, knownObjects, io, sockets));
+        });
+
+        webServer.get(objectInterfaceFolder + 'infoContent/:id', function (req, res) {
+            // debugConsole("get 12");
+            res.send(HybridObjectsWebFrontend.uploadInfoContent(req.params.id, objectLookup, objectExp, knownObjects, io, sockets));
         });
 
         // sends the content page for the object :id

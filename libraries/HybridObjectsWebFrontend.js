@@ -268,9 +268,6 @@ exports.printFolder = function (objectExp, dirnameO, debug, objectInterfaceFolde
 
 }
 
-
-
-
 exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, sockets) {
     var objectName = HybridObjectsUtilities.readObject(objectLookup, parm); //parm + thisMacAddress;
 
@@ -292,7 +289,7 @@ exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, 
     }
     var text = '<html>\n' +
         '<head>\n' +
-        '<head><meta http-equiv="refresh" content="0.3">\n' +
+        '<head>'+
         '    <link rel="stylesheet" href="js/bootstrap.min.css">\n' +
         '    <link rel="stylesheet" href="js/bootstrap-theme.min.css">\n' +
         '</head>\n' +
@@ -303,6 +300,67 @@ exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, 
         '<h3 class="panel-title"><font size="6">Hybrid Object - ' + parm + ' - Info&nbsp;&nbsp;&nbsp;&nbsp;<a href="../" style=" color: #ffffff; text-decoration: underline;">back</a></font></h3>\n' +
         '      </div>\n' +
         '</div>\n' +
+'<div id="changeContent"></div>'+
+
+'<script>' +
+
+        '/*var myVar = setInterval(loadInfoContent, 100);*/' +
+        'loadInfoContent();'+
+        'function loadInfoContent () {console.log("newtick");'+
+
+   'var con = document.getElementById("changeContent")'+
+    '    ,   xhr = new XMLHttpRequest();'+
+
+    'xhr.onreadystatechange = function (e) {'+
+     '   if (xhr.readyState == 4 && xhr.status == 200) {'+
+      '      con.innerHTML = xhr.responseText;' +
+        'setTimeout(loadInfoContent, 10);'+
+
+       ' }'+
+    '}; ' +
+        'xhr.open("GET", "/infoContent/'+parm+'", true);'+
+ '   xhr.setRequestHeader("Content-type", "text/html");'+
+  '  xhr.send();'+
+'}'+
+
+        '</script>'+
+        '</div>\n' +
+        '</body>\n' +
+        '</html>\n' +
+        '';
+
+
+    return text;
+
+
+    // var tempFolderName = tempFiles[i] + macAddress.replace(/:/gi, '');
+
+    // fill objectExp with objects named by the folders in objects
+    // objectExp[tempFolderName] = new ObjectExp();
+    // objectExp[tempFolderName].folder = tempFiles[i];
+}
+
+
+exports.uploadInfoContent = function (parm, objectLookup, objectExp, knownObjects, sockets) {
+    var objectName = HybridObjectsUtilities.readObject(objectLookup, parm); //parm + thisMacAddress;
+
+
+    var uploadInfoTexttempArray = objectExp[objectName].objectLinks;
+    var uploadInfoTexttempArrayValue = objectExp[objectName].objectValues;
+    var infoCount = 0;
+
+
+    var ArduinoINstance = 0;
+
+    // objectExp[objectName]
+
+    for (subKey in objectExp) {
+        if (subKey === objectName) {
+            break;
+        }
+        ArduinoINstance++;
+    }
+    var text =
         '<div id="actions" class="row">\n' +
         '    <div class="col-xs-6">\n' +
         '       <table class="table table-striped">\n' +
@@ -338,10 +396,10 @@ exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, 
         '        </tr>\n' +
         '        </thead>\n' +
         '        <tbody>\n' +
-            /*     '<tr>\n'+
-             '            <th scope="row">Arduino Instance</th>\n'+
-             '            <td>'+ArduinoINstance+'</td>\n'+
-             '        </tr>\n'+*/
+        /*     '<tr>\n'+
+         '            <th scope="row">Arduino Instance</th>\n'+
+         '            <td>'+ArduinoINstance+'</td>\n'+
+         '        </tr>\n'+*/
         '        <tr>\n' +
         '            <th scope="row">ip</th>\n' +
         '            <td>' + objectExp[objectName].ip + '</td>\n' +
@@ -425,9 +483,6 @@ exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, 
         '    </table>\n' +
         '</div>\n' +
         '</div>\n' +
-        '</div>\n' +
-        '</body>\n' +
-        '</html>\n' +
         '';
 
 

@@ -430,9 +430,7 @@ exports.uploadInfoContent = function (parm, objectLookup, objectExp, knownObject
         '        </tr>\n' +
         '        </thead>\n' +
         '        <tbody>\n';
-
-
-    console.log(socketsInfo.sockets);
+    
 
     infoCount = 0;
     for (subKey in knownObjects) {

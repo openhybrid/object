@@ -338,6 +338,7 @@ debugConsole("Loading Hardware interfaces");
 // set all the initial states for the Hardware Interfaces in order to run with the Server.
 HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, __dirname, dataPointModules, function (objKey2, valueKey, objectExp, dataPointModules) {
     objectEngine(objKey2, valueKey, objectExp, dataPointModules);
+    socketServer.notifyAllOHUpdate(objKey2, valueKey, objectExp);
 }, ObjectValue);
 debugConsole("Done");
 
@@ -474,6 +475,8 @@ function loadHybridObjects() {
  * @desc starting the system
  **/
 
+var socketServer;
+
 function startSystem() {
 
     // generating a udp heartbeat signal for every object that is hosted in this device
@@ -489,8 +492,17 @@ function startSystem() {
     objectWebServer();
 
     // receives all socket connections and processes the data
+    OHSocketServerHelper();
 
-    socketServer();
+    socketServer = new OHSocketServer();
+
+
+
+    socketServer.on("socketdisconnected", function(objList) {
+        console.log("TODO Cleaning things for %s", objList);
+    });
+
+    // socketServer();
     // receives all serial calls and processes the data
 
 
@@ -776,7 +788,7 @@ function objectWebServer() {
         webServer.use("/content/fonts", express.static(__dirname + '/libraries/webInterface/fonts/'));
         webServer.use("/js", express.static(__dirname + '/libraries/webInterface/js/'));
         webServer.use("/info/js", express.static(__dirname + '/libraries/webInterface/js/'));
-        
+
     }
 
     // use the cors cross origin REST model
@@ -822,7 +834,7 @@ function objectWebServer() {
         } else {
             tempObject= objectExp[thisObject].objectValues[thisValue];
         }
-        
+
         // check that the numbers are valid numbers..
         if (typeof req.body.x === "number" && typeof req.body.y === "number" && typeof req.body.scale === "number") {
 
@@ -929,50 +941,62 @@ function objectWebServer() {
     // general overview of all the hybrid objects - html response
     // ****************************************************************************************************************
     webServer.get('/object/*/html', function (req, res) {
-      //  if(globalVariables.debug) console.log("get 5");
-        var msg = "<html><head><meta http-equiv='refresh' content='3.3' /><title>" + req.params[0] + "</title></head><body>";
-        msg += "<table border='0'  cellpadding='10'><tr> <td  align='left' valign='top'>";
-        msg += "Values for " + req.params[0] + ":<br><table border='1'><tr> <td>ID</td><td>Value</td></tr>";
-        var tempArray = objectExp[req.params[0]].objectValues;
-        for (subKey in tempArray) {
-            msg += "<tr> <td>" + subKey + "</td><td>" + tempArray[subKey].value + "</td></tr>";
+        var msg = [];
+        var hoVals, hoLinks, subKey;
+        var objectName = req.params[0];
+        var hybridObject = objectExp[objectName];
+
+        msg.push("<html><head><meta http-equiv='refresh' content='3.3' /><title>", objectName, "</title></head>\n<body>\n");
+        msg.push("<table border='0' cellpadding='10'>\n<tr>\n<td align='left' valign='top'>\n");
+        msg.push("Values for ", objectName, ":<br>\n\n<table border='1'>\n<tr><td>ID</td><td>Value</td></tr>\n");
+
+        if (!_.isUndefined(hybridObject)) {
+            hoVals = hybridObject.objectValues;
+            for (subKey in hoVals) {
+                msg.push("<tr><td>", subKey, "</td><td>", hoVals[subKey].value, "</td></tr>\n");
+            }
         }
-        msg += "</table></td><td  align='left' valign='top'>";
+        msg.push("</table>\n</td>\n<td align='left' valign='top'>\n\n");
 
-        msg += "Links:<br><table border='1'><tr> <td>ID</td><td>ObjectA</td><td>locationInA</td><td>ObjectB</td><td>locationInB</td></tr>";
-        var tempArray = objectExp[req.params[0]].objectLinks;
-        for (subKey in tempArray) {
-            msg += "<tr> <td>" + subKey + "</td><td>" + tempArray[subKey].ObjectA + "</td><td>" + tempArray[subKey].locationInA + "</td><td>" + tempArray[subKey].ObjectB + "</td><td>" + tempArray[subKey].locationInB + "</td></tr>";
+        msg.push("Links:<br>\n\n<table border='1'>\n<tr><td>ID</td><td>ObjectA</td><td>locationInA</td><td>ObjectB</td><td>locationInB</td></tr>\n");
+        
+        if (!_.isUndefined(hybridObject)) {
+            hoLinks = hybridObject.objectLinks;
+            for (subKey in hoLinks) {
+                msg.push("  <tr><td>", subKey, "</td><td>", hoLinks[subKey].ObjectA, "</td><td>", hoLinks[subKey].locationInA, "</td>");
+                msg.push("<td>", hoLinks[subKey].ObjectB, "</td><td>", hoLinks[subKey].locationInB, "</td></tr>\n");
+            }
         }
-        msg += "</table></td></tr></table>";
 
-        msg += "<table border='0'  cellpadding='10'><tr> <td  align='left' valign='top'>";
-        msg += "Interface:<br><table border='1'>";
-        tempArray = objectExp[req.params[0]];
-        for (subKey in tempArray) {
-            msg += "<tr> <td>" + subKey + "</td><td>" + tempArray[subKey] + "</td></tr>";
+        msg.push("</table>\n</td></tr>\n</table>\n");
+
+        msg.push("<table border='0' cellpadding='10'>\n<tr><td align='left' valign='top'>\n");
+        msg.push("Interface:<br>\n\n<table border='1'>\n");
+        
+        for (subKey in hybridObject) {
+            msg.push("  <tr><td>", subKey, "</td><td>", hybridObject[subKey], "</td></tr>\n");
         }
-        msg += "</table></td><td  align='left' valign='top'>";
+        msg.push("</table>\n</td>\n<td align='left' valign='top'>");
 
 
-        msg += "Known Objects:<br><table border='1'>";
+        msg.push("Known Objects:<br>\n\n<table border='1'>\n");
         for (subKey in knownObjects) {
-            msg += "<tr> <td>" + subKey + "</td><td>" + knownObjects[subKey] + "</td></tr>";
+            msg.push("  <tr><td>", subKey, "</td><td>", knownObjects[subKey], "</td></tr>\n");
         }
-        msg += "</table></td><td  align='left' valign='top'>";
+        msg.push("</table>\n</td><td align='left' valign='top'>");
 
-        socketIndicator()
+        socketIndicator();
 
-        msg += "Socket Activity:<br><table border='1'>";
+        msg.push("Socket Activity:<br>\n<table border='1'>\n");
         for (subKey in sockets) {
             if (subKey !== "socketsOld" && subKey !== "connectedOld" && subKey !== "notConnectedOld")
-                msg += "<tr> <td>" + subKey + "</td><td>" + sockets[subKey] + "</td></tr>";
+                msg.push("  <tr><td>", subKey, "</td><td>", sockets[subKey], "</td></tr>\n");
         }
 
-        msg += "</table></td></tr></table>";
-        msg += "</body></html>";
+        msg.push("</table>\n</td></tr>\n</table>\n");
+        msg.push("</body></html>");
 
-        res.send(msg);
+        res.send(msg.join(""));
 
 
     });
@@ -1551,14 +1575,14 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
 
 //todo this function needs to be checked very intense
 
-function socketServer(params) {
-    events.EventEmitter.call(this)
-    socketServer=this;
+function OHSocketServer(params) {
+    events.EventEmitter.call(this);
+    osSocketServer=this;
     io.on('connection', function (socket) {
        debugConsole("New ws connection");
     	socket.objList=[]; // Initialize Object List intered by the socket
         socket.on('object', function (msg) {
-           debugConsole("socketServer incoming: " + msg);
+          debugConsole("OHSocketServer incoming: " + msg);
             var msgContent = JSON.parse(msg);
             var objSend;
             if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
@@ -1569,11 +1593,11 @@ function socketServer(params) {
 
                     objSend  = objectExp[msgContent.obj].objectValues[msgContent.pos];
                     objSend.value = msgContent.value;
-                    
+
                     if (hardwareInterfaceModules.hasOwnProperty(objSend.type)) {
                         hardwareInterfaceModules[objSend.type].send(objectExp[msgContent.obj].name, objectExp[msgContent.obj].objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type);
                     }
-                    
+
                     objectEngine(msgContent.obj, msgContent.pos, objectExp, dataPointModules);
 
                 } else {
@@ -1597,7 +1621,7 @@ function socketServer(params) {
 
         socket.on('/object/value', function (msg) {
         	//loghttp.debug ("value object msg %s", msg);
-            var msgContent = JSON.parse(msg);
+            var msgContent = JSON.parse(msg);            
         	//loghttp.debug("  before socketlist=%s", socket.objList);
             if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
             	socket.objList.push(msgContent.obj);
@@ -1605,7 +1629,7 @@ function socketServer(params) {
 
             if (msgContent.pos) {
                 if (objectExp.hasOwnProperty(msgContent.obj)) {
-                	socketServer.notifySingleOHUpdate(socket, msgContent.obj, msgContent.pos);
+                	osSocketServer.notifySingleOHUpdate(socket, msgContent.obj, msgContent.pos);
                 }
             	/*
                 var msgToSend = "";
@@ -1619,8 +1643,10 @@ function socketServer(params) {
                         });
                         socket.emit('object', msgToSend);
                     }
-                }
-              */
+                } else
+                	{                 	loghttp.debug("Send NOthing...")}
+                */
+
             } else {
                 var valueArray = {};
 
@@ -1628,7 +1654,7 @@ function socketServer(params) {
                     valueArray[objectExp[msgContent.obj].objectValues[thiskkey].name] = objectExp[msgContent.obj].objectValues[thiskkey];
                 }
 
-                var msgToSend2 = JSON.stringify({ obj: msgContent.obj, value: valueArray });
+                var msgToSend2 = JSON.stringify({obj: msgContent.obj, value: valueArray});
                 socket.emit('object', msgToSend2);
             }
             //debugConsole("got it");
@@ -1649,7 +1675,7 @@ function socketServer(params) {
         });
         socket.on('disconnect', function () {
            debugConsole("WS disconnected %s", socket.objList);
-          //  socketServer.emit("socketdisconnected", socket.objList);
+            osSocketServer.emit("socketdisconnected", socket.objList);
         });
 
     });
@@ -1657,43 +1683,47 @@ function socketServer(params) {
    debugConsole('socket.io started');
 }
 
-util.inherits(socketServer, events.EventEmitter);
-var __method = socketServer.prototype;
+function OHSocketServerHelper() {
 
-/**
- * notify change for one client
- * @param socket
- * @param obj
- * @param pos
- * @returns
- */
-__method.notifySingleOHUpdate = function(socket, obj, pos) {
-	loghttp.debug("==> notifyOHUpdate receive (%s,%s)", obj, pos)
-	if (objectExp[obj].objectValues.hasOwnProperty(pos+obj)) {
-		var msgToSend = JSON.stringify({
-			obj: obj,
-			pos: pos,
-			value: objectExp[obj].objectValues[pos+obj].value
-		});
-	    socket.emit('object', msgToSend);
-	}
-};
+    util.inherits(OHSocketServer, events.EventEmitter);
+    var __method = OHSocketServer.prototype;
 
-/**
- * notify change for all client interrested by obj
- * @param socket
- * @param obj
- * @param pos
- * @returns
- */
-__method.notifyAllOHUpdate = function(objKey, valueKey) {
-	for (var socnum of Object.keys(this.io.sockets.sockets)) {
-		var soc=this.io.sockets.sockets[socnum];
-		if (soc.objList!= undefined && soc.objList.indexOf(objKey)!==-1 ) {
-			this.notifySingleOHUpdate(soc, objKey, valueKey)
-		}
-	}
-};
+    /**
+     * notify change for one client
+     * @param socket
+     * @param obj
+     * @param pos
+     * @returns
+     */
+    __method.notifySingleOHUpdate = function (socket, obj, pos) {
+        debugConsole("==> notifyOHUpdate receive (%s,%s)", obj, pos);
+        if (objectExp[obj].objectValues.hasOwnProperty(pos + obj)) {
+            var msgToSend = JSON.stringify({
+                obj: obj,
+                pos: pos,
+                value: objectExp[obj].objectValues[pos + obj].value
+            });
+            socket.emit('object', msgToSend);
+        }
+    };
+
+    /**
+     * notify change for all client interrested by obj
+     * @param socket
+     * @param obj
+     * @param pos
+     * @returns
+     */
+    __method.notifyAllOHUpdate = function (objKey, valueKey) {
+        for (var socnum of Object.keys(this.io.sockets.sockets)) {
+            var soc = this.io.sockets.sockets[socnum];
+            if (soc.objList != undefined && soc.objList.indexOf(objKey) !== -1) {
+                this.notifySingleOHUpdate(soc, objKey, valueKey)
+            }
+        }
+    };
+
+}
 
 /**********************************************************************************************************************
  ******************************************** Engine ******************************************************************

@@ -246,15 +246,31 @@ function HybridObject() {
             return objectExp.modelViewMatrix;
         } else return undefined;
     };
-
-
-
+    
     if (typeof io !== "undefined") {
+        var thisOHObjectIdentifier = this;
+
         this.object = io.connect();
+        this.oldValueList = {};
+
+            this.sendServerSubscribe = setInterval(function() {
+                if(objectExp.obj) {
+                    thisOHObjectIdentifier.object.emit('/subscribe/realityEditor', JSON.stringify({obj: objectExp.obj}));
+                    clearInterval(thisOHObjectIdentifier.sendServerSubscribe);
+                }
+            }, 10);
 
         this.write = function (IO, value, mode) {
+            if(!IO in thisOHObjectIdentifier.oldValueList){
+                thisOHObjectIdentifier.oldValueList[IO]= null;
+            }
+
             if (!mode) mode = 'f';
-            this.object.emit('object', JSON.stringify({pos: IO, obj: objectExp.obj, value: value, mode: mode}));
+
+            if(thisOHObjectIdentifier.oldValueList[IO] !== value) {
+                this.object.emit('object', JSON.stringify({pos: IO, obj: objectExp.obj, value: value, mode: mode}));
+            }
+            thisOHObjectIdentifier.oldValueList[IO] = value;
         };
 
         this.readRequest = function (IO) {
@@ -268,6 +284,20 @@ function HybridObject() {
                 return undefined;
             }
         };
+
+        this.addReadListener = function (IO, callback) {
+            thisOHObjectIdentifier.object.on("object", function (msg) {
+                var data = JSON.parse(msg);
+
+                if (typeof data.pos !== "undefined") {
+                    if (data.pos === IO) {
+                        if (typeof data.value !== "undefined")
+                            callback(data.value);
+                    }
+                }
+            });
+        };
+        
         console.log("socket.io is loaded");
     }
     else {

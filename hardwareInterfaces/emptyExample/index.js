@@ -79,6 +79,8 @@ if (exports.enabled) {
      **/
     exports.init = function () {
 
+
+
             server.addIO("bluestone", "one", "default", "emptyExample");
             server.addIO("bluestone", "two", "default", "emptyExample");
             server.addIO("bluestone", "three", "default", "emptyExample");
@@ -87,10 +89,17 @@ if (exports.enabled) {
         server.addIO("brownstone", "one1", "default", "emptyExample");
         server.addIO("brownstone", "two2", "default", "emptyExample");
 
-
-
-
         server.clearIO("bluestone");
+        server.clearIO("brownstone");
+
+
+console.log("printthatshit");
+        setInterval(function(){
+         
+            server.writeIOToServer("bluestone", "one", Math.random(), "f");
+
+        }, 100);
+
     };
 
     /**

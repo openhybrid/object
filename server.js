@@ -1022,12 +1022,12 @@ function objectWebServer() {
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder + 'info/:id', function (req, res) {
             // debugConsole("get 12");
-            res.send(HybridObjectsWebFrontend.uploadInfoText(req.params.id, objectLookup, objectExp, knownObjects, io, sockets));
+            res.send(HybridObjectsWebFrontend.uploadInfoText(req.params.id, objectLookup, objectExp, knownObjects, sockets));
         });
 
         webServer.get(objectInterfaceFolder + 'infoContent/:id', function (req, res) {
             // debugConsole("get 12");
-            res.send(HybridObjectsWebFrontend.uploadInfoContent(req.params.id, objectLookup, objectExp, knownObjects, io, sockets));
+            res.send(HybridObjectsWebFrontend.uploadInfoContent(req.params.id, objectLookup, objectExp, knownObjects, sockets));
         });
 
         // sends the content page for the object :id
@@ -1553,7 +1553,7 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
 
 function socketServer(params) {
     events.EventEmitter.call(this)
-    osSocketServer=this;
+    socketServer=this;
     io.on('connection', function (socket) {
        debugConsole("New ws connection");
     	socket.objList=[]; // Initialize Object List intered by the socket
@@ -1605,7 +1605,7 @@ function socketServer(params) {
 
             if (msgContent.pos) {
                 if (objectExp.hasOwnProperty(msgContent.obj)) {
-                	osSocketServer.notifySingleOHUpdate(socket, msgContent.obj, msgContent.pos);
+                	socketServer.notifySingleOHUpdate(socket, msgContent.obj, msgContent.pos);
                 }
             	/*
                 var msgToSend = "";
@@ -1649,7 +1649,7 @@ function socketServer(params) {
         });
         socket.on('disconnect', function () {
            debugConsole("WS disconnected %s", socket.objList);
-          //  OHSocketServer.emit("socketdisconnected", socket.objList);
+          //  socketServer.emit("socketdisconnected", socket.objList);
         });
 
     });

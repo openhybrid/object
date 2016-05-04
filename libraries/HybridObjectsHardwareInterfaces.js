@@ -60,8 +60,11 @@ var hardwareInterfaces = {};
  * @param {string} mode specifies the datatype of value, you can define it to be whatever you want. For example 'f' could mean value is a floating point variable.
 **/
 exports.writeIOToServer = function (objName, ioName, value, mode) {
+
     var objKey2 = HybridObjectsUtilities.readObject(objectLookup, objName); //get globally unique object id
     var valueKey = ioName + objKey2;
+
+    //console.log(objectLookup);
 
 //    console.log("writeIOToServer obj: "+objName + "  name: "+ioName+ "  value: "+value+ "  mode: "+mode);
 

@@ -268,7 +268,7 @@ exports.printFolder = function (objectExp, dirnameO, debug, objectInterfaceFolde
 
 }
 
-exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, sockets) {
+exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, socketsInfo) {
     var objectName = HybridObjectsUtilities.readObject(objectLookup, parm); //parm + thisMacAddress;
 
 
@@ -341,7 +341,7 @@ exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, 
 }
 
 
-exports.uploadInfoContent = function (parm, objectLookup, objectExp, knownObjects, sockets) {
+exports.uploadInfoContent = function (parm, objectLookup, objectExp, knownObjects, socketsInfo) {
     var objectName = HybridObjectsUtilities.readObject(objectLookup, parm); //parm + thisMacAddress;
 
 
@@ -410,15 +410,15 @@ exports.uploadInfoContent = function (parm, objectLookup, objectExp, knownObject
         '        </tr>\n' +
         '        <tr>\n' +
         '            <th scope="row">sockets</th>\n' +
-        '            <td>' + sockets.sockets + '</td>\n' +
+        '            <td>' + socketsInfo.sockets + '</td>\n' +
         '        </tr>\n' +
         '        <tr>\n' +
         '            <th scope="row">connected</th>\n' +
-        '            <td>' + sockets.connected + '</td>\n' +
+        '            <td>' + socketsInfo.connected + '</td>\n' +
         '        </tr>\n' +
         '        <tr>\n' +
         '            <th scope="row">notConnected</th>\n' +
-        '            <td>' + sockets.notConnected + '</td>\n' +
+        '            <td>' + socketsInfo.notConnected + '</td>\n' +
         '        </tr>\n' +
         '        </tbody>\n' +
         '    </table>\n' +
@@ -430,6 +430,9 @@ exports.uploadInfoContent = function (parm, objectLookup, objectExp, knownObject
         '        </tr>\n' +
         '        </thead>\n' +
         '        <tbody>\n';
+
+
+    console.log(socketsInfo.sockets);
 
     infoCount = 0;
     for (subKey in knownObjects) {
@@ -470,7 +473,7 @@ exports.uploadInfoContent = function (parm, objectLookup, objectExp, knownObject
 
     infoCount = 0;
     for (subKey in uploadInfoTexttempArray) {
-        text += '<tr> <td><font size="2">' + subKey + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].ObjectA + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].locationInA.slice(0, (uploadInfoTexttempArray[subKey].ObjectA.length * -1)) + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].ObjectB + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].locationInB.slice(0, (uploadInfoTexttempArray[subKey].ObjectA.length * -1)) + '</font></td></tr>\n';
+        text += '<tr> <td><font size="2">' + subKey + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].ObjectA + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].locationInA.slice(0, (uploadInfoTexttempArray[subKey].ObjectA.length * -1)) + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].ObjectB + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].locationInB.slice(0, (uploadInfoTexttempArray[subKey].ObjectB.length * -1)) + '</font></td></tr>\n';
         infoCount++;
     }
 

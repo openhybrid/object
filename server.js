@@ -276,6 +276,13 @@ function ObjectSockets(socketPort, ip) {
     });
 }
 
+function EditorSocket(socketID, object) {
+    // keeps the own IP of an object
+    this.id = socketID;
+    // defines where to connect to
+    this.obj = object;
+
+}
 /**********************************************************************************************************************
  ******************************************** Variables and Objects ***************************************************
  **********************************************************************************************************************/
@@ -297,6 +304,8 @@ var objectLookup = {};
 // This list holds all the socket connections that are kept alive. Socket connections are kept alive if a link is
 // associated with this object. Once there is no more link the socket connection is deleted.
 var socketArray = {};     // all socket connections that are kept alive
+
+var realityEditorSocketArray = {};     // all socket connections that are kept alive
 
 // counter for the socket connections
 // this counter is used for the Web Developer Interface to reflect the state of the server socket connections.
@@ -337,6 +346,10 @@ debugConsole("Initialize System: ");
 debugConsole("Loading Hardware interfaces");
 // set all the initial states for the Hardware Interfaces in order to run with the Server.
 HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, __dirname, dataPointModules, function (objKey2, valueKey, objectExp, dataPointModules) {
+
+  //  var thisObject = objectExp[objKey2];
+//    sendMessagetoEditors({obj: objKey2, pos: valueKey, value: thisObject[valueKey].value,  mode: thisObject[valueKey].mode});
+
     objectEngine(objKey2, valueKey, objectExp, dataPointModules);
 }, ObjectValue);
 debugConsole("Done");
@@ -1577,14 +1590,19 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
 function OHSocketServer(params) {
    // events.EventEmitter.call(this);
   // var osSocketServer=this;
+    var ios = io;
+
     io.on('connection', function (socket) {
       /* debugConsole("New ws connection");
     	socket.objList=[]; // Initialize Object List intered by the socket
     	*/
         socket.on('/subscribe/realityEditor', function (msg) {
             console.log("reality editor subscription for object: " + JSON.parse(msg).obj);
-            // this is where the the socket connection should be saved in a list together with msg.obj
+            console.log("the letated socket has the ID: "+ socket.id);
 
+            realityEditorSocketArray[socket.id] = JSON.parse(msg).obj;
+            console.log(realityEditorSocketArray);
+            // this is where the the socket connection should be saved in a list together with msg.obj
         });
 
         socket.on('object', function (msg) {
@@ -1603,6 +1621,8 @@ function OHSocketServer(params) {
                     if (hardwareInterfaceModules.hasOwnProperty(objSend.type)) {
                         hardwareInterfaceModules[objSend.type].send(objectExp[msgContent.obj].name, objectExp[msgContent.obj].objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type);
                     }
+
+
 
                     objectEngine(msgContent.obj, msgContent.pos, objectExp, dataPointModules);
 
@@ -1626,8 +1646,12 @@ function OHSocketServer(params) {
         });
 
         socket.on('/object/value', function (msg) {
+
+
         	//loghttp.debug ("value object msg %s", msg);
             var msgContent = JSON.parse(msg);
+
+            messagetoSend(msgContent, socket.id);
         	//loghttp.debug("  before socketlist=%s", socket.objList);
            // if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
             //	socket.objList.push(msgContent.obj);
@@ -1637,29 +1661,7 @@ function OHSocketServer(params) {
                 if (objectExp.hasOwnProperty(msgContent.obj)) {
                 	osSocketServer.notifySingleOHUpdate(socket, msgContent.obj, msgContent.pos);
                 }*/
-                if (objectExp.hasOwnProperty(msgContent.obj)) {
-                    if (objectExp[msgContent.obj].objectValues.hasOwnProperty(msgContent.pos + msgContent.obj)) {
 
-                        var msgToSend = JSON.stringify({
-                            obj: msgContent.obj,
-                            pos: msgContent.pos,
-                            value: objectExp[msgContent.obj].objectValues[msgContent.pos + msgContent.obj].value
-                        });
-                        socket.emit('object', msgToSend);
-                    }
-                //}
-
-            } else {
-                var valueArray = {};
-                    if (objectExp.hasOwnProperty(msgContent.obj)) {
-                        for (var thiskkey in objectExp[msgContent.obj].objectValues) {
-                            valueArray[objectExp[msgContent.obj].objectValues[thiskkey].name] = objectExp[msgContent.obj].objectValues[thiskkey];
-                        }
-                    }
-
-                var msgToSend2 = JSON.stringify({obj: msgContent.obj, value: valueArray});
-                socket.emit('object', msgToSend2);
-            }
             //debugConsole("got it");
         });
 
@@ -1674,9 +1676,16 @@ function OHSocketServer(params) {
                 pos: msgContent.pos,
                 value: objectExp[msgContent.obj].objectValues[msgContent.pos + msgContent.obj]
             });
-            socket.emit('object', msgToSend);
+            //socket.emit('object', msgToSend);
+
+            io.sockets.connected[socket.id].emit('object', msgToSend);
+
         });
         socket.on('disconnect', function () {
+
+            console.log(socket.id + " has disconnected");
+
+           delete realityEditorSocketArray[socket.id];
           // debugConsole("WS disconnected %s", socket.objList);
           //  osSocketServer.emit("socketdisconnected", socket.objList);
         });
@@ -1684,6 +1693,58 @@ function OHSocketServer(params) {
     });
     this.io = io;
    debugConsole('socket.io started');
+}
+
+
+function sendMessagetoEditors(msgContent){
+
+
+    for(var thisEditor in realityEditorSocketArray){
+     if(msgContent.obj === realityEditorSocketArray[thisEditor])   {
+         messagetoSend(msgContent, thisEditor);
+     }
+    }
+}
+
+
+function messagetoSend(msgContent, socketID){
+    
+    if (objectExp.hasOwnProperty(msgContent.obj)) {
+
+        if (objectExp[msgContent.obj].objectValues.hasOwnProperty(msgContent.pos + msgContent.obj)) {
+
+            var msgToSend = JSON.stringify({
+                obj: msgContent.obj,
+                pos: msgContent.pos,
+                value: objectExp[msgContent.obj].objectValues[msgContent.pos + msgContent.obj].value
+            });
+            io.sockets.connected[socketID].emit('object', msgToSend);//       socket.emit('object', msgToSend);
+        } else {
+
+            var msgToSend = JSON.stringify({
+                obj: msgContent.obj,
+                pos: objectExp[msgContent.obj].objectValues[msgContent.pos].name,
+                value: objectExp[msgContent.obj].objectValues[msgContent.pos].value
+            });
+
+            console.log(msgToSend);
+            io.sockets.connected[socketID].emit('object', msgToSend);//       socket.emit('object', msgToSend);
+        }
+    } else {
+        var valueArray = {};
+        if (objectExp.hasOwnProperty(msgContent.obj)) {
+            for (var thiskkey in objectExp[msgContent.obj].objectValues) {
+                valueArray[objectExp[msgContent.obj].objectValues[thiskkey].name] = objectExp[msgContent.obj].objectValues[thiskkey];
+            }
+        }
+
+
+
+        var msgToSend2 = JSON.stringify({obj: msgContent.obj, value: valueArray});
+        //    socket.emit('object', msgToSend2);
+
+        io.sockets.connected[socketID].emit('object', msgToSend2);
+    }
 }
 
 /*function OHSocketServerHelper() {
@@ -1797,7 +1858,7 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
             //hardwareInterfaceModules[objSend.type].send(objectExp, link.ObjectB, link.locationInB, processedValue, mode);
         }
 
-
+        sendMessagetoEditors({obj: link.ObjectB, pos: link.locationInB, value: objSend.value,  mode: objSend.mode});
 
        // socketServer.notifyAllOHUpdate(link.ObjectB, link.locationInB);
 

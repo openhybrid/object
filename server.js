@@ -76,11 +76,11 @@ var globalVariables = {
 
 // ports used to define the server behaviour
 /*
-The server uses port 8080 to communicate with other servers and with the Reality Editor.
-As such the Server reacts to http and web sockets on this port.
+ The server uses port 8080 to communicate with other servers and with the Reality Editor.
+ As such the Server reacts to http and web sockets on this port.
 
-The beat port is used to send UDP broadcasting messages in  a local network. The Reality Editor and other Objects
-pick up these messages to identify the object.
+ The beat port is used to send UDP broadcasting messages in  a local network. The Reality Editor and other Objects
+ pick up these messages to identify the object.
 
  */
 
@@ -93,9 +93,9 @@ const version = "0.4.1";           // the version of this server
 
 
 // All objects are stored in this folder:
-const objectPath   = __dirname + "/objects";
+const objectPath = __dirname + "/objects";
 // All visual UI representations for IO Points are stored in this folder:
-const modulePath   = __dirname + "/dataPointInterfaces";
+const modulePath = __dirname + "/dataPointInterfaces";
 // All interfaces for different hardware such as Arduino Yun, PI, Philips Hue are stored in this folder.
 const internalPath = __dirname + "/hardwareInterfaces";
 // The web service level on wich objects are accessable. http://<IP>:8080 <objectInterfaceFolder> <object>
@@ -115,7 +115,7 @@ var express = require('express'); // Web Sever library
 // constrution for the werbserver using express combined with socket.io
 var webServer = express();
 var http = require('http').createServer(webServer).listen(serverPort, function () {
-   debugConsole('webserver + socket.io is listening on port: ' + serverPort);
+    debugConsole('webserver + socket.io is listening on port: ' + serverPort);
 });
 var io = require('socket.io')(http); // Websocket library
 var socket = require('socket.io-client'); // websocket client source
@@ -126,7 +126,7 @@ var cheerio = require('cheerio');
 // additional files containing project code
 
 // This file hosts all kinds of utilities programmed for the server
-var HybridObjectsUtilities   = require(__dirname + '/libraries/HybridObjectsUtilities');
+var HybridObjectsUtilities = require(__dirname + '/libraries/HybridObjectsUtilities');
 // The web frontend a developer is able to see when creating new user interfaces.
 var HybridObjectsWebFrontend = require(__dirname + '/libraries/HybridObjectsWebFrontend');
 // Definition for a simple API for hardware interfaces talking to the server.
@@ -345,12 +345,13 @@ for (var i = 0; i < DataPointFolderList.length; i++) {
 debugConsole("Initialize System: ");
 debugConsole("Loading Hardware interfaces");
 // set all the initial states for the Hardware Interfaces in order to run with the Server.
-HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, __dirname, dataPointModules, function (objKey2, valueKey, objectExp, dataPointModules) {
+HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, __dirname, dataPointModules, function (objKey2, valueKey, value, mode, objectExp, dataPointModules) {
 
-  //  var thisObject = objectExp[objKey2];
-//    sendMessagetoEditors({obj: objKey2, pos: valueKey, value: thisObject[valueKey].value,  mode: thisObject[valueKey].mode});
-
+    //these are the calls that come from the objects before they get processed by the object engine.
+    // send the saved value before it is processed
+    sendMessagetoEditors({obj: objKey2, pos: valueKey, value: value, mode: mode});
     objectEngine(objKey2, valueKey, objectExp, dataPointModules);
+
 }, ObjectValue);
 debugConsole("Done");
 
@@ -410,7 +411,7 @@ function getFileExtension(fileName) {
  * @desc Add objects from the objects folder to the system
  **/
 function loadHybridObjects() {
-   debugConsole("Enter loadHybridObjects");
+    debugConsole("Enter loadHybridObjects");
     // check for objects in the objects folder by reading the objects directory content.
     // get all directory names within the objects directory
     var HybridObjectFolderList = fs.readdirSync(objectPath).filter(function (file) {
@@ -423,12 +424,12 @@ function loadHybridObjects() {
             HybridObjectFolderList.splice(0, 1);
         }
     } catch (e) {
-       debugConsole("no hidden files");
+        debugConsole("no hidden files");
     }
 
     for (var i = 0; i < HybridObjectFolderList.length; i++) {
         var tempFolderName = HybridObjectsUtilities.getObjectIdFromTarget(HybridObjectFolderList[i], __dirname);
-       debugConsole("TempFolderName: " + tempFolderName);
+        debugConsole("TempFolderName: " + tempFolderName);
 
         if (tempFolderName !== null) {
             // fill objectExp with objects named by the folders in objects
@@ -446,7 +447,7 @@ function loadHybridObjects() {
                 // adding the values to the arduino lookup table so that the serial connection can take place.
                 // todo this is maybe obsolete.
                 for (var tempkey in objectExp[tempFolderName].objectValues) {
-                    ArduinoLookupTable.push({ obj: HybridObjectFolderList[i], pos: tempkey });
+                    ArduinoLookupTable.push({obj: HybridObjectFolderList[i], pos: tempkey});
                 }
                 // todo the sizes do not really save...
 
@@ -458,19 +459,19 @@ function loadHybridObjects() {
                 // data comes always from the arduino....
                 // clear = true;
 
-                    debugConsole("I found objects that I want to add");
-                    debugConsole("---");
-                    debugConsole(ArduinoLookupTable);
-                    debugConsole("---");
+                debugConsole("I found objects that I want to add");
+                debugConsole("---");
+                debugConsole(ArduinoLookupTable);
+                debugConsole("---");
 
             } catch (e) {
                 objectExp[tempFolderName].ip = ip.address();
                 objectExp[tempFolderName].objectId = tempFolderName;
-               debugConsole("No saved data for: " + tempFolderName);
+                debugConsole("No saved data for: " + tempFolderName);
             }
 
         } else {
-           debugConsole(" object " + HybridObjectFolderList[i] + " has no marker yet");
+            debugConsole(" object " + HybridObjectFolderList[i] + " has no marker yet");
         }
     }
 
@@ -504,17 +505,16 @@ function startSystem() {
     objectWebServer();
 
     // receives all socket connections and processes the data
-    // OHSocketServerHelper();
+    // socketServerHelper();
 
-   // socketServer = new OHSocketServer();
+    // socketServer = new socketServer();
 
 
-
-  /*  socketServer.on("socketdisconnected", function(objList) {
-        console.log("", objList);
-    });
-*/
-    OHSocketServer();
+    /*  socketServer.on("socketdisconnected", function(objList) {
+     console.log("", objList);
+     });
+     */
+    socketServer();
     // receives all serial calls and processes the data
 
 
@@ -573,22 +573,37 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
 
     debugConsole("creating beat for object: " + thisId);
     objectExp[thisId].version = version;
-    var thisVersionNumber  = parseInt(objectExp[thisId].version.replace(/\./g, ""));
+    var thisVersionNumber = parseInt(objectExp[thisId].version.replace(/\./g, ""));
 
-    if(typeof objectExp[thisId].tcs === "undefined"){
+    if (typeof objectExp[thisId].tcs === "undefined") {
         objectExp[thisId].tcs = 0;
     }
 
-   // ObjectExp
+    // ObjectExp
     debugConsole("with version number: " + thisVersionNumber);
 
     // json string to be send
-    var message = new Buffer(JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
+    var message = new Buffer(JSON.stringify({
+        id: thisId,
+        ip: thisIp,
+        vn: thisVersionNumber,
+        tcs: objectExp[thisId].tcs
+    }));
 
     if (globalVariables.debug) console.log("UDP broadcasting on port: " + PORT);
-    if (globalVariables.debug) console.log("Sending beats... Content: " + JSON.stringify({id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
-   debugConsole("UDP broadcasting on port: " + PORT);
-   debugConsole("Sending beats... Content: " + JSON.stringify({ id: thisId, ip: thisIp,  vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
+    if (globalVariables.debug) console.log("Sending beats... Content: " + JSON.stringify({
+            id: thisId,
+            ip: thisIp,
+            vn: thisVersionNumber,
+            tcs: objectExp[thisId].tcs
+        }));
+    debugConsole("UDP broadcasting on port: " + PORT);
+    debugConsole("Sending beats... Content: " + JSON.stringify({
+            id: thisId,
+            ip: thisIp,
+            vn: thisVersionNumber,
+            tcs: objectExp[thisId].tcs
+        }));
 
     // creating the datagram
     var client = dgram.createSocket('udp4');
@@ -606,14 +621,19 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
             //debugConsole(JSON.stringify(thisId));
             // debugConsole(JSON.stringify( objectExp));
             if (thisId in objectExp && thisId.length > 12) {
-               // debugConsole("Sending beats... Content: " + JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
+                // debugConsole("Sending beats... Content: " + JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
 
-                var message = new Buffer(JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
+                var message = new Buffer(JSON.stringify({
+                    id: thisId,
+                    ip: thisIp,
+                    vn: thisVersionNumber,
+                    tcs: objectExp[thisId].tcs
+                }));
 
 // this is an uglly trick to sync each object with being a developer object
-                if(globalVariables.developer){
+                if (globalVariables.developer) {
                     objectExp[thisId].developer = true;
-                }else{
+                } else {
                     objectExp[thisId].developer = false;
                 }
                 //console.log(globalVariables.developer);
@@ -635,7 +655,12 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
             // send the beat
             if (thisId in objectExp) {
 
-                var message = new Buffer(JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
+                var message = new Buffer(JSON.stringify({
+                    id: thisId,
+                    ip: thisIp,
+                    vn: thisVersionNumber,
+                    tcs: objectExp[thisId].tcs
+                }));
 
                 client.send(message, 0, message.length, PORT, HOST, function (err) {
                     if (err) throw err;
@@ -657,7 +682,7 @@ function actionSender(action) {
     var HOST = '255.255.255.255';
     var message;
 
-    message = new Buffer(JSON.stringify({ action: action }));
+    message = new Buffer(JSON.stringify({action: action}));
 
     // creating the datagram
     var client = dgram.createSocket('udp4');
@@ -703,14 +728,14 @@ function objectBeatServer() {
         msgContent = JSON.parse(msg);
         if (msgContent.hasOwnProperty("id") && msgContent.hasOwnProperty("ip") && !(msgContent.id in objectExp) && !(msgContent.id in knownObjects)) {
             knownObjects[msgContent.id] = msgContent.ip;
-           debugConsole("I found new Objects: " + JSON.stringify({
-                id: msgContent.id,
-                ip: msgContent.ip
-            }));
+            debugConsole("I found new Objects: " + JSON.stringify({
+                    id: msgContent.id,
+                    ip: msgContent.ip
+                }));
         }
         // check if action 'ping'
         if (msgContent.action === "ping") {
-           debugConsole(msgContent.action);
+            debugConsole(msgContent.action);
             for (var key in objectExp) {
                 objectBeatSender(beatPort, key, objectExp[key].ip, true);
             }
@@ -719,7 +744,7 @@ function objectBeatServer() {
 
     udpServer.on("listening", function () {
         var address = udpServer.address();
-       debugConsole("UDP listening on port: " + address.port);
+        debugConsole("UDP listening on port: " + address.port);
     });
 
     // bind the udp server to the udp beatPort
@@ -736,7 +761,7 @@ function existsSync(filename) {
     try {
         fs.accessSync(filename);
         return true;
-    } catch(ex) {
+    } catch (ex) {
         return false;
     }
 }
@@ -754,41 +779,38 @@ function objectWebServer() {
 
     webServer.use('/objectDefaultFiles', express.static(__dirname + '/libraries/objectDefaultFiles/'));
 
-    webServer.use("/obj",function(req,res,next){
+    webServer.use("/obj", function (req, res, next) {
 
         var urlArray = req.originalUrl.split("/");
 
         console.log(urlArray);
-      if((req.method === "GET" && urlArray[2] !=="dataPointInterfaces")  &&  (req.url.slice(-1) === "/" || urlArray[3] ==="index.html"  || urlArray[3] ==="index.htm")) {
+        if ((req.method === "GET" && urlArray[2] !== "dataPointInterfaces") && (req.url.slice(-1) === "/" || urlArray[3] === "index.html" || urlArray[3] === "index.htm")) {
 
+            var fileName = __dirname + "/objects" + req.url;
 
+            if (urlArray[3] !== "index.html" && urlArray[3] !== "index.htm") {
 
-          var fileName = __dirname + "/objects" + req.url;
-
-          if(urlArray[3] !=="index.html"  && urlArray[3] !=="index.htm") {
-
-              if (existsSync(fileName + "index.html")) {
-                  fileName = fileName + "index.html";
-              } else {
-                  fileName = fileName + "index.htm";
-              }
-          }
-                      var html = fs.readFileSync(fileName, 'utf8');
-                      var loadedHtml = cheerio.load(html);
-                      var scriptNode = '<script src="../../objectDefaultFiles/object.js"></script>';
-                      loadedHtml('head').prepend(scriptNode);
-                      res.send(loadedHtml.html());
-
-      }
-       else
-        next();
+                if (existsSync(fileName + "index.html")) {
+                    fileName = fileName + "index.html";
+                } else {
+                    fileName = fileName + "index.htm";
+                }
+            }
+            var html = fs.readFileSync(fileName, 'utf8');
+            var loadedHtml = cheerio.load(html);
+            var scriptNode = '<script src="../../objectDefaultFiles/object.js"></script>';
+            loadedHtml('head').prepend(scriptNode);
+            res.send(loadedHtml.html());
+        }
+        else
+            next();
     }, express.static(__dirname + '/objects/'));
 
     //webServer.get("/obj/objectDefaultFiles/*", express.static(__dirname + '/libraries/objectDefaultFiles/' + req.params[0]));
 
     //   webServer.use("/obj", express.static(__dirname + '/objects/'));
 
-  //  webServer.use("/objectDefaultFiles", express.static(__dirname + '/libraries/objectDefaultFiles/'));
+    //  webServer.use("/objectDefaultFiles", express.static(__dirname + '/libraries/objectDefaultFiles/'));
 
     if (globalVariables.developer === true) {
         webServer.use("/libraries", express.static(__dirname + '/libraries/webInterface/'));
@@ -820,7 +842,7 @@ function objectWebServer() {
             objectExp[req.params[0]].objectLinks[req.params[1]] = req.body;
 
             // call an action that asks all devices to reload their links, once the links are changed.
-            actionSender(JSON.stringify({ reloadLink: { id: req.params[0], ip: objectExp[req.params[0]].ip } }));
+            actionSender(JSON.stringify({reloadLink: {id: req.params[0], ip: objectExp[req.params[0]].ip}}));
             updateStatus = "added";
 
             // check if there are new connections associated with the new link.
@@ -844,7 +866,7 @@ function objectWebServer() {
         if (thisObject === thisValue) {
             tempObject = objectExp[thisObject];
         } else {
-            tempObject= objectExp[thisObject].objectValues[thisValue];
+            tempObject = objectExp[thisObject].objectValues[thisValue];
         }
 
         // check that the numbers are valid numbers..
@@ -860,7 +882,7 @@ function objectWebServer() {
         }
 
 
-        if(typeof req.body.matrix === "object" ){
+        if (typeof req.body.matrix === "object") {
 
             tempObject.matrix = req.body.matrix;
         }
@@ -868,7 +890,7 @@ function objectWebServer() {
         if ((typeof req.body.x === "number" && typeof req.body.y === "number" && typeof req.body.scale === "number") || (typeof req.body.matrix === "object" )) {
             HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
 
-            actionSender(JSON.stringify({ reloadObject: { id: thisObject, ip: objectExp[thisObject].ip } }));
+            actionSender(JSON.stringify({reloadObject: {id: thisObject, ip: objectExp[thisObject].ip}}));
             updateStatus = "added object";
         }
 
@@ -878,17 +900,17 @@ function objectWebServer() {
     // delete a link. *1 is the object *2 is the link id
     // ****************************************************************************************************************
     webServer.delete('/object/*/link/*/', function (req, res) {
-       debugConsole("delete 1");
+        debugConsole("delete 1");
 
-       debugConsole("i got a delete message");
+        debugConsole("i got a delete message");
         var thisLinkId = req.params[1];
         var fullEntry = objectExp[req.params[0]].objectLinks[thisLinkId];
         var destinationIp = knownObjects[fullEntry.ObjectB];
 
         delete objectExp[req.params[0]].objectLinks[thisLinkId];
 
-       debugConsole(objectExp[req.params[0]].objectLinks);
-        actionSender(JSON.stringify({ reloadLink: { id: req.params[0], ip: objectExp[req.params[0]].ip } }));
+        debugConsole(objectExp[req.params[0]].objectLinks);
+        actionSender(JSON.stringify({reloadLink: {id: req.params[0], ip: objectExp[req.params[0]].ip}}));
         HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
         res.send("deleted: " + thisLinkId + " in object: " + req.params[0]);
 
@@ -1036,7 +1058,7 @@ function objectWebServer() {
     // ****************************************************************************************************************
     webServer.get('/object/*/value/:id', function (req, res) {
         //  debugConsole("get 10");
-        res.send({ value: objectExp[req.params[0]].objectValues[req.params.id].value });
+        res.send({value: objectExp[req.params[0]].objectValues[req.params.id].value});
     });
 
     // sends a specific json object value for a specific hybrid object. * is the object name :id is the value name
@@ -1090,7 +1112,7 @@ function objectWebServer() {
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder, function (req, res) {
             // debugConsole("get 16");
-            res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup));
+            res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup, version));
         });
 
         // ****************************************************************************************************************
@@ -1098,7 +1120,7 @@ function objectWebServer() {
         // ****************************************************************************************************************
 
         webServer.post(objectInterfaceFolder + "contentDelete/:id", function (req, res) {
-            // debugConsole("post 21");
+            ;
             if (req.body.action === "delete") {
                 var folderDel = __dirname + '/objects/' + req.body.folder;
 
@@ -1163,14 +1185,14 @@ function objectWebServer() {
 
                 if (tempFolderName2 !== null) {
                     if (tempFolderName2 in objectExp) {
-                       debugConsole("ist noch da");
+                        debugConsole("ist noch da");
                     } else {
-                       debugConsole("ist weg");
+                        debugConsole("ist weg");
                     }
                     if (tempFolderName2 in knownObjects) {
-                       debugConsole("ist noch da");
+                        debugConsole("ist noch da");
                     } else {
-                       debugConsole("ist weg");
+                        debugConsole("ist weg");
                     }
 
                     // remove object from tree
@@ -1179,18 +1201,18 @@ function objectWebServer() {
                     delete objectLookup[req.body.folder];
 
                     if (tempFolderName2 in objectExp) {
-                       debugConsole("ist noch da");
+                        debugConsole("ist noch da");
                     } else {
-                       debugConsole("ist weg");
+                        debugConsole("ist weg");
                     }
                     if (tempFolderName2 in knownObjects) {
-                       debugConsole("ist noch da");
+                        debugConsole("ist noch da");
                     } else {
-                       debugConsole("ist weg");
+                        debugConsole("ist weg");
                     }
                 }
 
-               debugConsole("i deleted: " + tempFolderName2);
+                debugConsole("i deleted: " + tempFolderName2);
 
                 res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup));
             }
@@ -1206,7 +1228,7 @@ function objectWebServer() {
             function (req, res) {
                 // debugConsole("post 23");
 
-               debugConsole("komm ich hier hin?");
+                debugConsole("komm ich hier hin?");
 
                 var form = new formidable.IncomingForm({
                     uploadDir: __dirname + '/objects',  // don't forget the __dirname here
@@ -1232,22 +1254,22 @@ function objectWebServer() {
 
                 form.on('end', function () {
                     var folderD = form.uploadDir;
-                  // debugConsole("------------" + form.uploadDir + " " + filename);
+                    // debugConsole("------------" + form.uploadDir + " " + filename);
 
                     if (getFileExtension(filename) === "zip") {
 
-                       debugConsole("I found a zip file");
+                        debugConsole("I found a zip file");
 
                         try {
                             var DecompressZip = require('decompress-zip');
                             var unzipper = new DecompressZip(folderD + "/" + filename);
 
                             unzipper.on('error', function (err) {
-                               debugConsole('Caught an error');
+                                debugConsole('Caught an error');
                             });
 
                             unzipper.on('extract', function (log) {
-                               debugConsole('Finished extracting');
+                                debugConsole('Finished extracting');
                                 debugConsole("have created a new object");
                                 //createObjectFromTarget(filename.substr(0, filename.lastIndexOf('.')));
                                 createObjectFromTarget(ObjectExp, objectExp, filename.substr(0, filename.lastIndexOf('.')), __dirname, objectLookup, hardwareInterfaceModules, objectBeatSender, beatPort, globalVariables.debug);
@@ -1263,7 +1285,7 @@ function objectWebServer() {
                             });
 
                             unzipper.on('progress', function (fileIndex, fileCount) {
-                               debugConsole('Extracted file ' + (fileIndex + 1) + ' of ' + fileCount);
+                                debugConsole('Extracted file ' + (fileIndex + 1) + ' of ' + fileCount);
                             });
 
                             unzipper.extract({
@@ -1273,10 +1295,10 @@ function objectWebServer() {
                                 }
                             });
 
-                           debugConsole("extracting: " + filename + "  " + folderD);
+                            debugConsole("extracting: " + filename + "  " + folderD);
 
                         } catch (err) {
-                           debugConsole("could not unzip file");
+                            debugConsole("could not unzip file");
                         }
                     }
                 });
@@ -1327,7 +1349,7 @@ function objectWebServer() {
                         delete knownObjects[tempFolderName2];
                     }
 
-                   debugConsole("i deleted: " + tempFolderName2);
+                    debugConsole("i deleted: " + tempFolderName2);
 
                     res.send(HybridObjectsWebFrontend.uploadTargetContent(req.params.id, __dirname, objectInterfaceFolder));
                 }
@@ -1362,7 +1384,7 @@ function objectWebServer() {
 
                 form.on('end', function () {
                     var folderD = form.uploadDir;
-                   debugConsole("------------" + form.uploadDir + "/" + filename);
+                    debugConsole("------------" + form.uploadDir + "/" + filename);
 
                     if (req.headers.type === "targetUpload") {
                         var fileExtension = getFileExtension(filename);
@@ -1396,13 +1418,13 @@ function objectWebServer() {
                                     if (err) {
                                         debugConsole(err);
                                     } else {
-                                       debugConsole("XML saved to " + xmlOutFile);
+                                        debugConsole("XML saved to " + xmlOutFile);
                                     }
                                 });
                             }
 
 
-                           var fileList = [folderD + "/target/target.jpg", folderD + "/target/target.xml", folderD + "/target/target.dat"];
+                            var fileList = [folderD + "/target/target.jpg", folderD + "/target/target.xml", folderD + "/target/target.dat"];
 
                             var thisObjectId = HybridObjectsUtilities.readObject(objectLookup, req.params.id);
 
@@ -1427,14 +1449,14 @@ function objectWebServer() {
 
                         else if (fileExtension === "zip") {
 
-                           debugConsole("I found a zip file");
+                            debugConsole("I found a zip file");
 
                             try {
                                 var DecompressZip = require('decompress-zip');
                                 var unzipper = new DecompressZip(folderD + "/" + filename);
 
                                 unzipper.on('error', function (err) {
-                                   debugConsole('Caught an error in unzipper');
+                                    debugConsole('Caught an error in unzipper');
                                 });
 
                                 unzipper.on('extract', function (log) {
@@ -1442,7 +1464,7 @@ function objectWebServer() {
                                     var folderFileType;
 
                                     for (var i = 0; i < folderFile.length; i++) {
-                                       debugConsole(folderFile[i]);
+                                        debugConsole(folderFile[i]);
                                         folderFileType = folderFile[i].substr(folderFile[i].lastIndexOf('.') + 1);
                                         if (folderFileType === "xml" || folderFileType === "dat") {
                                             fs.renameSync(folderD + "/target/" + folderFile[i], folderD + "/target/target." + folderFileType);
@@ -1491,7 +1513,7 @@ function objectWebServer() {
                                 });
 
                                 unzipper.on('progress', function (fileIndex, fileCount) {
-                                   debugConsole('Extracted file ' + (fileIndex + 1) + ' of ' + fileCount);
+                                    debugConsole('Extracted file ' + (fileIndex + 1) + ' of ' + fileCount);
                                 });
 
                                 unzipper.extract({
@@ -1501,7 +1523,7 @@ function objectWebServer() {
                                     }
                                 });
                             } catch (err) {
-                               debugConsole("could not unzip file");
+                                debugConsole("could not unzip file");
                             }
                         } else {
                             res.status(200);
@@ -1533,12 +1555,12 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
     debugConsole("I can start");
 
     var folder = __dirname + '/objects/' + folderVar + '/';
-   debugConsole(folder);
+    debugConsole(folder);
 
     if (fs.existsSync(folder)) {
-       debugConsole("folder exists");
+        debugConsole("folder exists");
         var objectIDXML = HybridObjectsUtilities.getObjectIdFromTarget(folderVar, __dirname);
-       debugConsole("got ID: objectIDXML");
+        debugConsole("got ID: objectIDXML");
         if (!_.isUndefined(objectIDXML) && !_.isNull(objectIDXML)) {
             if (objectIDXML.length > 13) {
 
@@ -1546,16 +1568,16 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
                 objectExp[objectIDXML].folder = folderVar;
                 objectExp[objectIDXML].objectId = objectIDXML;
 
-               debugConsole("this should be the IP" + objectIDXML);
+                debugConsole("this should be the IP" + objectIDXML);
 
                 try {
                     objectExp[objectIDXML] = JSON.parse(fs.readFileSync(__dirname + "/objects/" + folderVar + "/object.json", "utf8"));
                     objectExp[objectIDXML].ip = ip.address();
-                   debugConsole("testing: " + objectExp[objectIDXML].ip);
+                    debugConsole("testing: " + objectExp[objectIDXML].ip);
                 } catch (e) {
                     objectExp[objectIDXML].ip = ip.address();
-                   debugConsole("testing: " + objectExp[objectIDXML].ip);
-                   debugConsole("No saved data for: " + objectIDXML);
+                    debugConsole("testing: " + objectExp[objectIDXML].ip);
+                    debugConsole("No saved data for: " + objectIDXML);
                 }
 
                 if (HybridObjectsUtilities.readObject(objectLookup, folderVar) !== objectIDXML) {
@@ -1571,7 +1593,7 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
                     hardwareInterfaceModules[keyint].init();
                 }
 
-               debugConsole("weiter im text " + objectIDXML);
+                debugConsole("weiter im text " + objectIDXML);
                 HybridObjectsUtilities.writeObjectToFile(objectExp, objectIDXML, __dirname);
 
                 objectBeatSender(beatPort, objectIDXML, objectExp[objectIDXML].ip);
@@ -1587,207 +1609,90 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
 
 //todo this function needs to be checked very intense
 
-function OHSocketServer(params) {
-   // events.EventEmitter.call(this);
-  // var osSocketServer=this;
-    var ios = io;
+function socketServer(params) {
 
     io.on('connection', function (socket) {
-      /* debugConsole("New ws connection");
-    	socket.objList=[]; // Initialize Object List intered by the socket
-    	*/
-        socket.on('/subscribe/realityEditor', function (msg) {
-            console.log("reality editor subscription for object: " + JSON.parse(msg).obj);
-            console.log("the letated socket has the ID: "+ socket.id);
 
-            realityEditorSocketArray[socket.id] = JSON.parse(msg).obj;
-            console.log(realityEditorSocketArray);
-            // this is where the the socket connection should be saved in a list together with msg.obj
+        socket.on('/subscribe/realityEditor', function (msg) {
+
+            if (objectExp.hasOwnProperty(JSON.parse(msg).obj)) {
+                debugConsole("reality editor subscription for object: " + JSON.parse(msg).obj);
+                debugConsole("the letated socket has the ID: " + socket.id);
+
+                realityEditorSocketArray[socket.id] = JSON.parse(msg).obj;
+                debugConsole(realityEditorSocketArray);
+            }
         });
 
         socket.on('object', function (msg) {
-          debugConsole("socketServer incoming: " + msg);
+            debugConsole("socketServer incoming: " + msg);
             var msgContent = JSON.parse(msg);
-            var objSend;
-           // if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
+            // if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
             //	socket.objList.push(msgContent.obj);
             if ((msgContent.obj in objectExp) && typeof msgContent.value !== "undefined") {
                 if (msgContent.pos in objectExp[msgContent.obj].objectValues) {
                     objectExp[msgContent.obj].objectValues[msgContent.pos].value = msgContent.value;
 
-                    objSend  = objectExp[msgContent.obj].objectValues[msgContent.pos];
-                    objSend.value = msgContent.value;
+                    var objSend = objectExp[msgContent.obj].objectValues[msgContent.pos];
 
                     if (hardwareInterfaceModules.hasOwnProperty(objSend.type)) {
-                        hardwareInterfaceModules[objSend.type].send(objectExp[msgContent.obj].name, objectExp[msgContent.obj].objectValues[msgContent.pos].name, msgContent.value, msgContent.mode, msgContent.type);
+                        hardwareInterfaceModules[objSend.type].send(msgContent.obj, msgContent.pos, msgContent.value, msgContent.mode, msgContent.type);
                     }
-
-
 
                     objectEngine(msgContent.obj, msgContent.pos, objectExp, dataPointModules);
-
-                } else {
-                    for (var thisKey in objectExp[msgContent.obj].objectValues) {
-                        if (msgContent.pos === objectExp[msgContent.obj].objectValues[thisKey].name) {
-                          objSend  = objectExp[msgContent.obj].objectValues[msgContent.pos + msgContent.obj];
-                            objSend.value = msgContent.value;
-
-                            if(hardwareInterfaceModules.hasOwnProperty(objSend.type))
-                            {
-                                hardwareInterfaceModules[objSend.type].send(objectExp,msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value, msgContent.mode);
-                            }
-
-                            //serialSender(serialPort, objectExp, msgContent.obj, msgContent.pos + msgContent.obj, msgContent.value);
-                            objectEngine(msgContent.obj, msgContent.pos + msgContent.obj, objectExp, dataPointModules);
-                        }
-                    }
                 }
             }
         });
 
+        // this is only for down compatibility
         socket.on('/object/value', function (msg) {
-
-
-        	//loghttp.debug ("value object msg %s", msg);
             var msgContent = JSON.parse(msg);
-
             messagetoSend(msgContent, socket.id);
-        	//loghttp.debug("  before socketlist=%s", socket.objList);
-           // if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
-            //	socket.objList.push(msgContent.obj);
-        	//loghttp.debug("  after socketlist=%s", socket.objList);
-
-          /*  if (msgContent.pos) {
-                if (objectExp.hasOwnProperty(msgContent.obj)) {
-                	osSocketServer.notifySingleOHUpdate(socket, msgContent.obj, msgContent.pos);
-                }*/
-
-            //debugConsole("got it");
         });
 
         socket.on('/object/value/full', function (msg) {
             var msgContent = JSON.parse(msg);
-           debugConsole("full object msg %s", msgContent);
-            //if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
-            //	socket.objList.push(msgContent.obj);
 
             var msgToSend = JSON.stringify({
                 obj: msgContent.obj,
                 pos: msgContent.pos,
                 value: objectExp[msgContent.obj].objectValues[msgContent.pos + msgContent.obj]
             });
-            //socket.emit('object', msgToSend);
 
             io.sockets.connected[socket.id].emit('object', msgToSend);
-
         });
+
         socket.on('disconnect', function () {
-
             console.log(socket.id + " has disconnected");
-
-           delete realityEditorSocketArray[socket.id];
-          // debugConsole("WS disconnected %s", socket.objList);
-          //  osSocketServer.emit("socketdisconnected", socket.objList);
+            delete realityEditorSocketArray[socket.id];
         });
-
     });
     this.io = io;
-   debugConsole('socket.io started');
+    debugConsole('socket.io started');
 }
 
+function sendMessagetoEditors(msgContent) {
 
-function sendMessagetoEditors(msgContent){
-
-
-    for(var thisEditor in realityEditorSocketArray){
-     if(msgContent.obj === realityEditorSocketArray[thisEditor])   {
-         messagetoSend(msgContent, thisEditor);
-     }
+    for (var thisEditor in realityEditorSocketArray) {
+        if (msgContent.obj === realityEditorSocketArray[thisEditor]) {
+            messagetoSend(msgContent, thisEditor);
+        }
     }
 }
 
+function messagetoSend(msgContent, socketID) {
 
-function messagetoSend(msgContent, socketID){
-    
     if (objectExp.hasOwnProperty(msgContent.obj)) {
+        if (objectExp[msgContent.obj].objectValues.hasOwnProperty(msgContent.pos)) {
 
-        if (objectExp[msgContent.obj].objectValues.hasOwnProperty(msgContent.pos + msgContent.obj)) {
-
-            var msgToSend = JSON.stringify({
+            io.sockets.connected[socketID].emit('object', JSON.stringify({
                 obj: msgContent.obj,
                 pos: msgContent.pos,
-                value: objectExp[msgContent.obj].objectValues[msgContent.pos + msgContent.obj].value
-            });
-            io.sockets.connected[socketID].emit('object', msgToSend);//       socket.emit('object', msgToSend);
-        } else {
-
-            var msgToSend = JSON.stringify({
-                obj: msgContent.obj,
-                pos: objectExp[msgContent.obj].objectValues[msgContent.pos].name,
                 value: objectExp[msgContent.obj].objectValues[msgContent.pos].value
-            });
-
-            console.log(msgToSend);
-            io.sockets.connected[socketID].emit('object', msgToSend);//       socket.emit('object', msgToSend);
+            }));//       socket.emit('object', msgToSend);
         }
-    } else {
-        var valueArray = {};
-        if (objectExp.hasOwnProperty(msgContent.obj)) {
-            for (var thiskkey in objectExp[msgContent.obj].objectValues) {
-                valueArray[objectExp[msgContent.obj].objectValues[thiskkey].name] = objectExp[msgContent.obj].objectValues[thiskkey];
-            }
-        }
-
-
-
-        var msgToSend2 = JSON.stringify({obj: msgContent.obj, value: valueArray});
-        //    socket.emit('object', msgToSend2);
-
-        io.sockets.connected[socketID].emit('object', msgToSend2);
     }
 }
-
-/*function OHSocketServerHelper() {
-
-    util.inherits(OHSocketServer, events.EventEmitter);
-    var __method = OHSocketServer.prototype;
-
-    /**
-     * notify change for one client
-     * @param socket
-     * @param obj
-     * @param pos
-     * @returns
-     */ /*
-    __method.notifySingleOHUpdate = function (socket, obj, pos) {
-        debugConsole("==> notifyOHUpdate receive (%s,%s)", obj, pos);
-        if (objectExp[obj].objectValues.hasOwnProperty(pos + obj)) {
-            var msgToSend = JSON.stringify({
-                obj: obj,
-                pos: pos,
-                value: objectExp[obj].objectValues[pos + obj].value
-            });
-            socket.emit('object', msgToSend);
-        }
-    };
-
-    /**
-     * notify change for all client interrested by obj
-     * @param socket
-     * @param obj
-     * @param pos
-     * @returns
-     */ /*
-    __method.notifyAllOHUpdate = function (objKey, valueKey) {
-        for (var socnum of Object.keys(this.io.sockets.sockets)) {
-            var soc = this.io.sockets.sockets[socnum];
-            if (soc.objList != undefined && soc.objList.indexOf(objKey) !== -1) {
-                this.notifySingleOHUpdate(soc, objKey, valueKey)
-            }
-        }
-    };
-
-}*/
 
 /**********************************************************************************************************************
  ******************************************** Engine ******************************************************************
@@ -1825,8 +1730,6 @@ function objectEngine(obj, pos, objectExp, dataPointModules) {
                         // debugConsole("from the enginehouse a bit later: " + mode);
                     });
                 }
-
-
             }
         }
     }
@@ -1843,6 +1746,12 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 
     if (!(link.ObjectB in objectExp)) {
         // check if object is in the same object
+
+        // send value to socketSender, ig object is external
+
+        // this is where it also should be send to the Reality Editor if the reality editor is present;
+        // todo send content to Reality Editor
+
         socketSender(obj, linkPos, processedValue, mode);
     }
     else {
@@ -1851,24 +1760,14 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
         objSend.value = processedValue;
 
         // debugConsole("from the afterrun: " + mode);
-
-
         if (hardwareInterfaceModules.hasOwnProperty(objSend.type)) {
             hardwareInterfaceModules[objSend.type].send(objectExp[link.ObjectB].name, objSend.name, objSend.value, objSend.mode, objSend.type);
             //hardwareInterfaceModules[objSend.type].send(objectExp, link.ObjectB, link.locationInB, processedValue, mode);
         }
-
-        sendMessagetoEditors({obj: link.ObjectB, pos: link.locationInB, value: objSend.value,  mode: objSend.mode});
-
-       // socketServer.notifyAllOHUpdate(link.ObjectB, link.locationInB);
-
+        // send data to listening editor
+        sendMessagetoEditors({obj: link.ObjectB, pos: link.locationInB, value: objSend.value, mode: objSend.mode});
         objectEngine(link.ObjectB, link.locationInB, objectExp, dataPointModules);
 
-
-        // debugConsole("from the second engine run: " + mode);
-
-
-        // serialSender(serialPort, objectExp, link.ObjectB, link.locationInB, processedValue);
     }
 
 }
@@ -1880,6 +1779,8 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 function socketSender(obj, linkPos, processedValue, mode) {
     var link = objectExp[obj].objectLinks[linkPos];
     var msg = JSON.stringify({obj: link.ObjectB, pos: link.locationInB, value: processedValue, mode: mode});
+
+    //todo this should be rewritten with handling an aeeay of connected objects similar the connected Reality Editors
     if (!(link.ObjectB in objectExp)) {
         try {
             var objIp = knownObjects[link.ObjectB];
@@ -1889,7 +1790,7 @@ function socketSender(obj, linkPos, processedValue, mode) {
             }
         }
         catch (e) {
-           debugConsole("can not emit from link ID:" + linkPos + "and object: " + obj);
+            debugConsole("can not emit from link ID:" + linkPos + "and object: " + obj);
         }
     }
 }
@@ -1952,13 +1853,13 @@ function socketUpdater() {
             if (!socketArray[sockKey3].io.connected) {
                 for (objKey2 in knownObjects) {
                     if (knownObjects[objKey2] === sockKey3) {
-                       debugConsole("Looking for: " + objKey2 + " with the ip: " + sockKey3);
+                        debugConsole("Looking for: " + objKey2 + " with the ip: " + sockKey3);
                     }
                 }
             }
         }
 
-       debugConsole(sockets.sockets + " connections; " + sockets.connected + " connected and " + sockets.notConnected + " not connected");
+        debugConsole(sockets.sockets + " connections; " + sockets.connected + " connected and " + sockets.notConnected + " not connected");
 
     }
     sockets.socketsOld = sockets.sockets;
@@ -1999,6 +1900,6 @@ function socketUpdaterInterval() {
 }
 
 
-function debugConsole(msg){
-    if(globalVariables.debug) console.log(msg);
+function debugConsole(msg) {
+    if (globalVariables.debug) console.log(msg);
 }

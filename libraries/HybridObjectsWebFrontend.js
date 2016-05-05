@@ -51,7 +51,7 @@ var debug = false;
 
 
 
-exports.printFolder = function (objectExp, dirnameO, debug, objectInterfaceFolder, objectLookup) {
+exports.printFolder = function (objectExp, dirnameO, debug, objectInterfaceFolder, objectLookup, version) {
     var resText = "<!DOCTYPE html>" +
         "<html>" +
         "<head>" +
@@ -71,7 +71,7 @@ exports.printFolder = function (objectExp, dirnameO, debug, objectInterfaceFolde
 
         "<div class='panel panel-primary'>" +
         "<div class='panel-heading'>" +
-        "<h3 class='panel-title'><font size='6'>Hybrid Object - Administration</font></h3>" +
+        "<h3 class='panel-title'><font size='6'>Hybrid Object - Administration</font>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Version: "+version+"</h3> " +
         "</div>" +
 
 
@@ -271,15 +271,7 @@ exports.printFolder = function (objectExp, dirnameO, debug, objectInterfaceFolde
 exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, socketsInfo) {
     var objectName = HybridObjectsUtilities.readObject(objectLookup, parm); //parm + thisMacAddress;
 
-
-    var uploadInfoTexttempArray = objectExp[objectName].objectLinks;
-    var uploadInfoTexttempArrayValue = objectExp[objectName].objectValues;
-    var infoCount = 0;
-
-
     var ArduinoINstance = 0;
-
-    // objectExp[objectName]
 
     for (subKey in objectExp) {
         if (subKey === objectName) {
@@ -347,8 +339,6 @@ exports.uploadInfoContent = function (parm, objectLookup, objectExp, knownObject
 
     var uploadInfoTexttempArray = objectExp[objectName].objectLinks;
     var uploadInfoTexttempArrayValue = objectExp[objectName].objectValues;
-    var infoCount = 0;
-
 
     var ArduinoINstance = 0;
 
@@ -375,7 +365,7 @@ exports.uploadInfoContent = function (parm, objectLookup, objectExp, knownObject
 
     infoCount = 0;
     for (subKey in uploadInfoTexttempArrayValue) {
-        text += "<tr> <td>" + infoCount + "</td><td>" + uploadInfoTexttempArrayValue[subKey].name + "</td><td>" + uploadInfoTexttempArrayValue[subKey].value + "</td></tr>";
+        text += "<tr> <td>" + infoCount + "</td><td>" + subKey + "</td><td>" + uploadInfoTexttempArrayValue[subKey].value + "</td></tr>";
         infoCount++;
     }
 
@@ -471,7 +461,7 @@ exports.uploadInfoContent = function (parm, objectLookup, objectExp, knownObject
 
     infoCount = 0;
     for (subKey in uploadInfoTexttempArray) {
-        text += '<tr> <td><font size="2">' + subKey + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].ObjectA + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].locationInA.slice(0, (uploadInfoTexttempArray[subKey].ObjectA.length * -1)) + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].ObjectB + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].locationInB.slice(0, (uploadInfoTexttempArray[subKey].ObjectB.length * -1)) + '</font></td></tr>\n';
+        text += '<tr> <td><font size="2">' + subKey + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].ObjectA + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].locationInA + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].ObjectB + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].locationInB + '</font></td></tr>\n';
         infoCount++;
     }
 
@@ -828,8 +818,7 @@ exports.uploadTargetContent = function (parm, dirname0, objectInterfaceFolder) {
         '</div> <div class="col-xs-5">\n' +
         'Drag and Drop your interface files anywhere on this window. Make sure that <b>index.html</b> is your startpoint.' +
         ' You can drop all your files at the same time.<br><br>' +
-        '<b>object.json</b> holds all relevant information about your object.' +
-        ' You need to include <b>object.css</b> and <b>object.js</b> at the beginning of your interface index.html page.<br>' +
+        '<b>object.json</b> holds all relevant information about your object.<br>' +
 
         ' <br><br><span class="fileupload-process">' +
         '          <div id="total-progress" class="progress progress-striped active" role="progressbar" aria-valuemin="0"' +

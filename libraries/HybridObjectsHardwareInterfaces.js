@@ -62,18 +62,20 @@ var hardwareInterfaces = {};
 exports.writeIOToServer = function (objName, ioName, value, mode) {
 
     var objKey2 = HybridObjectsUtilities.readObject(objectLookup, objName); //get globally unique object id
-    var valueKey = ioName + objKey2;
+  //  var valueKey = ioName + objKey2;
+
+
 
     //console.log(objectLookup);
 
 //    console.log("writeIOToServer obj: "+objName + "  name: "+ioName+ "  value: "+value+ "  mode: "+mode);
 
     if (objectExp.hasOwnProperty(objKey2)) {
-        if (objectExp[objKey2].objectValues.hasOwnProperty(valueKey)) {
-            objectExp[objKey2].objectValues[valueKey].value = value;
-            objectExp[objKey2].objectValues[valueKey].mode = mode;
+        if (objectExp[objKey2].objectValues.hasOwnProperty(ioName)) {
+            objectExp[objKey2].objectValues[ioName].value = value;
+            objectExp[objKey2].objectValues[ioName].mode = mode;
             //callback is objectEngine in server.js. Notify data has changed.
-            callback(objKey2, valueKey, objectExp, pluginModules);
+            callback(objKey2, ioName, value, mode, objectExp, pluginModules);
         }
     }
 };
@@ -117,7 +119,7 @@ exports.addIO = function (objName, ioName, plugin, type) {
     var objectID = HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
     if (globalVariables.debug) console.log("AddIO objectID: " + objectID + "   " + type);
 
-    objID = ioName + objectID;
+    //objID = ioName + objectID;
 
     if (!_.isUndefined(objectID) && !_.isNull(objectID)) {
 
@@ -129,8 +131,8 @@ exports.addIO = function (objName, ioName, plugin, type) {
                 objectExp[objectID].developer = globalVariables.developer;
                 objectExp[objectID].name = objName;
 
-                if (!objectExp[objectID].objectValues.hasOwnProperty(objID)) {
-                    var thisObject = objectExp[objectID].objectValues[objID] = new ObjectValue();
+                if (!objectExp[objectID].objectValues.hasOwnProperty(ioName)) {
+                    var thisObject = objectExp[objectID].objectValues[ioName] = new ObjectValue();
                     thisObject.x = HybridObjectsUtilities.randomIntInc(0, 200) - 100;
                     thisObject.y = HybridObjectsUtilities.randomIntInc(0, 200) - 100;
                     thisObject.frameSizeX = 47;
@@ -139,7 +141,7 @@ exports.addIO = function (objName, ioName, plugin, type) {
 
 
                 
-                var thisObj = objectExp[objectID].objectValues[objID];
+                var thisObj = objectExp[objectID].objectValues[ioName];
                 thisObj.name = ioName;
                 thisObj.plugin = plugin;
                 thisObj.type = type;

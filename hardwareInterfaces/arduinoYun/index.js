@@ -56,17 +56,17 @@ if (exports.enabled) {
     const GREEN_LED = "/sys/devices/platform/leds-gpio/leds/ds:green:usb/brightness";
 
     function ArduinoIndex() {
-        this.objName;
-        this.ioName;
-        this.index;
+        this.objName = null;
+        this.ioName = null;
+        this.index = null;
     }
 
     var ArduinoLookup = {};
+    var ArduinoLookupByIndex = {};
     var serialPortOpen = false;
 
 
     ledBlinker();
-
 
 
     //initialisation of the socket connection
@@ -154,7 +154,8 @@ if (exports.enabled) {
                     case 2:
                         value = parseFloat(data);
 
-                        server.writeIOToServer(obj, pos, value, valueMode);
+                        if (ArduinoLookupByIndex.hasOwnProperty(arrayID))
+                            server.writeIOToServer(ArduinoLookupByIndex[arrayID].objName, ArduinoLookupByIndex[arrayID].ioName, value, valueMode);
 
 
                         dataSwitch = 0;
@@ -178,6 +179,11 @@ if (exports.enabled) {
                         ArduinoLookup[obj + pos].objName = obj;
                         ArduinoLookup[obj + pos].ioName = pos;
                         ArduinoLookup[obj + pos].index = arrayID;
+
+                        ArduinoLookupByIndex[arrayID] = new ArduinoIndex();
+                        ArduinoLookupByIndex[arrayID].objName = obj;
+                        ArduinoLookupByIndex[arrayID].ioName = pos;
+                        ArduinoLookupByIndex[arrayID].index = arrayID;
 
                         server.addIO(obj, pos, thisPlugin, "arduinoYun");
 
@@ -215,9 +221,10 @@ if (exports.enabled) {
 
 
     function serialSender(serialPort, objName, ioName, value, mode, type) {
-
-        if (type === "arduinoYun") {
-            var index = ArduinoLookup[objName + ioName].index;
+        var object = objName + ioName;
+        // todo check if type is always arduino
+        if (type === "arduinoYun" && ArduinoLookup.hasOwnProperty(object)) {
+            var index = ArduinoLookup[object].index;
             var yunModes = ["f", "d", "p", "n"];
             if (_.includes(yunModes, mode)) {
                 serialPort.write(mode + "\n");
@@ -244,7 +251,8 @@ if (exports.enabled) {
     };
 
 
-    function noop_cb() { }
+    function noop_cb() {
+    }
 
     function blinkLed() {
         var onTime = 300;

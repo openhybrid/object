@@ -900,16 +900,14 @@ function objectWebServer() {
     // delete a link. *1 is the object *2 is the link id
     // ****************************************************************************************************************
     webServer.delete('/object/*/link/*/', function (req, res) {
-        debugConsole("delete 1");
-
-        debugConsole("i got a delete message");
+        
         var thisLinkId = req.params[1];
         var fullEntry = objectExp[req.params[0]].objectLinks[thisLinkId];
         var destinationIp = knownObjects[fullEntry.ObjectB];
 
         delete objectExp[req.params[0]].objectLinks[thisLinkId];
-
-        debugConsole(objectExp[req.params[0]].objectLinks);
+        debugConsole("deleted link: " + thisLinkId);
+       // debugConsole(objectExp[req.params[0]].objectLinks);
         actionSender(JSON.stringify({reloadLink: {id: req.params[0], ip: objectExp[req.params[0]].ip}}));
         HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
         res.send("deleted: " + thisLinkId + " in object: " + req.params[0]);
@@ -1625,18 +1623,23 @@ function socketServer(params) {
         });
 
         socket.on('object', function (msg) {
-            debugConsole("socketServer incoming: " + msg);
+          //  debugConsole("socketServer incoming: " + msg);
             var msgContent = JSON.parse(msg);
             // if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
             //	socket.objList.push(msgContent.obj);
             if ((msgContent.obj in objectExp) && typeof msgContent.value !== "undefined") {
                 if (msgContent.pos in objectExp[msgContent.obj].objectValues) {
-                    objectExp[msgContent.obj].objectValues[msgContent.pos].value = msgContent.value;
 
                     var objSend = objectExp[msgContent.obj].objectValues[msgContent.pos];
+                    objSend.value = msgContent.value;
+                    objSend.mode = msgContent.mode;
+
+                    objectExp[msgContent.obj].objectValues[msgContent.pos].value = msgContent.value;
+
+
 
                     if (hardwareInterfaceModules.hasOwnProperty(objSend.type)) {
-                        hardwareInterfaceModules[objSend.type].send(msgContent.obj, msgContent.pos, msgContent.value, msgContent.mode, msgContent.type);
+                        hardwareInterfaceModules[objSend.type].send(msgContent.obj, msgContent.pos, objSend.value, objSend.mode, objSend.type);
                     }
 
                     objectEngine(msgContent.obj, msgContent.pos, objectExp, dataPointModules);
@@ -1758,11 +1761,9 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 
         var objSend = objectExp[link.ObjectB].objectValues[link.locationInB];
         objSend.value = processedValue;
-
         // debugConsole("from the afterrun: " + mode);
         if (hardwareInterfaceModules.hasOwnProperty(objSend.type)) {
-            hardwareInterfaceModules[objSend.type].send(objectExp[link.ObjectB].name, objSend.name, objSend.value, objSend.mode, objSend.type);
-            //hardwareInterfaceModules[objSend.type].send(objectExp, link.ObjectB, link.locationInB, processedValue, mode);
+            hardwareInterfaceModules[objSend.type].send(link.ObjectB, link.locationInB, objSend.value, objSend.mode, objSend.type);
         }
         // send data to listening editor
         sendMessagetoEditors({obj: link.ObjectB, pos: link.locationInB, value: objSend.value, mode: objSend.mode});

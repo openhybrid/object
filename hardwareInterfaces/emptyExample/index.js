@@ -70,6 +70,8 @@ if (exports.enabled) {
      **/
     exports.send = function (objName, ioName, value, mode, type) {
 
+      //  console.log(objName+" : "+ ioName +" : "+ value +" : "+ mode +" : "+ type);
+
     };
 
     /**

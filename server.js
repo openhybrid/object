@@ -620,7 +620,7 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
 
             //debugConsole(JSON.stringify(thisId));
             // debugConsole(JSON.stringify( objectExp));
-            if (thisId in objectExp && thisId.length > 12) {
+            if (thisId in objectExp) {
                 // debugConsole("Sending beats... Content: " + JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
 
                 var message = new Buffer(JSON.stringify({

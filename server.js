@@ -205,6 +205,8 @@ function ObjectLink() {
     this.locationInB = 0;
     // Defines the type of the link destination. Currently this function is not in use.
     this.typeB = "";
+    // check that there is no endless loop in the system
+    this.endlessLoop = false;
     // Will be used to test if a link is still able to find its destination.
     // It needs to be discussed what to do if a link is not able to find the destination and for what time span.
     this.countLinkExistance = 0; // todo use this to test if link is still valid. If not able to send for some while, kill link.
@@ -488,8 +490,6 @@ function loadHybridObjects() {
  * @desc starting the system
  **/
 
-//var socketServer;
-
 function startSystem() {
 
     // generating a udp heartbeat signal for every object that is hosted in this device
@@ -505,26 +505,14 @@ function startSystem() {
     objectWebServer();
 
     // receives all socket connections and processes the data
-    // socketServerHelper();
-
-    // socketServer = new socketServer();
-
-
-    /*  socketServer.on("socketdisconnected", function(objList) {
-     console.log("", objList);
-     });
-     */
     socketServer();
-    // receives all serial calls and processes the data
-
 
     // initializes the first sockets to be opened to other objects
     socketUpdater();
+
     // keeps sockets to other objects alive based on the links found in the local objects
     // removes socket connections to objects that are no longer linked.
     socketUpdaterInterval();
-
-    // blink the LED at the arduino board
 
 }
 
@@ -551,7 +539,7 @@ process.on('SIGINT', exit);
 
 
 /**********************************************************************************************************************
- ******************************************** Emitter/Client/Sender Objects *******************************************
+ ******************************************** Emitter/Client/Sender ***************************************************
  **********************************************************************************************************************/
 
 /**
@@ -616,10 +604,6 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
     if (!oneTimeOnly) {
         setInterval(function () {
             // send the beat#
-            // if(thisId in objectLookup)
-
-            //debugConsole(JSON.stringify(thisId));
-            // debugConsole(JSON.stringify( objectExp));
             if (thisId in objectExp) {
                 // debugConsole("Sending beats... Content: " + JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
 
@@ -724,7 +708,6 @@ function objectBeatServer() {
     udpServer.on("message", function (msg) {
         var msgContent;
         // check if object ping
-        // if (globalVariables.debug)  debugConsole("I found new Objects: " + msg);
         msgContent = JSON.parse(msg);
         if (msgContent.hasOwnProperty("id") && msgContent.hasOwnProperty("ip") && !(msgContent.id in objectExp) && !(msgContent.id in knownObjects)) {
             knownObjects[msgContent.id] = msgContent.ip;
@@ -774,7 +757,7 @@ function objectWebServer() {
         extended: true
     }));
     webServer.use(bodyParser.json());
-    // devine a couple of static directory routs
+    // define a couple of static directory routs
 
 
     webServer.use('/objectDefaultFiles', express.static(__dirname + '/libraries/objectDefaultFiles/'));
@@ -806,23 +789,9 @@ function objectWebServer() {
             next();
     }, express.static(__dirname + '/objects/'));
 
-    //webServer.get("/obj/objectDefaultFiles/*", express.static(__dirname + '/libraries/objectDefaultFiles/' + req.params[0]));
-
-    //   webServer.use("/obj", express.static(__dirname + '/objects/'));
-
-    //  webServer.use("/objectDefaultFiles", express.static(__dirname + '/libraries/objectDefaultFiles/'));
 
     if (globalVariables.developer === true) {
         webServer.use("/libraries", express.static(__dirname + '/libraries/webInterface/'));
-        webServer.use(express.static(__dirname + '/libraries/webInterface/'));
-
-        webServer.use("/target/js", express.static(__dirname + '/libraries/webInterface/js/'));
-        webServer.use("/target", express.static(__dirname + '/libraries/webInterface/js/'));
-        webServer.use("/content/js", express.static(__dirname + '/libraries/webInterface/js/'));
-        webServer.use("/content/fonts", express.static(__dirname + '/libraries/webInterface/fonts/'));
-        webServer.use("/js", express.static(__dirname + '/libraries/webInterface/js/'));
-        webServer.use("/info/js", express.static(__dirname + '/libraries/webInterface/js/'));
-
     }
 
     // use the cors cross origin REST model
@@ -830,84 +799,25 @@ function objectWebServer() {
     // allow requests from all origins with '*'. TODO make it dependent on the local network. this is important for security
     webServer.options('*', cors());
 
-    // adding a new link to an object. *1 is the object *2 is the link id
+    // sends json object for a specific hybrid object. * is the object name
+    // ths is the most relevant for
     // ****************************************************************************************************************
-    webServer.post('/object/*/link/*/', function (req, res) {
-
-        //  debugConsole("post 1");
-
-        var updateStatus = "nothing happened";
-
-        if (objectExp.hasOwnProperty(req.params[0])) {
-            objectExp[req.params[0]].objectLinks[req.params[1]] = req.body;
-
-            // call an action that asks all devices to reload their links, once the links are changed.
-            actionSender(JSON.stringify({reloadLink: {id: req.params[0], ip: objectExp[req.params[0]].ip}}));
-            updateStatus = "added";
-
-            // check if there are new connections associated with the new link.
-            socketUpdater();
-
-            // write the object state to the permanent storage.
-            HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
-            res.send(updateStatus);
-        }
-    });
-
-    // changing the size and possition of an item. *1 is the object *2 is the datapoint id
-    // ****************************************************************************************************************
-    webServer.post('/object/*/size/*/', function (req, res) {
-        // debugConsole("post 2");
-        var updateStatus = "nothing happened";
-        var thisObject = req.params[0];
-        var thisValue = req.params[1];
-
-        var tempObject = {};
-        if (thisObject === thisValue) {
-            tempObject = objectExp[thisObject];
-        } else {
-            tempObject = objectExp[thisObject].objectValues[thisValue];
-        }
-
-        // check that the numbers are valid numbers..
-        if (typeof req.body.x === "number" && typeof req.body.y === "number" && typeof req.body.scale === "number") {
-
-            // if the object is equal the datapoint id, the item is actually the object it self.
-
-            tempObject.x = req.body.x;
-            tempObject.y = req.body.y;
-            tempObject.scale = req.body.scale;
-            // console.log(req.body);
-            // ask the devices to reload the objects
-        }
-
-
-        if (typeof req.body.matrix === "object") {
-
-            tempObject.matrix = req.body.matrix;
-        }
-
-        if ((typeof req.body.x === "number" && typeof req.body.y === "number" && typeof req.body.scale === "number") || (typeof req.body.matrix === "object" )) {
-            HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
-
-            actionSender(JSON.stringify({reloadObject: {id: thisObject, ip: objectExp[thisObject].ip}}));
-            updateStatus = "added object";
-        }
-
-        res.send(updateStatus);
+    webServer.get('/object/*/', function (req, res) {
+        //  debugConsole("get 7");
+        res.json(objectExp[req.params[0]]);
     });
 
     // delete a link. *1 is the object *2 is the link id
     // ****************************************************************************************************************
     webServer.delete('/object/*/link/*/', function (req, res) {
-        
+
         var thisLinkId = req.params[1];
         var fullEntry = objectExp[req.params[0]].objectLinks[thisLinkId];
         var destinationIp = knownObjects[fullEntry.ObjectB];
 
         delete objectExp[req.params[0]].objectLinks[thisLinkId];
         debugConsole("deleted link: " + thisLinkId);
-       // debugConsole(objectExp[req.params[0]].objectLinks);
+        // debugConsole(objectExp[req.params[0]].objectLinks);
         actionSender(JSON.stringify({reloadLink: {id: req.params[0], ip: objectExp[req.params[0]].ip}}));
         HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
         res.send("deleted: " + thisLinkId + " in object: " + req.params[0]);
@@ -928,143 +838,106 @@ function objectWebServer() {
         }
     });
 
-    // request a link. *1 is the object *2 is the link id
+    // adding a new link to an object. *1 is the object *2 is the link id
     // ****************************************************************************************************************
-    webServer.get('/object/*/link/:id', function (req, res) {
-        // debugConsole("get 1");
-        res.send(objectExp[req.params[0]].objectLinks[req.params.id]);
+    webServer.post('/object/*/link/*/', function (req, res) {
+
+        var updateStatus = "nothing happened";
+
+        if (objectExp.hasOwnProperty(req.params[0])) {
+
+
+            objectExp[req.params[0]].objectLinks[req.params[1]] = req.body;
+
+            var thisObject = objectExp[req.params[0]].objectLinks[req.params[1]];
+
+            thisObject.endlessLoop = false;
+
+
+            // todo the first link in a chain should carry a UUID that propagates through the entire chain each time a change is done to the chain.
+            // todo endless loops should be checked by the time of creation of a new loop and not in the Engine
+            if (thisObject.locationInA === thisObject.locationInB && thisObject.ObjectA === thisObject.ObjectB) {
+                thisObject.endlessLoop = true;
+            }
+
+            if (!thisObject.endlessLoop) {
+                // call an action that asks all devices to reload their links, once the links are changed.
+                actionSender(JSON.stringify({reloadLink: {id: req.params[0], ip: objectExp[req.params[0]].ip}}));
+                updateStatus = "added";
+                debugConsole("added link: " + req.params[1]);
+                // check if there are new connections associated with the new link.
+                socketUpdater();
+
+                // write the object state to the permanent storage.
+                HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
+            } else {
+                updateStatus = "found endless Loop";
+            }
+
+
+            res.send(updateStatus);
+        }
     });
 
-    // request all link. *1 is the object
+    // changing the size and possition of an item. *1 is the object *2 is the datapoint id
     // ****************************************************************************************************************
-    webServer.get('/object/*/link', function (req, res) {
-        //  debugConsole("get 2");
-        res.send(objectExp[req.params[0]].objectLinks);
-    });
 
-    // request a zip-file with the object stored inside. *1 is the object
-    // ****************************************************************************************************************
-    webServer.get('/object/*/zipBackup/', function (req, res) {
-        //  debugConsole("get 3");
-        res.writeHead(200, {
-            'Content-Type': 'application/zip',
-            'Content-disposition': 'attachment; filename=HybridObjectBackup.zip'
+    if (globalVariables.developer === true) {
+        webServer.post('/object/*/size/*/', function (req, res) {
+
+            // debugConsole("post 2");
+            var updateStatus = "nothing happened";
+            var thisObject = req.params[0];
+            var thisValue = req.params[1];
+
+            debugConsole("changing Size for :" + thisObject + " : " + thisValue);
+
+            var tempObject = {};
+            if (thisObject === thisValue) {
+                tempObject = objectExp[thisObject];
+            } else {
+                tempObject = objectExp[thisObject].objectValues[thisValue];
+            }
+
+            // check that the numbers are valid numbers..
+            if (typeof req.body.x === "number" && typeof req.body.y === "number" && typeof req.body.scale === "number") {
+
+                // if the object is equal the datapoint id, the item is actually the object it self.
+
+                tempObject.x = req.body.x;
+                tempObject.y = req.body.y;
+                tempObject.scale = req.body.scale;
+                // console.log(req.body);
+                // ask the devices to reload the objects
+            }
+
+
+            if (typeof req.body.matrix === "object") {
+
+                tempObject.matrix = req.body.matrix;
+            }
+
+            if ((typeof req.body.x === "number" && typeof req.body.y === "number" && typeof req.body.scale === "number") || (typeof req.body.matrix === "object" )) {
+                HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
+
+                actionSender(JSON.stringify({reloadObject: {id: thisObject, ip: objectExp[thisObject].ip}}));
+                updateStatus = "added object";
+            }
+
+            res.send(updateStatus);
         });
+    }
 
-        var Archiver = require('archiver');
-
-        var zip = Archiver('zip', false);
-        zip.pipe(res);
-        zip.directory(__dirname + "/objects/" + req.params[0], req.params[0] + "/");
-        zip.finalize();
-    });
-
-    // Send the programming interface static web content
+    // Send the programming interface static web content [This is the older form. Consider it deprecated.
     // ****************************************************************************************************************
     webServer.get('/obj/dataPointInterfaces/*/*/', function (req, res) {   // watch out that you need to make a "/" behind request.
-        res.sendFile(__dirname + "/dataPointInterfaces/" + req.params[0] + '/www/' + req.params[1]);
+        res.sendFile(__dirname + "/dataPointInterfaces/" + req.params[0] + '/gui/' + req.params[1]);
     });
 
+    // this is the newer form. 
+    // in future the data programming interface should be accessable directly like so. because the obj is reserved for the object content only
     webServer.get('/dataPointInterfaces/*/*/', function (req, res) {   // watch out that you need to make a "/" behind request.
-        res.sendFile(__dirname + "/dataPointInterfaces/" + req.params[0] + '/www/' + req.params[1]);
-    });
-
-
-    // general overview of all the hybrid objects - html response
-    // ****************************************************************************************************************
-    webServer.get('/object/*/html', function (req, res) {
-        var msg = [];
-        var hoVals, hoLinks, subKey;
-        var objectName = req.params[0];
-        var hybridObject = objectExp[objectName];
-
-        msg.push("<html><head><meta http-equiv='refresh' content='3.3' /><title>", objectName, "</title></head>\n<body>\n");
-        msg.push("<table border='0' cellpadding='10'>\n<tr>\n<td align='left' valign='top'>\n");
-        msg.push("Values for ", objectName, ":<br>\n\n<table border='1'>\n<tr><td>ID</td><td>Value</td></tr>\n");
-
-        if (!_.isUndefined(hybridObject)) {
-            hoVals = hybridObject.objectValues;
-            for (subKey in hoVals) {
-                msg.push("<tr><td>", subKey, "</td><td>", hoVals[subKey].value, "</td></tr>\n");
-            }
-        }
-        msg.push("</table>\n</td>\n<td align='left' valign='top'>\n\n");
-
-        msg.push("Links:<br>\n\n<table border='1'>\n<tr><td>ID</td><td>ObjectA</td><td>locationInA</td><td>ObjectB</td><td>locationInB</td></tr>\n");
-
-        if (!_.isUndefined(hybridObject)) {
-            hoLinks = hybridObject.objectLinks;
-            for (subKey in hoLinks) {
-                msg.push("  <tr><td>", subKey, "</td><td>", hoLinks[subKey].ObjectA, "</td><td>", hoLinks[subKey].locationInA, "</td>");
-                msg.push("<td>", hoLinks[subKey].ObjectB, "</td><td>", hoLinks[subKey].locationInB, "</td></tr>\n");
-            }
-        }
-
-        msg.push("</table>\n</td></tr>\n</table>\n");
-
-        msg.push("<table border='0' cellpadding='10'>\n<tr><td align='left' valign='top'>\n");
-        msg.push("Interface:<br>\n\n<table border='1'>\n");
-
-        for (subKey in hybridObject) {
-            msg.push("  <tr><td>", subKey, "</td><td>", hybridObject[subKey], "</td></tr>\n");
-        }
-        msg.push("</table>\n</td>\n<td align='left' valign='top'>");
-
-
-        msg.push("Known Objects:<br>\n\n<table border='1'>\n");
-        for (subKey in knownObjects) {
-            msg.push("  <tr><td>", subKey, "</td><td>", knownObjects[subKey], "</td></tr>\n");
-        }
-        msg.push("</table>\n</td><td align='left' valign='top'>");
-
-        socketIndicator();
-
-        msg.push("Socket Activity:<br>\n<table border='1'>\n");
-        for (subKey in sockets) {
-            if (subKey !== "socketsOld" && subKey !== "connectedOld" && subKey !== "notConnectedOld")
-                msg.push("  <tr><td>", subKey, "</td><td>", sockets[subKey], "</td></tr>\n");
-        }
-
-        msg.push("</table>\n</td></tr>\n</table>\n");
-        msg.push("</body></html>");
-
-        res.send(msg.join(""));
-
-
-    });
-
-    // sends json object for a specific hybrid object. * is the object name
-    // ****************************************************************************************************************
-    webServer.get('/object/*/', function (req, res) {
-        //  debugConsole("get 7");
-        res.json(objectExp[req.params[0]]);
-    });
-
-    webServer.get('/object/*/thisObject', function (req, res) {
-        //  debugConsole("get 8");
-        res.json(objectExp[req.params[0]]);
-    });
-
-    // sends all json object values for a specific hybrid object. * is the object name
-    // ****************************************************************************************************************
-    webServer.get('/object/*/value', function (req, res) {
-        //   debugConsole("get 9");
-        res.json(objectExp[req.params[0]].objectValues);
-    });
-
-    // sends a specific value for a specific hybrid object. * is the object name :id is the value name
-    // ****************************************************************************************************************
-    webServer.get('/object/*/value/:id', function (req, res) {
-        //  debugConsole("get 10");
-        res.send({value: objectExp[req.params[0]].objectValues[req.params.id].value});
-    });
-
-    // sends a specific json object value for a specific hybrid object. * is the object name :id is the value name
-    // ****************************************************************************************************************
-
-    webServer.get('/object/*/value/full/:id', function (req, res) {
-        //  debugConsole("get 11");
-        res.json(objectExp[req.params[0]].objectValues[req.params.id]);
+        res.sendFile(__dirname + "/dataPointInterfaces/" + req.params[0] + '/gui/' + req.params[1]);
     });
 
     // ****************************************************************************************************************
@@ -1081,7 +954,7 @@ function objectWebServer() {
             res.send(HybridObjectsWebFrontend.uploadInfoText(req.params.id, objectLookup, objectExp, knownObjects, sockets));
         });
 
-        webServer.get(objectInterfaceFolder + 'infoContent/:id', function (req, res) {
+        webServer.get(objectInterfaceFolder + 'infoLoadData/:id', function (req, res) {
             // debugConsole("get 12");
             res.send(HybridObjectsWebFrontend.uploadInfoContent(req.params.id, objectLookup, objectExp, knownObjects, sockets));
         });
@@ -1102,15 +975,31 @@ function objectWebServer() {
         });
 
         webServer.get(objectInterfaceFolder + 'target/*/*/', function (req, res) {
-            //  debugConsole("get 15");
             res.sendFile(__dirname + '/' + req.params[0] + '/' + req.params[1]);
         });
 
-        // sends the object folder?? //todo what is this for?
+        // Send the main starting page for the web user interface
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder, function (req, res) {
             // debugConsole("get 16");
             res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup, version));
+        });
+
+        // request a zip-file with the object stored inside. *1 is the object
+        // ****************************************************************************************************************
+        webServer.get('/object/*/zipBackup/', function (req, res) {
+            //  debugConsole("get 3");
+            res.writeHead(200, {
+                'Content-Type': 'application/zip',
+                'Content-disposition': 'attachment; filename=HybridObjectBackup.zip'
+            });
+
+            var Archiver = require('archiver');
+
+            var zip = Archiver('zip', false);
+            zip.pipe(res);
+            zip.directory(__dirname + "/objects/" + req.params[0], req.params[0] + "/");
+            zip.finalize();
         });
 
         // ****************************************************************************************************************
@@ -1544,9 +1433,7 @@ function objectWebServer() {
     }
 }
 
-// relies on ip
-
-
+// TODO this should move to the utilities section
 //createObjectFromTarget(ObjectExp, objectExp, tmpFolderFile, __dirname, objectLookup, hardwareInterfaceModules, objectBeatSender, beatPort, globalVariables.debug);
 
 function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, objectLookup, hardwareInterfaceModules, objectBeatSender, beatPort, debug) {
@@ -1604,9 +1491,6 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
  * @desc Check for incoming MSG from other objects or the User. Make changes to the objectValues if changes occur.
  **/
 
-
-//todo this function needs to be checked very intense
-
 function socketServer(params) {
 
     io.on('connection', function (socket) {
@@ -1623,10 +1507,9 @@ function socketServer(params) {
         });
 
         socket.on('object', function (msg) {
-          //  debugConsole("socketServer incoming: " + msg);
+
             var msgContent = JSON.parse(msg);
-            // if (socket.objList.indexOf(msgContent.obj) ===-1) // Add objet to interested list
-            //	socket.objList.push(msgContent.obj);
+
             if ((msgContent.obj in objectExp) && typeof msgContent.value !== "undefined") {
                 if (msgContent.pos in objectExp[msgContent.obj].objectValues) {
 
@@ -1635,8 +1518,6 @@ function socketServer(params) {
                     objSend.mode = msgContent.mode;
 
                     objectExp[msgContent.obj].objectValues[msgContent.pos].value = msgContent.value;
-
-
 
                     if (hardwareInterfaceModules.hasOwnProperty(objSend.type)) {
                         hardwareInterfaceModules[objSend.type].send(msgContent.obj, msgContent.pos, objSend.value, objSend.mode, objSend.type);
@@ -1647,22 +1528,10 @@ function socketServer(params) {
             }
         });
 
-        // this is only for down compatibility
+        // this is only for down compatibility for when the UI would request a readRequest
         socket.on('/object/value', function (msg) {
             var msgContent = JSON.parse(msg);
             messagetoSend(msgContent, socket.id);
-        });
-
-        socket.on('/object/value/full', function (msg) {
-            var msgContent = JSON.parse(msg);
-
-            var msgToSend = JSON.stringify({
-                obj: msgContent.obj,
-                pos: msgContent.pos,
-                value: objectExp[msgContent.obj].objectValues[msgContent.pos + msgContent.obj]
-            });
-
-            io.sockets.connected[socket.id].emit('object', msgToSend);
         });
 
         socket.on('disconnect', function () {
@@ -1713,26 +1582,13 @@ function objectEngine(obj, pos, objectExp, dataPointModules) {
     var key;
     for (key in objectExp[obj].objectLinks) {
         if (objectExp[obj].objectLinks[key].locationInA === pos) {
-            var endlessLoop = false;
 
-            if (pos === objectExp[obj].objectLinks[key].locationInB && objectExp[obj].objectLinks[key].ObjectA === objectExp[obj].objectLinks[key].ObjectB) {
-                endlessLoop = true;
-            }
+            var thisData = objectExp[obj].objectValues[pos];
 
-            if (!endlessLoop) {
-                // preparation for later when values can be from different types.
-
-                //var thisPlugin = objectExp[obj].objectValues[pos].plugin;
-                // var thisData = objectExp[obj].objectValues[pos].value;
-
-                var thisData = objectExp[obj].objectValues[pos];
-
-                if ((thisData.plugin in dataPointModules)) {
-                    dataPointModules[thisData.plugin](obj, key, thisData.value, thisData.mode, function (obj, linkPos, processedValue, mode) {
-                        afterPluginProcessing(obj, linkPos, processedValue, mode);
-                        // debugConsole("from the enginehouse a bit later: " + mode);
-                    });
-                }
+            if ((thisData.plugin in dataPointModules)) {
+                dataPointModules[thisData.plugin](obj, key, thisData.value, thisData.mode, function (obj, linkPos, processedValue, mode) {
+                    afterPluginProcessing(obj, linkPos, processedValue, mode);
+                });
             }
         }
     }
@@ -1748,12 +1604,6 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
     var link = objectExp[obj].objectLinks[linkPos];
 
     if (!(link.ObjectB in objectExp)) {
-        // check if object is in the same object
-
-        // send value to socketSender, ig object is external
-
-        // this is where it also should be send to the Reality Editor if the reality editor is present;
-        // todo send content to Reality Editor
 
         socketSender(obj, linkPos, processedValue, mode);
     }
@@ -1761,16 +1611,14 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 
         var objSend = objectExp[link.ObjectB].objectValues[link.locationInB];
         objSend.value = processedValue;
-        // debugConsole("from the afterrun: " + mode);
+
         if (hardwareInterfaceModules.hasOwnProperty(objSend.type)) {
             hardwareInterfaceModules[objSend.type].send(link.ObjectB, link.locationInB, objSend.value, objSend.mode, objSend.type);
         }
         // send data to listening editor
         sendMessagetoEditors({obj: link.ObjectB, pos: link.locationInB, value: objSend.value, mode: objSend.mode});
         objectEngine(link.ObjectB, link.locationInB, objectExp, dataPointModules);
-
     }
-
 }
 
 /**
@@ -1781,7 +1629,7 @@ function socketSender(obj, linkPos, processedValue, mode) {
     var link = objectExp[obj].objectLinks[linkPos];
     var msg = JSON.stringify({obj: link.ObjectB, pos: link.locationInB, value: processedValue, mode: mode});
 
-    //todo this should be rewritten with handling an aeeay of connected objects similar the connected Reality Editors
+    //todo this should be rewritten with handling an array of connected objects similar the connected Reality Editors
     if (!(link.ObjectB in objectExp)) {
         try {
             var objIp = knownObjects[link.ObjectB];

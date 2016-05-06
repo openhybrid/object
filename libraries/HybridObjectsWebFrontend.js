@@ -56,8 +56,8 @@ exports.printFolder = function (objectExp, dirnameO, debug, objectInterfaceFolde
         "<html>" +
         "<head>" +
         "<meta charset=='utf-8'>" +
-        "<link rel='stylesheet' href='js/bootstrap.min.css'>" +
-        '   <script src="js/dropzone.js"></script>\n' +
+        "<link rel='stylesheet' href='../libraries/css/bootstrap.min.css'>" +
+        '   <script src="../libraries/js/dropzone.js"></script>\n' +
         '    <style>\n' +
         '        #total-progress {\n' +
         '            opacity: 0;\n' +
@@ -282,8 +282,8 @@ exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, 
     var text = '<html>\n' +
         '<head>\n' +
         '<head>'+
-        '    <link rel="stylesheet" href="js/bootstrap.min.css">\n' +
-        '    <link rel="stylesheet" href="js/bootstrap-theme.min.css">\n' +
+        '    <link rel="stylesheet" href="../libraries/css/bootstrap.min.css">\n' +
+        '    <link rel="stylesheet" href="../libraries/css/bootstrap-theme.min.css">\n' +
         '</head>\n' +
         '<body style="height:100vh; width: 100%">\n' +
         '<div class="container" id="container" style="width: 750px;">\n' +
@@ -310,7 +310,7 @@ exports.uploadInfoText = function (parm, objectLookup, objectExp, knownObjects, 
 
        ' }'+
     '}; ' +
-        'xhr.open("GET", "/infoContent/'+parm+'", true);'+
+        'xhr.open("GET", "/infoLoadData/'+parm+'", true);'+
  '   xhr.setRequestHeader("Content-type", "text/html");'+
   '  xhr.send();'+
 '}'+
@@ -485,7 +485,7 @@ exports.uploadInfoContent = function (parm, objectLookup, objectExp, knownObject
     // fill objectExp with objects named by the folders in objects
     // objectExp[tempFolderName] = new ObjectExp();
     // objectExp[tempFolderName].folder = tempFiles[i];
-}
+};
 
 
 
@@ -503,9 +503,9 @@ exports.uploadTargetText = function (parm, objectLookup, objectExp) {
         '<html>\n' +
         '<head>\n' +
         '   <meta charset="utf-8">\n' +
-        '   <link rel="stylesheet" href="js/bootstrap.min.css">\n' +
-        '   <link rel="stylesheet" href="js/bootstrap-theme.min.css">\n' +
-        '   <script src="js/dropzone.js"></script>\n' +
+        '   <link rel="stylesheet" href="../libraries/css/bootstrap.min.css">\n' +
+        '   <link rel="stylesheet" href="../libraries/css/bootstrap-theme.min.css">\n' +
+        '   <script src="../libraries/js/dropzone.js"></script>\n' +
         '    <style>\n' +
         '        #total-progress {\n' +
         '            opacity: 0;\n' +
@@ -535,7 +535,7 @@ exports.uploadTargetText = function (parm, objectLookup, objectExp) {
         '            <button class="btn btn-info" id="copy-button" data-clipboard-text="' + objectName + '"' +
         '                    title="Click to copy me.">Copy Object Name to Clipboard' +
         '            </button>' +
-        '    <script src="js/ZeroClipboard.js"></script>' +
+        '    <script src="../libraries/js/ZeroClipboard.js"></script>' +
         '    <script>' +
         '    var client = new ZeroClipboard( document.getElementById("copy-button") );' +
         '</script>' +
@@ -685,9 +685,9 @@ exports.uploadTargetContent = function (parm, dirname0, objectInterfaceFolder) {
         '<html>\n' +
         '<head>\n' +
         '<head>\n' +
-        '    <link rel="stylesheet" href="js/bootstrap.min.css">\n' +
-        '    <link rel="stylesheet" href="js/bootstrap-theme.min.css">\n' +
-        '   <script src="js/dropzone.js"></script>\n' +
+        '    <link rel="stylesheet" href="../libraries/css/bootstrap.min.css">\n' +
+        '    <link rel="stylesheet" href="../libraries/css/bootstrap-theme.min.css">\n' +
+        '   <script src="../libraries/js/dropzone.js"></script>\n' +
         '    <style>\n' +
         '        #total-progress {\n' +
         '            opacity: 0;\n' +

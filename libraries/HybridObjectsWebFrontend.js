@@ -449,11 +449,11 @@ exports.uploadInfoContent = function (parm, objectLookup, objectExp, knownObject
         '   <table class="table table-striped">\n' +
         '        <thead>\n' +
         '        <tr>\n' +
-        '            <th class="info">Active Link ID</th>\n' +
-        '            <th class="info">Origin</th>\n' +
-        '            <th class="info">Location in O.</th>\n' +
-        '            <th class="info">Destination</td>\n' +
-        '            <th class="info">Location in D.</th>\n' +
+        '            <th class="info"><small>Active Link ID</small></th>\n' +
+        '            <th class="info"><small>Origin Object</small></th>\n' +
+        '            <th class="info"><small>Origin Possition</small></th>\n' +
+        '            <th class="info"><small>Destination Object</small></td>\n' +
+        '            <th class="info"><small>Destination Possition</small></th>\n' +
         '        </tr>\n' +
         '        </thead>\n' +
         '        <tbody>\n';
@@ -461,7 +461,12 @@ exports.uploadInfoContent = function (parm, objectLookup, objectExp, knownObject
 
     infoCount = 0;
     for (subKey in uploadInfoTexttempArray) {
-        text += '<tr> <td><font size="2">' + subKey + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].ObjectA + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].locationInA + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].ObjectB + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].locationInB + '</font></td></tr>\n';
+        if(uploadInfoTexttempArray[subKey].hasOwnProperty("ObjectNameA"))
+        text += '<tr> <td><font size="2">' + subKey + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].ObjectNameA + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].locationInA + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].ObjectNameB + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].locationInB + '</font></td></tr>\n';
+        else
+            text += '<tr> <td><font size="2">' + subKey + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].ObjectA + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].locationInA + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].ObjectB + '</font></td><td><font size="2">' + uploadInfoTexttempArray[subKey].locationInB + '</font></td></tr>\n';
+
+
         infoCount++;
     }
 

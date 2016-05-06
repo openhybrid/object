@@ -196,7 +196,7 @@ function ObjectLink() {
     // The origin IOPoint from where the link is taking its data from
     this.locationInA = 0;
     // Defines the type of the link origin. Currently this function is not in use.
-    this.typeA = "";
+    this.ObjectNameA = "";
     // The destination object to where the origin object is sending data to.
     // At this point the destination object accepts all incoming data and routs the data according to the link data sent.
     this.ObjectB = null;
@@ -204,7 +204,7 @@ function ObjectLink() {
     // ObjectB and locationInB will be send with each data package.
     this.locationInB = 0;
     // Defines the type of the link destination. Currently this function is not in use.
-    this.typeB = "";
+    this.ObjectNameB = "";
     // check that there is no endless loop in the system
     this.endlessLoop = false;
     // Will be used to test if a link is still able to find its destination.

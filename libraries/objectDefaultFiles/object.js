@@ -143,6 +143,16 @@ function HybridObject() {
 
     };
 
+    this.addMatrixListener = function (callback) {
+        window.addEventListener("message", function (MSG) {
+            var msg = JSON.parse(MSG.data);
+            if (typeof msg.modelViewMatrix !== "undefined") {
+                callback(msg.modelViewMatrix, objectExp.projectionMatrix);
+            }
+        }, false);
+
+    };
+
     // subscriptions
     this.subscribeToMatrix = function() {
         objectExpSendMatrix = true;
@@ -218,20 +228,20 @@ function HybridObject() {
     };
     
     this.getPossitionX = function() {
-        if (typeof objectExp.modelViewMatrix[3][0] !== "undefined") {
-            return objectExp.modelViewMatrix[3][0];
+        if (typeof objectExp.modelViewMatrix[12] !== "undefined") {
+            return objectExp.modelViewMatrix[12];
         } else return undefined;
     };
 
     this.getPossitionY = function() {
-        if (typeof objectExp.modelViewMatrix[3][1] !== "undefined") {
-            return objectExp.modelViewMatrix[3][1];
+        if (typeof objectExp.modelViewMatrix[13] !== "undefined") {
+            return objectExp.modelViewMatrix[13];
         } else return undefined;
     };
 
     this.getPossitionZ = function() {
-        if (typeof objectExp.modelViewMatrix[3][2] !== "undefined") {
-            return objectExp.modelViewMatrix[3][2];
+        if (typeof objectExp.modelViewMatrix[14] !== "undefined") {
+            return objectExp.modelViewMatrix[14];
         } else return undefined;
     };
 

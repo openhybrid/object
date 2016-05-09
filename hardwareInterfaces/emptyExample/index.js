@@ -83,22 +83,22 @@ if (exports.enabled) {
 
 
 
-            server.addIO("bluestone", "one", "default", "emptyExample");
-            server.addIO("bluestone", "two", "default", "emptyExample");
-            server.addIO("bluestone", "three", "default", "emptyExample");
-            server.addIO("bluestone", "four", "default", "emptyExample");
+            server.addIO("obj45", "one", "default", "emptyExample");
+            server.addIO("obj45", "two", "default", "emptyExample");
+            server.addIO("obj45", "three", "default", "emptyExample");
+            server.addIO("obj45", "four", "default", "emptyExample");
 
-        server.addIO("brownstone", "one1", "default", "emptyExample");
-        server.addIO("brownstone", "two2", "default", "emptyExample");
+        server.addIO("obj46", "one1", "default", "emptyExample");
+        server.addIO("obj46", "two2", "default", "emptyExample");
 
-        server.clearIO("bluestone");
-        server.clearIO("brownstone");
+        server.clearIO("obj45");
+        server.clearIO("obj46");
 
 
 console.log("printthatshit");
         setInterval(function(){
          
-            server.writeIOToServer("bluestone", "one", Math.random(), "f");
+            server.writeIOToServer("obj45", "one", Math.random(), "f");
 
         }, 100);
 

@@ -115,7 +115,7 @@ var express = require('express'); // Web Sever library
 // constrution for the werbserver using express combined with socket.io
 var webServer = express();
 var http = require('http').createServer(webServer).listen(serverPort, function () {
-    debugConsole('webserver + socket.io is listening on port: ' + serverPort);
+    cout('webserver + socket.io is listening on port: ' + serverPort);
 });
 var io = require('socket.io')(http); // Websocket library
 var socket = require('socket.io-client'); // websocket client source
@@ -326,7 +326,7 @@ var sockets = {
  **********************************************************************************************************************/
 
 
-debugConsole("Starting the Server");
+cout("Starting the Server");
 
 // get a list with the names for all IO-Points, based on the folder names in the dataPointInterfaces folder folder.
 // Each folder represents on IO-Point.
@@ -344,8 +344,8 @@ for (var i = 0; i < DataPointFolderList.length; i++) {
     dataPointModules[DataPointFolderList[i]] = require(modulePath + '/' + DataPointFolderList[i] + "/index.js").render;
 }
 
-debugConsole("Initialize System: ");
-debugConsole("Loading Hardware interfaces");
+cout("Initialize System: ");
+cout("Loading Hardware interfaces");
 // set all the initial states for the Hardware Interfaces in order to run with the Server.
 HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, __dirname, dataPointModules, function (objKey2, valueKey, value, mode, objectExp, dataPointModules) {
 
@@ -355,15 +355,15 @@ HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, 
     objectEngine(objKey2, valueKey, objectExp, dataPointModules);
 
 }, ObjectValue);
-debugConsole("Done");
+cout("Done");
 
-debugConsole("Loading Hybrid Objects");
+cout("Loading Hybrid Objects");
 // This function will load all the Hybrid Objects
 loadHybridObjects();
-debugConsole("Done");
+cout("Done");
 
 startSystem();
-debugConsole("started");
+cout("started");
 
 
 // get the directory names of all available plugins for the 3D-UI
@@ -385,7 +385,7 @@ for (var i = hardwareInterfacesFolderList.length - 1; i >= 0; i--) {
     }
 }
 
-debugConsole("ready to start internal servers");
+cout("ready to start internal servers");
 
 // starting the internal servers (receive)
 for (var i = 0; i < hardwareInterfacesFolderList.length; i++) {
@@ -393,8 +393,8 @@ for (var i = 0; i < hardwareInterfacesFolderList.length; i++) {
     hardwareInterfaceModules[hardwareInterfacesFolderList[i]].receive();
 }
 
-debugConsole("found " + hardwareInterfacesFolderList.length + " internal server");
-debugConsole("starting internal Server.");
+cout("found " + hardwareInterfacesFolderList.length + " internal server");
+cout("starting internal Server.");
 
 
 /**
@@ -413,7 +413,7 @@ function getFileExtension(fileName) {
  * @desc Add objects from the objects folder to the system
  **/
 function loadHybridObjects() {
-    debugConsole("Enter loadHybridObjects");
+    cout("Enter loadHybridObjects");
     // check for objects in the objects folder by reading the objects directory content.
     // get all directory names within the objects directory
     var HybridObjectFolderList = fs.readdirSync(objectPath).filter(function (file) {
@@ -426,12 +426,12 @@ function loadHybridObjects() {
             HybridObjectFolderList.splice(0, 1);
         }
     } catch (e) {
-        debugConsole("no hidden files");
+        cout("no hidden files");
     }
 
     for (var i = 0; i < HybridObjectFolderList.length; i++) {
         var tempFolderName = HybridObjectsUtilities.getObjectIdFromTarget(HybridObjectFolderList[i], __dirname);
-        debugConsole("TempFolderName: " + tempFolderName);
+        cout("TempFolderName: " + tempFolderName);
 
         if (tempFolderName !== null) {
             // fill objectExp with objects named by the folders in objects
@@ -461,19 +461,19 @@ function loadHybridObjects() {
                 // data comes always from the arduino....
                 // clear = true;
 
-                debugConsole("I found objects that I want to add");
-                debugConsole("---");
-                debugConsole(ArduinoLookupTable);
-                debugConsole("---");
+                cout("I found objects that I want to add");
+                cout("---");
+                cout(ArduinoLookupTable);
+                cout("---");
 
             } catch (e) {
                 objectExp[tempFolderName].ip = ip.address();
                 objectExp[tempFolderName].objectId = tempFolderName;
-                debugConsole("No saved data for: " + tempFolderName);
+                cout("No saved data for: " + tempFolderName);
             }
 
         } else {
-            debugConsole(" object " + HybridObjectFolderList[i] + " has no marker yet");
+            cout(" object " + HybridObjectFolderList[i] + " has no marker yet");
         }
     }
 
@@ -559,7 +559,7 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
 
     var HOST = '255.255.255.255';
 
-    debugConsole("creating beat for object: " + thisId);
+    cout("creating beat for object: " + thisId);
     objectExp[thisId].version = version;
     var thisVersionNumber = parseInt(objectExp[thisId].version.replace(/\./g, ""));
 
@@ -568,7 +568,7 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
     }
 
     // ObjectExp
-    debugConsole("with version number: " + thisVersionNumber);
+    cout("with version number: " + thisVersionNumber);
 
     // json string to be send
     var message = new Buffer(JSON.stringify({
@@ -585,8 +585,8 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
             vn: thisVersionNumber,
             tcs: objectExp[thisId].tcs
         }));
-    debugConsole("UDP broadcasting on port: " + PORT);
-    debugConsole("Sending beats... Content: " + JSON.stringify({
+    cout("UDP broadcasting on port: " + PORT);
+    cout("Sending beats... Content: " + JSON.stringify({
             id: thisId,
             ip: thisIp,
             vn: thisVersionNumber,
@@ -605,7 +605,7 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
         setInterval(function () {
             // send the beat#
             if (thisId in objectExp) {
-                // debugConsole("Sending beats... Content: " + JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
+                // cout("Sending beats... Content: " + JSON.stringify({ id: thisId, ip: thisIp, vn:thisVersionNumber, tcs: objectExp[thisId].tcs}));
 
                 var message = new Buffer(JSON.stringify({
                     id: thisId,
@@ -624,7 +624,7 @@ function objectBeatSender(PORT, thisId, thisIp, oneTimeOnly) {
 
                 client.send(message, 0, message.length, PORT, HOST, function (err) {
                     if (err) {
-                        debugConsole("error ");
+                        cout("error ");
                         throw err;
                     }
                     // client is not being closed, as the beat is send ongoing
@@ -701,7 +701,7 @@ function objectBeatServer() {
     // creating the udp server
     var udpServer = dgram.createSocket("udp4");
     udpServer.on("error", function (err) {
-        debugConsole("server error:\n" + err);
+        cout("server error:\n" + err);
         udpServer.close();
     });
 
@@ -711,14 +711,14 @@ function objectBeatServer() {
         msgContent = JSON.parse(msg);
         if (msgContent.hasOwnProperty("id") && msgContent.hasOwnProperty("ip") && !(msgContent.id in objectExp) && !(msgContent.id in knownObjects)) {
             knownObjects[msgContent.id] = msgContent.ip;
-            debugConsole("I found new Objects: " + JSON.stringify({
+            cout("I found new Objects: " + JSON.stringify({
                     id: msgContent.id,
                     ip: msgContent.ip
                 }));
         }
         // check if action 'ping'
         if (msgContent.action === "ping") {
-            debugConsole(msgContent.action);
+            cout(msgContent.action);
             for (var key in objectExp) {
                 objectBeatSender(beatPort, key, objectExp[key].ip, true);
             }
@@ -727,7 +727,7 @@ function objectBeatServer() {
 
     udpServer.on("listening", function () {
         var address = udpServer.address();
-        debugConsole("UDP listening on port: " + address.port);
+        cout("UDP listening on port: " + address.port);
     });
 
     // bind the udp server to the udp beatPort
@@ -803,7 +803,7 @@ function objectWebServer() {
     // ths is the most relevant for
     // ****************************************************************************************************************
     webServer.get('/object/*/', function (req, res) {
-        //  debugConsole("get 7");
+        //  cout("get 7");
         res.json(objectExp[req.params[0]]);
     });
 
@@ -816,8 +816,8 @@ function objectWebServer() {
         var destinationIp = knownObjects[fullEntry.ObjectB];
 
         delete objectExp[req.params[0]].objectLinks[thisLinkId];
-        debugConsole("deleted link: " + thisLinkId);
-        // debugConsole(objectExp[req.params[0]].objectLinks);
+        cout("deleted link: " + thisLinkId);
+        // cout(objectExp[req.params[0]].objectLinks);
         actionSender(JSON.stringify({reloadLink: {id: req.params[0], ip: objectExp[req.params[0]].ip}}));
         HybridObjectsUtilities.writeObjectToFile(objectExp, req.params[0], __dirname);
         res.send("deleted: " + thisLinkId + " in object: " + req.params[0]);
@@ -864,7 +864,7 @@ function objectWebServer() {
                 // call an action that asks all devices to reload their links, once the links are changed.
                 actionSender(JSON.stringify({reloadLink: {id: req.params[0], ip: objectExp[req.params[0]].ip}}));
                 updateStatus = "added";
-                debugConsole("added link: " + req.params[1]);
+                cout("added link: " + req.params[1]);
                 // check if there are new connections associated with the new link.
                 socketUpdater();
 
@@ -885,12 +885,12 @@ function objectWebServer() {
     if (globalVariables.developer === true) {
         webServer.post('/object/*/size/*/', function (req, res) {
 
-            // debugConsole("post 2");
+            // cout("post 2");
             var updateStatus = "nothing happened";
             var thisObject = req.params[0];
             var thisValue = req.params[1];
 
-            debugConsole("changing Size for :" + thisObject + " : " + thisValue);
+            cout("changing Size for :" + thisObject + " : " + thisValue);
 
             var tempObject = {};
             if (thisObject === thisValue) {
@@ -950,26 +950,26 @@ function objectWebServer() {
         // sends the info page for the object :id
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder + 'info/:id', function (req, res) {
-            // debugConsole("get 12");
+            // cout("get 12");
             res.send(HybridObjectsWebFrontend.uploadInfoText(req.params.id, objectLookup, objectExp, knownObjects, sockets));
         });
 
         webServer.get(objectInterfaceFolder + 'infoLoadData/:id', function (req, res) {
-            // debugConsole("get 12");
+            // cout("get 12");
             res.send(HybridObjectsWebFrontend.uploadInfoContent(req.params.id, objectLookup, objectExp, knownObjects, sockets));
         });
 
         // sends the content page for the object :id
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder + 'content/:id', function (req, res) {
-            // debugConsole("get 13");
+            // cout("get 13");
             res.send(HybridObjectsWebFrontend.uploadTargetContent(req.params.id, __dirname, objectInterfaceFolder));
         });
 
         // sends the target page for the object :id
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder + 'target/:id', function (req, res) {
-            //   debugConsole("get 14");
+            //   cout("get 14");
             res.send(HybridObjectsWebFrontend.uploadTargetText(req.params.id, objectLookup, objectExp, globalVariables.debug));
             // res.sendFile(__dirname + '/'+ "index2.html");
         });
@@ -981,14 +981,14 @@ function objectWebServer() {
         // Send the main starting page for the web user interface
         // ****************************************************************************************************************
         webServer.get(objectInterfaceFolder, function (req, res) {
-            // debugConsole("get 16");
+            // cout("get 16");
             res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup, version));
         });
 
         // request a zip-file with the object stored inside. *1 is the object
         // ****************************************************************************************************************
         webServer.get('/object/*/zipBackup/', function (req, res) {
-            //  debugConsole("get 3");
+            //  cout("get 3");
             res.writeHead(200, {
                 'Content-Type': 'application/zip',
                 'Content-disposition': 'attachment; filename=HybridObjectBackup.zip'
@@ -1039,9 +1039,9 @@ function objectWebServer() {
 
         //*****************************************************************************************
         webServer.post(objectInterfaceFolder, function (req, res) {
-            // debugConsole("post 22");
+            // cout("post 22");
             if (req.body.action === "new") {
-                // debugConsole(req.body);
+                // cout(req.body);
                 if (req.body.folder !== "") {
 
                     HybridObjectsUtilities.createFolder(req.body.folder, __dirname, globalVariables.debug);
@@ -1072,14 +1072,14 @@ function objectWebServer() {
 
                 if (tempFolderName2 !== null) {
                     if (tempFolderName2 in objectExp) {
-                        debugConsole("ist noch da");
+                        cout("ist noch da");
                     } else {
-                        debugConsole("ist weg");
+                        cout("ist weg");
                     }
                     if (tempFolderName2 in knownObjects) {
-                        debugConsole("ist noch da");
+                        cout("ist noch da");
                     } else {
-                        debugConsole("ist weg");
+                        cout("ist weg");
                     }
 
                     // remove object from tree
@@ -1088,18 +1088,18 @@ function objectWebServer() {
                     delete objectLookup[req.body.folder];
 
                     if (tempFolderName2 in objectExp) {
-                        debugConsole("ist noch da");
+                        cout("ist noch da");
                     } else {
-                        debugConsole("ist weg");
+                        cout("ist weg");
                     }
                     if (tempFolderName2 in knownObjects) {
-                        debugConsole("ist noch da");
+                        cout("ist noch da");
                     } else {
-                        debugConsole("ist weg");
+                        cout("ist weg");
                     }
                 }
 
-                debugConsole("i deleted: " + tempFolderName2);
+                cout("i deleted: " + tempFolderName2);
 
                 res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup));
             }
@@ -1113,9 +1113,9 @@ function objectWebServer() {
         //*************************************************************************************
         webServer.post(objectInterfaceFolder + 'backup/',
             function (req, res) {
-                // debugConsole("post 23");
+                // cout("post 23");
 
-                debugConsole("komm ich hier hin?");
+                cout("komm ich hier hin?");
 
                 var form = new formidable.IncomingForm({
                     uploadDir: __dirname + '/objects',  // don't forget the __dirname here
@@ -1141,29 +1141,29 @@ function objectWebServer() {
 
                 form.on('end', function () {
                     var folderD = form.uploadDir;
-                    // debugConsole("------------" + form.uploadDir + " " + filename);
+                    // cout("------------" + form.uploadDir + " " + filename);
 
                     if (getFileExtension(filename) === "zip") {
 
-                        debugConsole("I found a zip file");
+                        cout("I found a zip file");
 
                         try {
                             var DecompressZip = require('decompress-zip');
                             var unzipper = new DecompressZip(folderD + "/" + filename);
 
                             unzipper.on('error', function (err) {
-                                debugConsole('Caught an error');
+                                cout('Caught an error');
                             });
 
                             unzipper.on('extract', function (log) {
-                                debugConsole('Finished extracting');
-                                debugConsole("have created a new object");
+                                cout('Finished extracting');
+                                cout("have created a new object");
                                 //createObjectFromTarget(filename.substr(0, filename.lastIndexOf('.')));
                                 createObjectFromTarget(ObjectExp, objectExp, filename.substr(0, filename.lastIndexOf('.')), __dirname, objectLookup, hardwareInterfaceModules, objectBeatSender, beatPort, globalVariables.debug);
 
                                 //todo add object to the beatsender.
 
-                                debugConsole("have created a new object");
+                                cout("have created a new object");
                                 fs.unlinkSync(folderD + "/" + filename);
 
                                 res.status(200);
@@ -1172,7 +1172,7 @@ function objectWebServer() {
                             });
 
                             unzipper.on('progress', function (fileIndex, fileCount) {
-                                debugConsole('Extracted file ' + (fileIndex + 1) + ' of ' + fileCount);
+                                cout('Extracted file ' + (fileIndex + 1) + ' of ' + fileCount);
                             });
 
                             unzipper.extract({
@@ -1182,10 +1182,10 @@ function objectWebServer() {
                                 }
                             });
 
-                            debugConsole("extracting: " + filename + "  " + folderD);
+                            cout("extracting: " + filename + "  " + folderD);
 
                         } catch (err) {
-                            debugConsole("could not unzip file");
+                            cout("could not unzip file");
                         }
                     }
                 });
@@ -1198,7 +1198,7 @@ function objectWebServer() {
         webServer.post(objectInterfaceFolder + 'content/:id',
             function (req, res) {
 
-                debugConsole("object is: " + req.params.id);
+                cout("object is: " + req.params.id);
 
                 tmpFolderFile = req.params.id;
 
@@ -1236,7 +1236,7 @@ function objectWebServer() {
                         delete knownObjects[tempFolderName2];
                     }
 
-                    debugConsole("i deleted: " + tempFolderName2);
+                    cout("i deleted: " + tempFolderName2);
 
                     res.send(HybridObjectsWebFrontend.uploadTargetContent(req.params.id, __dirname, objectInterfaceFolder));
                 }
@@ -1271,7 +1271,7 @@ function objectWebServer() {
 
                 form.on('end', function () {
                     var folderD = form.uploadDir;
-                    debugConsole("------------" + form.uploadDir + "/" + filename);
+                    cout("------------" + form.uploadDir + "/" + filename);
 
                     if (req.headers.type === "targetUpload") {
                         var fileExtension = getFileExtension(filename);
@@ -1281,7 +1281,7 @@ function objectWebServer() {
                             if (!fs.existsSync(folderD + "/target/")) {
                                 fs.mkdirSync(folderD + "/target/", "0766", function (err) {
                                     if (err) {
-                                        debugConsole(err);
+                                        cout(err);
                                         res.send("ERROR! Can't make the directory! \n");    // echo the result back
                                     }
                                 });
@@ -1303,9 +1303,9 @@ function objectWebServer() {
                             if (!fs.existsSync(xmlOutFile)) {
                                 fs.writeFile(xmlOutFile, documentcreate, function (err) {
                                     if (err) {
-                                        debugConsole(err);
+                                        cout(err);
                                     } else {
-                                        debugConsole("XML saved to " + xmlOutFile);
+                                        cout("XML saved to " + xmlOutFile);
                                     }
                                 });
                             }
@@ -1336,14 +1336,14 @@ function objectWebServer() {
 
                         else if (fileExtension === "zip") {
 
-                            debugConsole("I found a zip file");
+                            cout("I found a zip file");
 
                             try {
                                 var DecompressZip = require('decompress-zip');
                                 var unzipper = new DecompressZip(folderD + "/" + filename);
 
                                 unzipper.on('error', function (err) {
-                                    debugConsole('Caught an error in unzipper');
+                                    cout('Caught an error in unzipper');
                                 });
 
                                 unzipper.on('extract', function (log) {
@@ -1351,7 +1351,7 @@ function objectWebServer() {
                                     var folderFileType;
 
                                     for (var i = 0; i < folderFile.length; i++) {
-                                        debugConsole(folderFile[i]);
+                                        cout(folderFile[i]);
                                         folderFileType = folderFile[i].substr(folderFile[i].lastIndexOf('.') + 1);
                                         if (folderFileType === "xml" || folderFileType === "dat") {
                                             fs.renameSync(folderD + "/target/" + folderFile[i], folderD + "/target/target." + folderFileType);
@@ -1364,17 +1364,17 @@ function objectWebServer() {
 
                                     if (fs.existsSync(folderD + "/target/target.dat") && fs.existsSync(folderD + "/target/target.xml")) {
 
-                                        debugConsole("creating object from target file " + tmpFolderFile);
+                                        cout("creating object from target file " + tmpFolderFile);
                                         // createObjectFromTarget(tmpFolderFile);
                                         createObjectFromTarget(ObjectExp, objectExp, tmpFolderFile, __dirname, objectLookup, hardwareInterfaceModules, objectBeatSender, beatPort, globalVariables.debug);
 
                                         //todo send init to internal modules
-                                        debugConsole("have created a new object");
+                                        cout("have created a new object");
 
                                         for (var keyint in hardwareInterfaceModules) {
                                             hardwareInterfaceModules[keyint].init();
                                         }
-                                        debugConsole("have initialized the modules");
+                                        cout("have initialized the modules");
 
                                         var fileList = [folderD + "/target/target.jpg", folderD + "/target/target.xml", folderD + "/target/target.dat"];
 
@@ -1400,7 +1400,7 @@ function objectWebServer() {
                                 });
 
                                 unzipper.on('progress', function (fileIndex, fileCount) {
-                                    debugConsole('Extracted file ' + (fileIndex + 1) + ' of ' + fileCount);
+                                    cout('Extracted file ' + (fileIndex + 1) + ' of ' + fileCount);
                                 });
 
                                 unzipper.extract({
@@ -1410,7 +1410,7 @@ function objectWebServer() {
                                     }
                                 });
                             } catch (err) {
-                                debugConsole("could not unzip file");
+                                cout("could not unzip file");
                             }
                         } else {
                             res.status(200);
@@ -1427,7 +1427,7 @@ function objectWebServer() {
             });
     } else {
         webServer.get(objectInterfaceFolder, function (req, res) {
-            //   debugConsole("GET 21");
+            //   cout("GET 21");
             res.send("Hybrid Objects<br>Developer functions are off");
         });
     }
@@ -1437,15 +1437,15 @@ function objectWebServer() {
 //createObjectFromTarget(ObjectExp, objectExp, tmpFolderFile, __dirname, objectLookup, hardwareInterfaceModules, objectBeatSender, beatPort, globalVariables.debug);
 
 function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, objectLookup, hardwareInterfaceModules, objectBeatSender, beatPort, debug) {
-    debugConsole("I can start");
+    cout("I can start");
 
     var folder = __dirname + '/objects/' + folderVar + '/';
-    debugConsole(folder);
+    cout(folder);
 
     if (fs.existsSync(folder)) {
-        debugConsole("folder exists");
+        cout("folder exists");
         var objectIDXML = HybridObjectsUtilities.getObjectIdFromTarget(folderVar, __dirname);
-        debugConsole("got ID: objectIDXML");
+        cout("got ID: objectIDXML");
         if (!_.isUndefined(objectIDXML) && !_.isNull(objectIDXML)) {
             if (objectIDXML.length > 13) {
 
@@ -1453,16 +1453,16 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
                 objectExp[objectIDXML].folder = folderVar;
                 objectExp[objectIDXML].objectId = objectIDXML;
 
-                debugConsole("this should be the IP" + objectIDXML);
+                cout("this should be the IP" + objectIDXML);
 
                 try {
                     objectExp[objectIDXML] = JSON.parse(fs.readFileSync(__dirname + "/objects/" + folderVar + "/object.json", "utf8"));
                     objectExp[objectIDXML].ip = ip.address();
-                    debugConsole("testing: " + objectExp[objectIDXML].ip);
+                    cout("testing: " + objectExp[objectIDXML].ip);
                 } catch (e) {
                     objectExp[objectIDXML].ip = ip.address();
-                    debugConsole("testing: " + objectExp[objectIDXML].ip);
-                    debugConsole("No saved data for: " + objectIDXML);
+                    cout("testing: " + objectExp[objectIDXML].ip);
+                    cout("No saved data for: " + objectIDXML);
                 }
 
                 if (HybridObjectsUtilities.readObject(objectLookup, folderVar) !== objectIDXML) {
@@ -1478,7 +1478,7 @@ function createObjectFromTarget(ObjectExp, objectExp, folderVar, __dirname, obje
                     hardwareInterfaceModules[keyint].init();
                 }
 
-                debugConsole("weiter im text " + objectIDXML);
+                cout("weiter im text " + objectIDXML);
                 HybridObjectsUtilities.writeObjectToFile(objectExp, objectIDXML, __dirname);
 
                 objectBeatSender(beatPort, objectIDXML, objectExp[objectIDXML].ip);
@@ -1498,11 +1498,11 @@ function socketServer(params) {
         socket.on('/subscribe/realityEditor', function (msg) {
 
             if (objectExp.hasOwnProperty(JSON.parse(msg).obj)) {
-                debugConsole("reality editor subscription for object: " + JSON.parse(msg).obj);
-                debugConsole("the letated socket has the ID: " + socket.id);
+                cout("reality editor subscription for object: " + JSON.parse(msg).obj);
+                cout("the letated socket has the ID: " + socket.id);
 
                 realityEditorSocketArray[socket.id] = JSON.parse(msg).obj;
-                debugConsole(realityEditorSocketArray);
+                cout(realityEditorSocketArray);
             }
         });
 
@@ -1540,7 +1540,7 @@ function socketServer(params) {
         });
     });
     this.io = io;
-    debugConsole('socket.io started');
+    cout('socket.io started');
 }
 
 function sendMessagetoEditors(msgContent) {
@@ -1578,7 +1578,7 @@ function messagetoSend(msgContent, socketID) {
 // dependencies afterPluginProcessing
 
 function objectEngine(obj, pos, objectExp, dataPointModules) {
-    // debugConsole("engine started");
+    // cout("engine started");
     var key;
     for (key in objectExp[obj].objectLinks) {
         if (objectExp[obj].objectLinks[key].locationInA === pos) {
@@ -1639,7 +1639,7 @@ function socketSender(obj, linkPos, processedValue, mode) {
             }
         }
         catch (e) {
-            debugConsole("can not emit from link ID:" + linkPos + "and object: " + obj);
+            cout("can not emit from link ID:" + linkPos + "and object: " + obj);
         }
     }
 }
@@ -1656,7 +1656,7 @@ function socketSender(obj, linkPos, processedValue, mode) {
  **/
 
 function socketUpdater() {
-    // debugConsole(knownObjects);
+    // cout(knownObjects);
     // delete unconnected connections
     var sockKey, objKey, posKey;
 
@@ -1685,9 +1685,9 @@ function socketUpdater() {
 
 
                 var ip = knownObjects[link.ObjectB];
-                //debugConsole("this ip: "+ip);
+                //cout("this ip: "+ip);
                 if (!(ip in socketArray)) {
-                    // debugConsole("shoudl not show up -----------");
+                    // cout("shoudl not show up -----------");
                     socketArray[ip] = new ObjectSockets(socketPort, ip);
                 }
             }
@@ -1702,13 +1702,13 @@ function socketUpdater() {
             if (!socketArray[sockKey3].io.connected) {
                 for (objKey2 in knownObjects) {
                     if (knownObjects[objKey2] === sockKey3) {
-                        debugConsole("Looking for: " + objKey2 + " with the ip: " + sockKey3);
+                        cout("Looking for: " + objKey2 + " with the ip: " + sockKey3);
                     }
                 }
             }
         }
 
-        debugConsole(sockets.sockets + " connections; " + sockets.connected + " connected and " + sockets.notConnected + " not connected");
+        cout(sockets.sockets + " connections; " + sockets.connected + " connected and " + sockets.notConnected + " not connected");
 
     }
     sockets.socketsOld = sockets.sockets;
@@ -1749,6 +1749,6 @@ function socketUpdaterInterval() {
 }
 
 
-function debugConsole(msg) {
+function cout(msg) {
     if (globalVariables.debug) console.log(msg);
 }

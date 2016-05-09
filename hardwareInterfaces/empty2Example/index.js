@@ -81,18 +81,16 @@ if (exports.enabled) {
 
 
 
-            server.addIO("graystone", "hans", "default", "empty2Example");
-            server.addIO("graystone", "peter", "default", "empty2Example");
+            server.addIO("obj47", "hans", "default", "empty2Example");
+            server.addIO("obj47", "peter", "default", "empty2Example");
 
 
-        server.clearIO("graystone");
-        server.clearIO("graystone");
-
-
+        server.clearIO("obj47");
+        
 console.log("printthatshit");
         setInterval(function(){
          
-            server.writeIOToServer("graystone", "hans", Math.random(), "f");
+            server.writeIOToServer("obj47", "hans", Math.random(), "f");
 
         }, 100);
 

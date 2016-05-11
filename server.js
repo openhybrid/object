@@ -89,7 +89,7 @@ const socketPort = serverPort;     // server and socket port are always identica
 const beatPort = 52316;            // this is the port for UDP broadcasting so that the objects find each other.
 const beatInterval = 5000;         // how often is the heartbeat sent
 const socketUpdateInterval = 2000; // how often the system checks if the socket connections are still up and running.
-const version = "0.4.1";           // the version of this server
+const version = "1.6.0";           // the version of this server
 
 
 // All objects are stored in this folder:

@@ -63,6 +63,7 @@ if (exports.enabled) {
 
     var ArduinoLookup = {};
     var ArduinoLookupByIndex = {};
+    var FullLookup = {};
     var serialPortOpen = false;
 
 
@@ -185,6 +186,13 @@ if (exports.enabled) {
                         ArduinoLookupByIndex[arrayID].ioName = pos;
                         ArduinoLookupByIndex[arrayID].index = arrayID;
 
+                        var thisObjectID = server.getObjectIdFromObjectName(obj);
+
+                        if (!FullLookup.hasOwnProperty(thisObjectID)) {
+                            FullLookup[thisObjectID] = {};
+                        }
+                        FullLookup[thisObjectID][pos] = arrayID;
+
                         server.addIO(obj, pos, thisPlugin, "arduinoYun");
 
                         dataSwitch = 0;
@@ -197,13 +205,6 @@ if (exports.enabled) {
                         break;
                     case 50:
                         amount = parseInt(data, 10);
-                        //I don't think this is of any use anymore - Carsten
-                        //var ioPoints = [];
-                        //for (key in ArduinoLookup) {
-                        //    if (ArduinoLookup[key].objName == obj) {
-                        //        ioPoints.push(ArduinoLookup[key].ioName);
-                        //    }
-                        //}
                         server.clearIO("arduinoYun");
                         dataSwitch = 0;
                         break;
@@ -221,16 +222,19 @@ if (exports.enabled) {
 
 
     function serialSender(serialPort, objName, ioName, value, mode, type) {
-        var object = objName + ioName;
-        // todo check if type is always arduino
-        if (type === "arduinoYun" && ArduinoLookup.hasOwnProperty(object)) {
-            var index = ArduinoLookup[object].index;
-            var yunModes = ["f", "d", "p", "n"];
-            if (_.includes(yunModes, mode)) {
-                serialPort.write(mode + "\n");
+
+        if (type === "arduinoYun" && FullLookup.hasOwnProperty(objName)) {
+            if (FullLookup[objName].hasOwnProperty(ioName)) {
+                var index = FullLookup[objName][ioName];
+                var yunModes = ["f", "d", "p", "n"];
+                if (_.includes(yunModes, mode)) {
+                    serialPort.write(mode + "\n");
+                } else {
+                    serialPort.write("f\n");
+                }
+                serialPort.write(index + "\n");
+                serialPort.write(value + "\n");
             }
-            serialPort.write(index + "\n");
-            serialPort.write(value + "\n");
         }
     }
 
@@ -240,6 +244,7 @@ if (exports.enabled) {
     };
 
     exports.send = function (objName, ioName, value, mode, type) {
+
         serialSender(serialPort, objName, ioName, value, mode, type);
     };
 

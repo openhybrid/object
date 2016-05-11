@@ -749,7 +749,6 @@ function existsSync(filename) {
     }
 }
 
-
 function objectWebServer() {
 
     // define the body parser
@@ -773,13 +772,18 @@ function objectWebServer() {
 
             if (urlArray[3] !== "index.html" && urlArray[3] !== "index.htm") {
 
-                if (existsSync(fileName + "index.html")) {
+                if (fs.existsSync(fileName + "index.html")) {
                     fileName = fileName + "index.html";
                 } else {
                     fileName = fileName + "index.htm";
                 }
             }
             var html = fs.readFileSync(fileName, 'utf8');
+
+            html = html.replace('<script src="object.js"></script>', '');
+            html = html.replace('<script src="objectIO.js"></script>', '');
+            html = html.replace('<script src="/socket.io/socket.io.js"></script>', '');
+
             var loadedHtml = cheerio.load(html);
             var scriptNode = '<script src="../../objectDefaultFiles/object.js"></script>';
             loadedHtml('head').prepend(scriptNode);

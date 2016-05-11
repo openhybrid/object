@@ -164,6 +164,10 @@ exports.addIO = function (objName, ioName, plugin, type) {
     objectID = undefined;
 };
 
+exports.getObjectIdFromObjectName = function (objName) {
+   return HybridObjectsUtilities.getObjectIdFromTarget(objName, dirnameO);
+};
+
 /**
  * @desc developerOn() Enables the developer mode for all HybridObjects and enables the developer web interface
 **/

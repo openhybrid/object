@@ -47,7 +47,7 @@
 /**
  * Set to true to enable the hardware interface
  **/
-exports.enabled = true;
+exports.enabled = false;
 
 
 if (exports.enabled) {
@@ -80,28 +80,7 @@ if (exports.enabled) {
      * @note program the init so that it can be called anytime there is a change to the amount of objects.
      **/
     exports.init = function () {
-
-
-
-            server.addIO("obj45", "one", "default", "emptyExample");
-            server.addIO("obj45", "two", "default", "emptyExample");
-            server.addIO("obj45", "three", "default", "emptyExample");
-            server.addIO("obj45", "four", "default", "emptyExample");
-
-        server.addIO("obj46", "one1", "default", "emptyExample");
-        server.addIO("obj46", "two2", "default", "emptyExample");
-
-        server.clearIO("obj45");
-        server.clearIO("obj46");
-
-
-console.log("printthatshit");
-        setInterval(function(){
-         
-            server.writeIOToServer("obj45", "one", Math.random(), "f");
-
-        }, 100);
-
+        
     };
 
     /**

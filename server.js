@@ -1051,7 +1051,7 @@ function objectWebServer() {
                     HybridObjectsUtilities.createFolder(req.body.folder, __dirname, globalVariables.debug);
 
                 }
-                res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup));
+                res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup, version));
             }
             if (req.body.action === "delete") {
                 var folderDel = __dirname + '/objects/' + req.body.folder;
@@ -1105,7 +1105,7 @@ function objectWebServer() {
 
                 cout("i deleted: " + tempFolderName2);
 
-                res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup));
+                res.send(HybridObjectsWebFrontend.printFolder(objectExp, __dirname, globalVariables.debug, objectInterfaceFolder, objectLookup, version));
             }
 
         });

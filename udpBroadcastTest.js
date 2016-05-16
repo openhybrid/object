@@ -63,7 +63,7 @@ udpServer.on("message", function (msg) {
 
 udpServer.on("listening", function () {
     var address = udpServer.address();
-    console.log("I am waiting for messages on port: " + address.port);
+    console.log("I am waiting for messages on port: " + address.port + " my own ID is "+uuid);
 });
 
 udpServer.bind(beatPort);

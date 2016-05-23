@@ -351,6 +351,7 @@ HybridObjectsHardwareInterfaces.setup(objectExp, objectLookup, globalVariables, 
 
     //these are the calls that come from the objects before they get processed by the object engine.
     // send the saved value before it is processed
+
     sendMessagetoEditors({obj: objKey2, pos: valueKey, value: value, mode: mode});
     objectEngine(objKey2, valueKey, objectExp, dataPointModules);
 
@@ -1527,6 +1528,7 @@ function socketServer(params) {
                         hardwareInterfaceModules[objSend.type].send(msgContent.obj, msgContent.pos, objSend.value, objSend.mode, objSend.type);
                     }
 
+                    sendMessagetoEditors({obj: msgContent.obj, pos: msgContent.pos, value: msgContent.value, mode: msgContent.mode});
                     objectEngine(msgContent.obj, msgContent.pos, objectExp, dataPointModules);
                 }
             }
@@ -1620,6 +1622,7 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
             hardwareInterfaceModules[objSend.type].send(link.ObjectB, link.locationInB, objSend.value, objSend.mode, objSend.type);
         }
         // send data to listening editor
+
         sendMessagetoEditors({obj: link.ObjectB, pos: link.locationInB, value: objSend.value, mode: objSend.mode});
         objectEngine(link.ObjectB, link.locationInB, objectExp, dataPointModules);
     }

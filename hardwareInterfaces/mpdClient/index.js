@@ -138,6 +138,10 @@ if (exports.enabled) {
 
     };
 
+    exports.origin = function (originObj, originIO) {
+
+    }
+    
     exports.init = function () {
         if (server.getDebug()) console.log("mpd init()");
         for (var key in mpdServers) {

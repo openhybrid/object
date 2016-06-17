@@ -42,14 +42,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
-exports.enabled = false;
+exports.enabled = true;
 
 if (exports.enabled) {
     var fs = require('fs');
     var _ = require('lodash');
     var serialport = require("serialport");
     var server = require(__dirname + '/../../libraries/HybridObjectsHardwareInterfaces');
-
+var originold = "";
 
     const serialBaudRate = 115200; // baud rate for connection to arudino
     const serialSource = "/dev/ttyATH0"; // this is pointing to the arduino
@@ -132,7 +132,7 @@ if (exports.enabled) {
                             dataSwitch = 20;
                         }
                         else if (data === "okbird") {
-
+                            originold = "";
                             serialPort.write(" \n");
                             serialPort.write("okbird\n");
                             if (server.getDebug()) console.log("ok as respond");
@@ -215,6 +215,7 @@ if (exports.enabled) {
             // this is for when the server is started...
             serialPort.write(" \n");
             serialPort.write("okbird\n");
+            originold = "";
 
         });
         if (server.getDebug()) console.log("no problem");
@@ -248,10 +249,21 @@ if (exports.enabled) {
         serialSender(serialPort, objName, ioName, value, mode, type);
     };
 
+    exports.origin = function (originObj, originIO) {
+        if(originold !== originIO) {
+            serialPort.write("s\n");
+            serialPort.write(originIO + "\n");
+            originold= originIO;
+            console.log(originIO);
+        }
+        
+    };
+
     exports.init = function () {
         if (serialPortOpen) {
             serialPort.write(" \n");
             serialPort.write("okbird\n");
+            originold = "";
         }
     };
 

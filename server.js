@@ -89,7 +89,7 @@ const socketPort = serverPort;     // server and socket port are always identica
 const beatPort = 52316;            // this is the port for UDP broadcasting so that the objects find each other.
 const beatInterval = 5000;         // how often is the heartbeat sent
 const socketUpdateInterval = 2000; // how often the system checks if the socket connections are still up and running.
-const version = "1.6.1";           // the version of this server
+const version = "1.6.2";           // the version of this server
 
 
 // All objects are stored in this folder:
@@ -862,7 +862,7 @@ function objectWebServer() {
             // todo the first link in a chain should carry a UUID that propagates through the entire chain each time a change is done to the chain.
             // todo endless loops should be checked by the time of creation of a new loop and not in the Engine
             if (thisObject.locationInA === thisObject.locationInB && thisObject.ObjectA === thisObject.ObjectB) {
-                thisObject.endlessLoop = true;
+               // thisObject.endlessLoop = true;
             }
 
             if (!thisObject.endlessLoop) {
@@ -1523,7 +1523,7 @@ function socketServer(params) {
                     objSend.mode = msgContent.mode;
 
                     objectExp[msgContent.obj].objectValues[msgContent.pos].value = msgContent.value;
-
+                    
                     if (hardwareInterfaceModules.hasOwnProperty(objSend.type)) {
                         hardwareInterfaceModules[objSend.type].send(msgContent.obj, msgContent.pos, objSend.value, objSend.mode, objSend.type);
                     }
@@ -1611,6 +1611,7 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 
     if (!(link.ObjectB in objectExp)) {
 
+        hardwareInterfaceModules[objectExp[link.ObjectA].objectValues[link.locationInA].type].origin(link.ObjectB, link.locationInB);
         socketSender(obj, linkPos, processedValue, mode);
     }
     else {
@@ -1620,8 +1621,10 @@ function afterPluginProcessing(obj, linkPos, processedValue, mode) {
 
         if (hardwareInterfaceModules.hasOwnProperty(objSend.type)) {
             hardwareInterfaceModules[objSend.type].send(link.ObjectB, link.locationInB, objSend.value, objSend.mode, objSend.type);
+            hardwareInterfaceModules[objSend.type].origin(link.ObjectB, link.locationInB);
         }
         // send data to listening editor
+       // console.log(link.ObjectB +"   "+link.locationInB);
 
         sendMessagetoEditors({obj: link.ObjectB, pos: link.locationInB, value: objSend.value, mode: objSend.mode});
         objectEngine(link.ObjectB, link.locationInB, objectExp, dataPointModules);

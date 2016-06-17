@@ -282,6 +282,10 @@ if (exports.enabled) {
         }
     };
 
+    exports.origin = function (originObj, originIO) {
+
+    }
+
     exports.init = function () {
         for (var key in lights) {
             server.addIO(key, "switch", "default", "philipsHue");

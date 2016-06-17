@@ -84,6 +84,10 @@ if (exports.enabled) {
 
     };
 
+    exports.origin = function (originObj, originIO) {
+
+    }
+
     exports.send = function (objName, ioName, value, mode, type) {
         if (kodiServers.hasOwnProperty(objName) && !_.isNull(kodiServers[objName].connection)) {
             if (ioName == "volume") {

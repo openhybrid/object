@@ -72,6 +72,19 @@ if (exports.enabled) {
 
     };
 
+
+    var originold = "";
+    exports.origin = function (originObj, originIO) {
+       if(originold !== originIO) {
+           // serialPort.write("s\n");
+           // serialPort.write(originIO + "\n");
+            originold= originIO;
+            console.log("this is the IO ORIGIN: "+originIO);
+       }
+
+
+    };
+    
     /**
      * @desc prototype for an interface init. The init reinitialize the communication with the external source.
      *       Place calls to addIO() and clearIO() in here. Call clearIO() after you have added all the IO points with addIO() calls.

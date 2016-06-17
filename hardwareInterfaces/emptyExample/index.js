@@ -74,6 +74,10 @@ if (exports.enabled) {
 
     };
 
+    exports.origin = function (originObj, originIO) {
+
+    }
+    
     /**
      * @desc prototype for an interface init. The init reinitialize the communication with the external source.
      *       Place calls to addIO() and clearIO() in here. Call clearIO() after you have added all the IO points with addIO() calls.

@@ -155,4 +155,8 @@ if (exports.enabled) {
         teardown();
     };
 
+    exports.origin = function (originObj, originIO) {
+
+    }
+
 }

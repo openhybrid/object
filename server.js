@@ -767,7 +767,7 @@ function objectWebServer() {
         var urlArray = req.originalUrl.split("/");
 
         console.log(urlArray);
-        if ((req.method === "GET" && urlArray[2] !== "dataPointInterfaces") && (req.url.slice(-1) === "/" || urlArray[3] === "index.html" || urlArray[3] === "index.htm")) {
+        if ((req.method === "GET" && urlArray[2] !== "dataPointInterfaces") && (req.url.slice(-1) === "/" || urlArray[3].match(/\.html?$/))) {
 
             var fileName = __dirname + "/objects" + req.url;
 

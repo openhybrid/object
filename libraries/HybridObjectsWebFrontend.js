@@ -177,7 +177,7 @@ exports.printFolder = function (objectExp, dirnameO, debug, objectInterfaceFolde
         "</ul><div class='row'>" +
         "<form id='newFolderForm' action='" + objectInterfaceFolder + "' method='post' style='display:inline'>" +
         "<div class='col-xs-5'>" +
-        "<input type='text' class='form-control' name='folder' id='folder' />" +
+        "<input type='text' class='form-control' name='folder' id='folder' placeholder='New Object Name'/>" +
         "<input type='hidden' name='action' value='new'>" +
         "</div>" +
         "<div class='col-xs-4' style='display: inline'>" +

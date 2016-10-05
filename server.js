@@ -804,14 +804,6 @@ function objectWebServer() {
     // allow requests from all origins with '*'. TODO make it dependent on the local network. this is important for security
     webServer.options('*', cors());
 
-    // sends json object for a specific hybrid object. * is the object name
-    // ths is the most relevant for
-    // ****************************************************************************************************************
-    webServer.get('/object/*/', function (req, res) {
-        //  cout("get 7");
-        res.json(objectExp[req.params[0]]);
-    });
-
     // delete a link. *1 is the object *2 is the link id
     // ****************************************************************************************************************
     webServer.delete('/object/*/link/*/', function (req, res) {
@@ -1436,6 +1428,15 @@ function objectWebServer() {
             res.send("Hybrid Objects<br>Developer functions are off");
         });
     }
+	
+    // sends json object for a specific hybrid object. * is the object name
+    // ths is the most relevant for
+    // ****************************************************************************************************************
+    webServer.get('/object/*/', function (req, res) {
+        //  cout("get 7");
+        res.json(objectExp[req.params[0]]);
+    });
+	
 }
 
 // TODO this should move to the utilities section
